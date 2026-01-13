@@ -164,6 +164,7 @@ Generate or update code based on OpenAPI spec.
 /oas:sync --dry-run          # Preview only, no file changes
 /oas:sync --force            # Ignore cache, full regeneration
 /oas:sync --trust-cache      # Trust cache mode (faster, 99% accuracy)
+/oas:sync --offline          # Use cached spec only (no network)
 
 # Filter by tag
 /oas:sync --tag=users        # Specific tag only
@@ -193,6 +194,8 @@ Compare OpenAPI spec changes.
 /oas:diff --remote           # Compare with remote spec
 /oas:diff old.json new.json  # Compare two files
 /oas:diff --breaking-only    # Show breaking changes only
+/oas:diff --force            # Ignore cache, fetch fresh spec
+/oas:diff --offline          # Use cached spec only (no network)
 /oas:diff --tag=users        # Specific tag only
 /oas:diff --exclude-tag=internal  # Exclude specific tag
 /oas:diff --list-tags        # Show tags with change summary
@@ -206,6 +209,8 @@ Validate code matches spec.
 /oas:validate                # Basic validation
 /oas:validate --strict       # Warnings treated as errors
 /oas:validate --fix          # Auto-fix what's possible
+/oas:validate --force        # Ignore cache, fetch fresh spec
+/oas:validate --offline      # Use cached spec only (no network)
 /oas:validate --tag=users    # Specific tag only
 /oas:validate --quiet        # Errors only
 ```
@@ -222,6 +227,8 @@ Check spec and code for consistency.
 /oas:lint --rule=type-naming # Specific rule only
 /oas:lint --severity=critical # Filter by severity
 /oas:lint --ignore=pattern   # Ignore specific path/schema
+/oas:lint --force            # Ignore cache, fetch fresh spec
+/oas:lint --offline          # Use cached spec only (no network)
 ```
 
 ### /oas:status
@@ -234,6 +241,7 @@ Quick status check from cache.
 /oas:status --tag=users      # Status for specific tag
 /oas:status --list-tags      # Show all tags with coverage
 /oas:status --quiet          # Summary only
+/oas:status --verbose        # Show detailed coverage breakdown
 ```
 
 ### /oas:analyze
