@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Adaptive API code generator that learns your project patterns and syncs with OpenAPI specs",
   "author": "jack",
-  "homepage": "https://github.com/jack/openapi-sync-plugin",
-  "repository": "https://github.com/jack/openapi-sync-plugin",
+  "homepage": "https://github.com/jhlee0409/openapi-sync-plugin",
+  "repository": "https://github.com/jhlee0409/openapi-sync-plugin",
   "license": "MIT",
   "keywords": [
     "openapi",

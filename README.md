@@ -398,51 +398,17 @@ The following shows what `/api:init` generates after scanning your codebase.
 
 ```json
 {
-  "$schema": "https://openapi-sync.dev/schema/v1.json",
   "version": "1.0.0",
 
   "openapi": {
-    "source": "./openapi.json",
-    "remote": "https://api.example.com/openapi.json",
-    "title": "My API",
-    "version": "2.0.0"
+    "source": "https://api.example.com/openapi.json"
   },
 
-  // ⬇️ Auto-detected from package.json
-  "project": {
-    "framework": "react",           // detected: react, vue, angular, svelte, next, nuxt, etc.
-    "language": "typescript",       // detected: typescript or javascript
-    "httpClient": "axios-custom",   // detected: axios, fetch, ky, or custom wrapper
-    "dataFetching": "react-query"   // detected: react-query, swr, or none
-  },
-
-  // ⬇️ User provides paths to existing code samples
   "samples": {
     "api": "src/entities/user/api/user-api.ts",
     "types": "src/entities/user/model/types.ts",
     "hooks": "src/entities/user/api/queries.ts",
     "keys": "src/entities/user/api/user-keys.ts"
-  },
-
-  // ⬇️ Auto-detected from samples directory structure & code
-  "patterns": {
-    "structure": {
-      "type": "fsd",                                              // detected from directory pattern
-      "apiPath": "src/entities/{domain}/api/{domain}-api.ts",     // detected from samples
-      "typesPath": "src/entities/{domain}/model/types.ts",        // detected from samples
-      "hooksPath": "src/entities/{domain}/api/queries.ts"         // detected from samples
-    },
-    "httpClient": {
-      "import": "import { createApi } from '@/shared/api'",       // detected from sample imports
-      "usage": "createApi().{method}<{Type}>({path})",            // detected from sample code
-      "responseAccess": ".data"                                   // detected from sample code
-    }
-    // naming, codeStyle: auto-inferred from samples, usually no need to configure
-  },
-
-  // ⬇️ Optional: override validation behavior
-  "validation": {
-    "ignorePaths": ["src/entities/legacy/*"]                      // skip legacy code
   },
 
   "tagMapping": {
@@ -454,85 +420,32 @@ The following shows what `/api:init` generates after scanning your codebase.
     "/health",
     "/metrics",
     "/internal/*"
-  ]
+  ],
+
+  "validation": {
+    "ignorePaths": ["src/entities/legacy/*"]
+  }
 }
 ```
 
-### How Auto-Detection Works
-
-| Field | Detection Source |
-|-------|------------------|
-| `project.framework` | `package.json` dependencies |
-| `project.httpClient` | Sample code imports (`axios`, `fetch`, `ky`, etc.) |
-| `patterns.structure.*Path` | Sample file locations → extract `{domain}` pattern |
-| `patterns.httpClient.*` | Sample code analysis |
-| `patterns.naming.*` | Sample function/type names |
-| `patterns.codeStyle.*` | Sample code formatting |
-
-**Any framework, structure, or pattern works** - as long as you provide a sample file, the plugin will learn and replicate your exact style.
+> **Note:** `project.*` and `patterns.*` are auto-detected from samples and stored internally.
+> You don't need to configure them manually.
 
 ### Config Field Reference
 
-#### Root Fields
-
 | Field | Required | Description |
 |-------|----------|-------------|
-| `$schema` | | JSON schema URL for IDE autocompletion |
 | `version` | | Config file version (e.g., "1.0.0") |
-
-#### openapi
-
-| Field | Required | Description |
-|-------|----------|-------------|
 | `openapi.source` | ✅ | OpenAPI spec path or URL |
-| `openapi.remote` | | Remote URL (if local file differs from source) |
-| `openapi.title` | | API title (auto-filled from spec info.title) |
-| `openapi.version` | | API version (auto-filled from spec info.version) |
-
-#### samples
-
-| Field | Required | Description |
-|-------|----------|-------------|
 | `samples.api` | ✅ | API functions sample file path |
 | `samples.types` | | TypeScript types sample file path |
 | `samples.hooks` | | React Query/SWR hooks sample file path |
 | `samples.keys` | | Query key factory sample file path |
+| `tagMapping` | | Map OpenAPI tags to domain names (e.g., `{"user-controller": "user"}`) |
+| `ignore` | | Endpoint paths to ignore (e.g., `["/health", "/internal/*"]`) |
+| `validation.ignorePaths` | | Glob patterns for paths to skip validation |
 
-#### project (Auto-detected)
-
-| Field | Description |
-|-------|-------------|
-| `project.framework` | Framework: react, vue, angular, svelte, next, nuxt, etc. |
-| `project.language` | Language: typescript or javascript |
-| `project.httpClient` | HTTP client: axios, fetch, ky, or custom wrapper name |
-| `project.dataFetching` | Data fetching lib: react-query, swr, or none |
-
-#### patterns (Auto-detected)
-
-| Field | Description |
-|-------|-------------|
-| `patterns.structure.type` | Structure type: fsd, feature, flat |
-| `patterns.structure.apiPath` | API file path template with `{domain}` placeholder |
-| `patterns.structure.typesPath` | Types file path template |
-| `patterns.structure.hooksPath` | Hooks file path template |
-| `patterns.httpClient.import` | HTTP client import statement |
-| `patterns.httpClient.usage` | HTTP client usage pattern |
-| `patterns.httpClient.responseAccess` | Response data access (e.g., ".data") |
-
-> **Note:** `patterns.naming.*` and `patterns.codeStyle.*` are auto-inferred from samples. Manual configuration is rarely needed.
-
-#### validation
-
-| Field | Default | Description |
-|-------|---------|-------------|
-| `validation.ignorePaths` | [] | Glob patterns for paths to skip (e.g., `["src/legacy/*"]`) |
-
-#### Other
-
-| Field | Description |
-|-------|-------------|
-| `tagMapping` | Map OpenAPI tags to domain names (e.g., `{"user-controller": "user"}`) |
-| `ignore` | Endpoint paths to ignore (e.g., `["/health", "/internal/*"]`) |
+> **Note:** `project.*` and `patterns.*` are auto-detected from your samples and stored internally by `/api:init`. Manual configuration is not needed.
 
 ## Cache Files
 

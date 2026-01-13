@@ -398,51 +398,17 @@ src/api/{tag}/
 
 ```json
 {
-  "$schema": "https://openapi-sync.dev/schema/v1.json",
   "version": "1.0.0",
 
   "openapi": {
-    "source": "./openapi.json",
-    "remote": "https://api.example.com/openapi.json",
-    "title": "My API",
-    "version": "2.0.0"
+    "source": "https://api.example.com/openapi.json"
   },
 
-  // ⬇️ package.json에서 자동 감지
-  "project": {
-    "framework": "react",           // 감지: react, vue, angular, svelte, next, nuxt 등
-    "language": "typescript",       // 감지: typescript 또는 javascript
-    "httpClient": "axios-custom",   // 감지: axios, fetch, ky, 또는 커스텀 래퍼
-    "dataFetching": "react-query"   // 감지: react-query, swr, 또는 none
-  },
-
-  // ⬇️ 사용자가 기존 코드 샘플 경로 제공
   "samples": {
     "api": "src/entities/user/api/user-api.ts",
     "types": "src/entities/user/model/types.ts",
     "hooks": "src/entities/user/api/queries.ts",
     "keys": "src/entities/user/api/user-keys.ts"
-  },
-
-  // ⬇️ 샘플 디렉토리 구조 & 코드에서 자동 감지
-  "patterns": {
-    "structure": {
-      "type": "fsd",                                              // 디렉토리 패턴에서 감지
-      "apiPath": "src/entities/{domain}/api/{domain}-api.ts",     // 샘플에서 감지
-      "typesPath": "src/entities/{domain}/model/types.ts",        // 샘플에서 감지
-      "hooksPath": "src/entities/{domain}/api/queries.ts"         // 샘플에서 감지
-    },
-    "httpClient": {
-      "import": "import { createApi } from '@/shared/api'",       // 샘플 import에서 감지
-      "usage": "createApi().{method}<{Type}>({path})",            // 샘플 코드에서 감지
-      "responseAccess": ".data"                                   // 샘플 코드에서 감지
-    }
-    // naming, codeStyle: 샘플에서 자동 추론, 보통 설정 불필요
-  },
-
-  // ⬇️ 선택: 검증 동작 오버라이드
-  "validation": {
-    "ignorePaths": ["src/entities/legacy/*"]                      // 레거시 코드 스킵
   },
 
   "tagMapping": {
@@ -454,85 +420,32 @@ src/api/{tag}/
     "/health",
     "/metrics",
     "/internal/*"
-  ]
+  ],
+
+  "validation": {
+    "ignorePaths": ["src/entities/legacy/*"]
+  }
 }
 ```
 
-### 자동 감지 원리
-
-| 필드 | 감지 소스 |
-|------|----------|
-| `project.framework` | `package.json` dependencies |
-| `project.httpClient` | 샘플 코드 imports (`axios`, `fetch`, `ky` 등) |
-| `patterns.structure.*Path` | 샘플 파일 위치 → `{domain}` 패턴 추출 |
-| `patterns.httpClient.*` | 샘플 코드 분석 |
-| `patterns.naming.*` | 샘플 함수/타입명 |
-| `patterns.codeStyle.*` | 샘플 코드 포맷팅 |
-
-**어떤 프레임워크, 구조, 패턴이든 동작합니다** - 샘플 파일만 제공하면 그 스타일을 그대로 학습하고 복제합니다.
+> **참고:** `project.*`와 `patterns.*`는 샘플에서 자동 감지되어 내부적으로 저장됩니다.
+> 수동 설정할 필요 없습니다.
 
 ### 설정 필드 레퍼런스
 
-#### 루트 필드
-
 | 필드 | 필수 | 설명 |
 |------|------|------|
-| `$schema` | | IDE 자동완성용 JSON 스키마 URL |
 | `version` | | 설정 파일 버전 (예: "1.0.0") |
-
-#### openapi
-
-| 필드 | 필수 | 설명 |
-|------|------|------|
 | `openapi.source` | ✅ | OpenAPI 스펙 경로 또는 URL |
-| `openapi.remote` | | 원격 URL (로컬 파일과 다를 때) |
-| `openapi.title` | | API 제목 (스펙 info.title에서 자동 입력) |
-| `openapi.version` | | API 버전 (스펙 info.version에서 자동 입력) |
-
-#### samples
-
-| 필드 | 필수 | 설명 |
-|------|------|------|
 | `samples.api` | ✅ | API 함수 샘플 파일 경로 |
 | `samples.types` | | TypeScript 타입 샘플 파일 경로 |
 | `samples.hooks` | | React Query/SWR 훅 샘플 파일 경로 |
 | `samples.keys` | | Query key factory 샘플 파일 경로 |
+| `tagMapping` | | OpenAPI 태그를 도메인명에 매핑 (예: `{"user-controller": "user"}`) |
+| `ignore` | | 무시할 엔드포인트 경로 (예: `["/health", "/internal/*"]`) |
+| `validation.ignorePaths` | | 검증 스킵할 경로 Glob 패턴 |
 
-#### project (자동 감지)
-
-| 필드 | 설명 |
-|------|------|
-| `project.framework` | 프레임워크: react, vue, angular, svelte, next, nuxt 등 |
-| `project.language` | 언어: typescript 또는 javascript |
-| `project.httpClient` | HTTP 클라이언트: axios, fetch, ky, 또는 커스텀 래퍼명 |
-| `project.dataFetching` | 데이터 페칭 라이브러리: react-query, swr, 또는 none |
-
-#### patterns (자동 감지)
-
-| 필드 | 설명 |
-|------|------|
-| `patterns.structure.type` | 구조 타입: fsd, feature, flat |
-| `patterns.structure.apiPath` | `{domain}` 플레이스홀더가 포함된 API 파일 경로 템플릿 |
-| `patterns.structure.typesPath` | 타입 파일 경로 템플릿 |
-| `patterns.structure.hooksPath` | 훅 파일 경로 템플릿 |
-| `patterns.httpClient.import` | HTTP 클라이언트 import 문 |
-| `patterns.httpClient.usage` | HTTP 클라이언트 사용 패턴 |
-| `patterns.httpClient.responseAccess` | 응답 데이터 접근 방식 (예: ".data") |
-
-> **참고:** `patterns.naming.*`과 `patterns.codeStyle.*`은 샘플에서 자동 추론됩니다. 수동 설정은 거의 필요 없습니다.
-
-#### validation
-
-| 필드 | 기본값 | 설명 |
-|------|--------|------|
-| `validation.ignorePaths` | [] | 스킵할 경로 Glob 패턴 (예: `["src/legacy/*"]`) |
-
-#### 기타
-
-| 필드 | 설명 |
-|------|------|
-| `tagMapping` | OpenAPI 태그를 도메인명에 매핑 (예: `{"user-controller": "user"}`) |
-| `ignore` | 무시할 엔드포인트 경로 (예: `["/health", "/internal/*"]`) |
+> **참고:** `project.*`와 `patterns.*`는 `/api:init`에서 샘플 코드를 분석해 자동 감지하고 내부적으로 저장됩니다. 수동 설정 불필요.
 
 ## 캐시 파일
 

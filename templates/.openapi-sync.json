@@ -1,65 +1,8 @@
 {
-  "$schema": "https://openapi-sync.dev/schema/v1.json",
   "version": "1.0.0",
 
   "openapi": {
-    "source": "./openapi.json",
-    "_comment": "file path or URL (e.g., https://api.example.com/openapi.json)"
-  },
-
-  "project": {
-    "framework": null,
-    "language": "typescript",
-    "httpClient": null,
-    "dataFetching": null
-  },
-
-  "patterns": {
-    "structure": {
-      "type": "auto",
-      "apiPath": null,
-      "typesPath": null,
-      "hooksPath": null,
-      "keysPath": null
-    },
-
-    "httpClient": {
-      "import": null,
-      "usage": null,
-      "responseAccess": null
-    },
-
-    "dataFetching": {
-      "queryKeyPattern": null,
-      "keysImport": null
-    },
-
-    "naming": {
-      "functions": {
-        "get": "get{Entity}",
-        "list": "get{Entity}List",
-        "create": "create{Entity}",
-        "update": "update{Entity}",
-        "delete": "delete{Entity}"
-      },
-      "hooks": {
-        "query": "use{Entity}",
-        "queryList": "use{Entity}List",
-        "mutation": "use{Verb}{Entity}"
-      },
-      "types": {
-        "entity": "{Entity}",
-        "request": "{Operation}Request",
-        "response": "{Operation}Response"
-      }
-    },
-
-    "codeStyle": {
-      "quotes": "single",
-      "semicolons": true,
-      "indentation": "2",
-      "trailingComma": "es5"
-    }
+    "source": "./openapi.json"
   },
 
   "samples": {
@@ -69,10 +12,7 @@
     "keys": null
   },
 
-  "tagMapping": {
-    "_comment": "Map OpenAPI tags to your domain names",
-    "_example": "user-management → user"
-  },
+  "tagMapping": {},
 
   "ignore": [
     "/health",
@@ -80,10 +20,7 @@
     "/internal/*"
   ],
 
-  "options": {
-    "generateQueryKeys": true,
-    "generateMutationHooks": true,
-    "includeJsDoc": true,
-    "addGeneratedHeader": true
+  "validation": {
+    "ignorePaths": []
   }
 }
