@@ -48,16 +48,20 @@ claude plugins install openapi-sync
 기존 API 코드를 분석해서 프로젝트 패턴을 학습:
 
 ```bash
-/api:init
+/api:init https://api.example.com/openapi.json
 
-? OpenAPI 스펙 URL: https://api.example.com/openapi.json
-? 기존 API 코드 샘플: src/entities/user/api/user-api.ts
+📄 OpenAPI: My API v2.0.0 (25 endpoints)
 
-패턴 학습 중...
+🔍 기존 API 코드 검색 중...
+   src/entities/*/api/에서 5개 API 파일 발견
+
+📂 감지된 패턴:
   ✓ HTTP 클라이언트: createApi() (Axios wrapper)
   ✓ 데이터 페칭: React Query v5 + createQuery helper
   ✓ 구조: FSD (Feature-Sliced Design)
   ✓ 네이밍: camelCase functions, PascalCase types
+
+이 패턴으로 코드를 생성할까요? [Y/n]
 ```
 
 ### 2. 일관된 코드 생성

@@ -48,16 +48,20 @@ claude plugins install openapi-sync
 Analyzes your existing API code to learn project patterns:
 
 ```bash
-/api:init
+/api:init https://api.example.com/openapi.json
 
-? OpenAPI spec URL: https://api.example.com/openapi.json
-? Existing API code sample: src/entities/user/api/user-api.ts
+📄 OpenAPI: My API v2.0.0 (25 endpoints)
 
-Learning patterns...
+🔍 Scanning for existing API code...
+   Found 5 API files in src/entities/*/api/
+
+📂 Detected patterns:
   ✓ HTTP client: createApi() (Axios wrapper)
   ✓ Data fetching: React Query v5 + createQuery helper
   ✓ Structure: FSD (Feature-Sliced Design)
   ✓ Naming: camelCase functions, PascalCase types
+
+Generate code using these patterns? [Y/n]
 ```
 
 ### 2. Consistent Code Generation
