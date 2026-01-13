@@ -379,7 +379,7 @@ Proceed with generation?
    → Remove usage code
 ```
 
-For detailed migration strategies and handling breaking changes, see [MIGRATION.md](./MIGRATION.md).
+For detailed migration strategies and handling breaking changes, see [MIGRATION.md](./docs/MIGRATION.md).
 
 ## Generated File Structures
 
@@ -619,7 +619,7 @@ For development environments, additional flags are available:
 /oas:sync --allow-internal --insecure
 ```
 
-> **Warning:** These flags bypass security protections. Never use in production or with untrusted URLs. See [SECURITY.md](./SECURITY.md) for detailed guidelines.
+> **Warning:** These flags bypass security protections. Never use in production or with untrusted URLs. See [SECURITY.md](./docs/SECURITY.md) for detailed guidelines.
 
 ## Troubleshooting
 

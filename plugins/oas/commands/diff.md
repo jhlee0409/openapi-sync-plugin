@@ -333,7 +333,7 @@ Cache contents: { timestamp, spec, version }
 
 ## Error Handling
 
-For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+For full error code reference, see [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md).
 
 | Error | Code | Description | Recovery |
 |-------|------|-------------|----------|
@@ -354,7 +354,7 @@ E601 → "Run /oas:sync to create initial cache"
 
 ## Migration Guide
 
-For handling detected breaking changes and planning migrations, see [../MIGRATION.md](../MIGRATION.md).
+For handling detected breaking changes and planning migrations, see [../docs/MIGRATION.md](../docs/MIGRATION.md).
 
 After running `/oas:diff --breaking-only`:
 1. Review severity of each change (🔴 Critical, 🟠 Breaking, 🟡 Deprecated)

@@ -138,7 +138,7 @@ For each schema in `components.schemas`:
 
 ## ERROR HANDLING
 
-For full error code reference, see [../../ERROR-CODES.md](../../ERROR-CODES.md).
+For full error code reference, see [../../docs/ERROR-CODES.md](../../docs/ERROR-CODES.md).
 
 ### Invalid JSON/YAML [E201, E202]
 
@@ -223,7 +223,7 @@ Recovery: Generate from method + path (e.g., `get_users_id`)
 
 ## REFERENCE: Edge Cases
 
-For comprehensive edge case handling (circular references, Swagger 2.0 conversion, large specs, etc.), see [../../EDGE-CASES.md](../../EDGE-CASES.md).
+For comprehensive edge case handling (circular references, Swagger 2.0 conversion, large specs, etc.), see [../../docs/EDGE-CASES.md](../../docs/EDGE-CASES.md).
 
 ---
 

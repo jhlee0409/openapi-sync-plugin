@@ -995,5 +995,5 @@ export const projectApi = {
 ## Reference
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Plugin structure
-- [skills/code-generator/SKILL.md](./skills/code-generator/SKILL.md) - Generation logic
-- [skills/pattern-detector/SKILL.md](./skills/pattern-detector/SKILL.md) - Pattern detection
+- [skills/code-generator/SKILL.md](../skills/code-generator/SKILL.md) - Generation logic
+- [skills/pattern-detector/SKILL.md](../skills/pattern-detector/SKILL.md) - Pattern detection

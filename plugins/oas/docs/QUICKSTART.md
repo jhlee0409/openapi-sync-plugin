@@ -339,7 +339,7 @@ Add to ignore list:
 
 ## Getting Help
 
-> For detailed command reference, see [README.md](./README.md#command-reference)
+> For detailed command reference, see [README.md](../README.md#command-reference)
 
 - [EXAMPLES.md](./EXAMPLES.md) - Complete code examples
 - [EXTENSIBILITY.md](./EXTENSIBILITY.md) - Customization options

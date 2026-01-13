@@ -248,7 +248,7 @@ Total coverage: 79/92 endpoints (86%)
 
 ## Error Handling
 
-For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+For full error code reference, see [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md).
 
 | Error | Code | Description | Recovery |
 |-------|------|-------------|----------|
