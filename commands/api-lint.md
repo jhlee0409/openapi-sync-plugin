@@ -665,65 +665,11 @@ Show migration guide? [y/n]
 
 ## Config
 
-Configure lint rules in `.openapi-sync.json`:
+Lint rules are auto-detected from your project's patterns. No manual configuration is typically needed.
 
-```json
-{
-  "lint": {
-    "spec": {
-      "rules": {
-        "response-key-consistency": "warning",
-        "timestamp-naming": "warning",
-        "id-type-consistency": "critical",
-        "boolean-prefix": "info",
-        "operationId-format": "off",
-        "description-coverage": "info"
-      },
-      "ignore": {
-        "paths": ["/internal/*", "/debug/*"],
-        "schemas": ["LegacyResponse", "DeprecatedUser"]
-      },
-      "custom": {
-        "preferredListKey": "items",
-        "preferredTimestamp": "created_at",
-        "preferredBooleanPrefix": "is_"
-      }
-    },
-    "code": {
-      "rules": {
-        "export-pattern-consistency": "warning",
-        "immutability-pattern": "warning",
-        "type-naming-convention": "critical",
-        "api-function-parameter-style": "warning",
-        "query-key-format": "warning",
-        "config-structure": "info",
-        "barrel-export-completeness": "warning",
-        "file-naming-convention": "info",
-        "mutation-vs-query-separation": "warning",
-        "return-type-annotation": "warning"
-      },
-      "ignore": {
-        "paths": ["src/entities/legacy/*"],
-        "files": ["*.test.ts", "*.spec.ts"]
-      },
-      "preferences": {
-        "_comment": "Override auto-detected patterns (optional)",
-        "exportPattern": "auto",
-        "immutabilityPattern": "auto",
-        "typeNaming": "auto",
-        "parameterStyle": "auto",
-        "queryKeyFormat": "auto"
-      },
-      "thresholds": {
-        "_comment": "Minimum % to consider a pattern as 'project standard'",
-        "majorityThreshold": 60,
-        "highInconsistency": 25,
-        "mediumInconsistency": 10
-      }
-    }
-  }
-}
-```
+The majority pattern in your codebase becomes the "standard" - we find inconsistencies, not enforce external rules.
+
+> **Note:** Advanced lint configuration is stored internally by `/api:init`. Manual override is not recommended.
 
 ## Integration with Other Commands
 
@@ -738,21 +684,3 @@ Configure lint rules in `.openapi-sync.json`:
 /api:sync --normalize
 ```
 
-## Custom Rules
-
-Add project-specific custom rules:
-
-```json
-{
-  "lint": {
-    "customRules": [
-      {
-        "name": "workspace-id-required",
-        "description": "All create endpoints should require workspace_id",
-        "check": "endpoints.filter(e => e.method === 'POST' && !e.requestBody.required.includes('workspace_id'))",
-        "severity": "warning"
-      }
-    ]
-  }
-}
-```

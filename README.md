@@ -183,6 +183,8 @@ Compare OpenAPI spec changes.
 /api:diff old.json new.json  # Compare two files
 /api:diff --breaking-only    # Show breaking changes only
 /api:diff --tag=users        # Specific tag only
+/api:diff --exclude-tag=internal  # Exclude specific tag
+/api:diff --list-tags        # Show tags with change summary
 /api:diff --json             # JSON output
 ```
 
@@ -210,6 +212,8 @@ Check spec and code for consistency.
 /api:lint --fix              # Show fix suggestions
 /api:lint --rule=type-naming # Specific rule only
 /api:lint --severity=critical # Filter by severity
+/api:lint --ignore=pattern   # Ignore specific path/schema
+/api:lint --output=file      # Save results to file
 /api:lint --json             # JSON output
 ```
 
@@ -224,6 +228,16 @@ Quick status check from cache.
 /api:status --list-tags      # Show all tags with coverage
 /api:status --json           # JSON output
 /api:status --quiet          # Summary only
+```
+
+### /api:analyze
+
+Deep analysis of detected patterns.
+
+```bash
+/api:analyze                 # Full pattern analysis
+/api:analyze --verbose       # Show all file paths and code samples
+/api:analyze --domain=users  # Analyze specific domain only
 ```
 
 ## Tag Filtering

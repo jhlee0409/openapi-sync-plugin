@@ -183,6 +183,8 @@ OpenAPI 스펙 변경사항 비교.
 /api:diff old.json new.json  # 두 파일 비교
 /api:diff --breaking-only    # Breaking changes만 표시
 /api:diff --tag=users        # 특정 태그만
+/api:diff --exclude-tag=internal  # 특정 태그 제외
+/api:diff --list-tags        # 태그별 변경 요약 표시
 /api:diff --json             # JSON 출력
 ```
 
@@ -210,6 +212,8 @@ OpenAPI 스펙 변경사항 비교.
 /api:lint --fix              # 수정 제안 표시
 /api:lint --rule=type-naming # 특정 규칙만
 /api:lint --severity=critical # 심각도별 필터
+/api:lint --ignore=pattern   # 특정 경로/스키마 무시
+/api:lint --output=file      # 결과 파일로 저장
 /api:lint --json             # JSON 출력
 ```
 
@@ -224,6 +228,16 @@ OpenAPI 스펙 변경사항 비교.
 /api:status --list-tags      # 모든 태그 커버리지 표시
 /api:status --json           # JSON 출력
 /api:status --quiet          # 요약만
+```
+
+### /api:analyze
+
+감지된 패턴 심층 분석.
+
+```bash
+/api:analyze                 # 전체 패턴 분석
+/api:analyze --verbose       # 모든 파일 경로와 코드 샘플 표시
+/api:analyze --domain=users  # 특정 도메인만 분석
 ```
 
 ## 태그 필터링

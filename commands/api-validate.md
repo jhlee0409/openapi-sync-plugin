@@ -198,20 +198,16 @@ Apply auto-fixes? [y/N]
 
 ## Validation Config
 
-Configure validation rules in `.openapi-sync.json`:
+Configure validation in `.openapi-sync.json`:
 
 ```json
 {
   "validation": {
-    "ignoreExtra": false,
-    "ignoreNaming": true,
     "ignorePaths": [
       "src/entities/legacy/*"
-    ],
-    "customRules": {
-      "requireJsDoc": false,
-      "requireTypes": true
-    }
+    ]
   }
 }
 ```
+
+> **Note:** Most validation behavior is auto-detected from your project's patterns. Only `ignorePaths` needs manual configuration.
