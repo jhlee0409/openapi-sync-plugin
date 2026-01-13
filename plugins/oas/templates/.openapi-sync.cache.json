@@ -6,6 +6,15 @@
   "specHash": null,
   "source": null,
 
+  "httpCache": {
+    "etag": null,
+    "lastModified": null
+  },
+
+  "localCache": {
+    "mtime": null
+  },
+
   "meta": {
     "title": null,
     "version": null,
