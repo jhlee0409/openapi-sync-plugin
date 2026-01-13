@@ -87,13 +87,13 @@ Server returned error response
 
 Cause by status:
   400: Bad request URL or parameters
-  401: Authentication required
-  403: Access forbidden (check permissions/API key)
+  401: Authentication required (use local file instead)
+  403: Access forbidden (use local file instead)
   404: Resource not found (wrong URL)
   500: Server internal error
   502/503/504: Server temporarily unavailable
 
-Fix: Check URL, authentication, and server status
+Fix: Check URL and server status. For protected specs, download locally.
 Recovery: Retry on 502/503/504, use cache on timeout
 
 See: EDGE-CASES.md#32-retry-logic

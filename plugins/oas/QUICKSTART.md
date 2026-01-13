@@ -150,23 +150,14 @@ Get up and running with the OAS plugin in 5 minutes.
 
 Provide a sample file explicitly:
 ```bash
-/oas:init https://api.com/spec.json --sample-api=src/api/user-api.ts
+/oas:init https://api.com/spec.json --sample=src/api/user-api.ts
 ```
 
 **Q: Plugin can't access spec URL**
 
-Try with authentication:
-```json
-// .openapi-sync.json
-{
-  "openapi": {
-    "source": "https://api.com/openapi.json",
-    "auth": {
-      "type": "bearer",
-      "token": "${API_TOKEN}"
-    }
-  }
-}
+Download the spec file locally and use a local path:
+```bash
+/oas:init ./specs/openapi.json
 ```
 
 ### Sync Issues
@@ -214,7 +205,7 @@ rm .openapi-sync.cache.json
 
 2. Re-initialize with specific sample:
 ```bash
-/oas:init --sample-api=src/my/preferred/style.ts
+/oas:init --sample=src/my/preferred/style.ts
 ```
 
 **Q: Want to exclude certain endpoints**
@@ -350,11 +341,8 @@ Add to ignore list:
 # Basic
 /oas:init <spec-url-or-path>
 
-# With authentication
-/oas:init https://api.com/spec.json --auth-token=$TOKEN
-
 # With sample
-/oas:init https://api.com/spec.json --sample-api=path/to/sample.ts
+/oas:init https://api.com/spec.json --sample=path/to/sample.ts
 
 # Force overwrite existing config
 /oas:init --force

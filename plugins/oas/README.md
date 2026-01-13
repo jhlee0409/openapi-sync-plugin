@@ -160,7 +160,7 @@ Generate or update code based on OpenAPI spec.
 
 ```bash
 # Basic
-/oas:sync                    # Default (Conservative, 100% accuracy)
+/oas:sync                    # Default (Smart, 100% accuracy)
 /oas:sync --dry-run          # Preview only, no file changes
 /oas:sync --force            # Ignore cache, full regeneration
 /oas:sync --trust-cache      # Trust cache mode (faster, 99% accuracy)
@@ -310,9 +310,11 @@ Generated:
 
 | Mode | Command | Speed | Accuracy | Use Case |
 |------|---------|-------|----------|----------|
-| Conservative (default) | `/oas:sync` | Medium | 100% | Always recommended |
+| Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
 | Trust Cache | `/oas:sync --trust-cache` | Fast | 99%* | Quick check needed |
 | Force | `/oas:sync --force` | Slow | 100% | Ignore cache, full regen |
+
+*Smart mode: HEAD request to check changes, full fetch only when needed
 
 *Trust Cache may miss changes if server ETag/Last-Modified errors or cache corrupted
 

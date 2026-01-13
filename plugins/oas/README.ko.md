@@ -160,7 +160,7 @@ OpenAPI 스펙 기반 코드 생성/업데이트.
 
 ```bash
 # 기본
-/oas:sync                    # 기본 (Conservative, 100% 정확도)
+/oas:sync                    # 기본 (Smart, 100% 정확도)
 /oas:sync --dry-run          # 미리보기만, 파일 변경 없음
 /oas:sync --force            # 캐시 무시, 전체 재생성
 /oas:sync --trust-cache      # 캐시 신뢰 모드 (빠름, 99% 정확도)
@@ -310,9 +310,11 @@ billing          8           ❌ 미구현
 
 | 모드 | 커맨드 | 속도 | 정확도 | 사용 시점 |
 |------|--------|------|--------|----------|
-| Conservative (기본) | `/oas:sync` | 보통 | 100% | 항상 권장 |
+| Smart (기본) | `/oas:sync` | 빠름* | 100% | 항상 권장 |
 | Trust Cache | `/oas:sync --trust-cache` | 빠름 | 99%* | 빠른 체크 필요 시 |
 | Force | `/oas:sync --force` | 느림 | 100% | 캐시 무시, 전체 재생성 |
+
+*Smart mode: HEAD 요청으로 변경 확인, 필요 시에만 전체 fetch
 
 *Trust Cache: 서버 ETag/Last-Modified 오류나 캐시 손상 시 변경 누락 가능
 

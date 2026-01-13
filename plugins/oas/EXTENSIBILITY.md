@@ -26,11 +26,7 @@ All configuration is stored in `.openapi-sync.json`.
   "version": "1.0.0",
 
   "openapi": {
-    "source": "https://api.example.com/openapi.json",
-    "auth": {
-      "type": "bearer",
-      "token": "${OPENAPI_TOKEN}"
-    }
+    "source": "https://api.example.com/openapi.json"
   },
 
   "samples": {
@@ -83,21 +79,14 @@ All configuration is stored in `.openapi-sync.json`.
 | Option | Type | Description |
 |--------|------|-------------|
 | `source` | string | URL or local path to OpenAPI spec |
-| `auth.type` | string | Authentication type: `bearer`, `basic`, `apikey` |
-| `auth.token` | string | Token value (supports env vars with `${VAR}`) |
-| `auth.header` | string | Custom header name for apikey auth |
 
 **Examples:**
 
 ```json
-// Remote with bearer token
+// Remote URL
 {
   "openapi": {
-    "source": "https://api.example.com/openapi.json",
-    "auth": {
-      "type": "bearer",
-      "token": "${API_TOKEN}"
-    }
+    "source": "https://api.example.com/openapi.json"
   }
 }
 
@@ -105,18 +94,6 @@ All configuration is stored in `.openapi-sync.json`.
 {
   "openapi": {
     "source": "./specs/openapi.yaml"
-  }
-}
-
-// API key in header
-{
-  "openapi": {
-    "source": "https://api.example.com/openapi.json",
-    "auth": {
-      "type": "apikey",
-      "header": "X-API-Key",
-      "token": "${API_KEY}"
-    }
   }
 }
 ```
@@ -266,14 +243,23 @@ export const useExample = (id: string) => {
 
 ### Overriding Detected Patterns
 
-After running `/oas:init`, you can override specific patterns:
+After running `/oas:init`, you can override patterns by specifying a sample file:
 
 ```bash
-# Override just the API sample
-/oas:init --sample-api=src/custom/my-api.ts
+# Override with a specific sample file
+/oas:init --sample=src/custom/my-api.ts
+```
 
-# Override multiple samples
-/oas:init --sample-api=... --sample-types=... --sample-hooks=...
+Or manually edit `.openapi-sync.json` to specify multiple sample files:
+
+```json
+{
+  "samples": {
+    "api": "src/custom/my-api.ts",
+    "types": "src/custom/my-types.ts",
+    "hooks": "src/custom/my-hooks.ts"
+  }
+}
 ```
 
 ---
