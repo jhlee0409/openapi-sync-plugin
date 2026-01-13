@@ -1,7 +1,5 @@
 ---
 description: Compare OpenAPI spec changes between versions
-argument-hint: [old-spec] [new-spec] | [--remote]
-uses-skills: [output-format]
 ---
 
 # API Diff

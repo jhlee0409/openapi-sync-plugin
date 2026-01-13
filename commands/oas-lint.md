@@ -1,7 +1,5 @@
 ---
 description: Lint OpenAPI spec AND codebase for inconsistencies
-argument-hint: [--spec] [--code] [--fix] [--rule=name]
-uses-skills: [output-format]
 ---
 
 # API Lint

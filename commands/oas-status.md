@@ -1,7 +1,5 @@
 ---
 description: Quick status check - show sync state without fetching spec
-argument-hint: [--check-remote] [--tag=name] [--list-tags]
-uses-skills: [output-format]
 ---
 
 # API Status

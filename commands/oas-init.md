@@ -1,7 +1,5 @@
 ---
 description: Initialize OpenAPI sync - learns your project patterns automatically
-argument-hint: [openapi-spec-path-or-url]
-uses-skills: [output-format]
 ---
 
 # OpenAPI Sync Initialization

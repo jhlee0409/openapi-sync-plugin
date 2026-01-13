@@ -1,7 +1,5 @@
 ---
 description: Validate that code matches OpenAPI spec
-argument-hint: [--strict] [--fix]
-uses-skills: [output-format]
 ---
 
 # API Validate
