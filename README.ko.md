@@ -214,8 +214,70 @@ OpenAPI 스펙 변경사항 비교.
 ```bash
 /api:status                  # 즉시 상태 (~0.1초)
 /api:status --check-remote   # 원격 스펙 hash 확인 (~1초)
+/api:status --tag=users      # 특정 태그 상태 확인
+/api:status --list-tags      # 모든 태그 커버리지 표시
 /api:status --json           # JSON 출력
 /api:status --quiet          # 요약만
+```
+
+## 태그 필터링
+
+OpenAPI 태그로 작업 필터링. 태그는 각 엔드포인트의 `tags` 필드에서 추출됩니다.
+
+### 태그 확인
+
+```bash
+# 사용 가능한 태그 목록
+/api:sync --list-tags
+
+📋 사용 가능한 태그:
+
+태그             엔드포인트   상태
+─────────────────────────────────────
+workspace        18          ⚠️ 부분 (14/18)
+user             12          ✅ 완료
+billing          8           ❌ 미구현
+...
+```
+
+### 태그로 필터링
+
+```bash
+# 특정 태그만 동기화
+/api:sync --tag=workspace
+
+# 여러 태그 (OR 로직)
+/api:sync --tag=workspace --tag=billing
+
+# 태그 제외
+/api:sync --exclude-tag=internal
+
+# 조합
+/api:sync --tag=workspace --exclude-tag=deprecated
+```
+
+### 태그 지원 커맨드
+
+| 커맨드 | 예시 |
+|--------|------|
+| `/api:sync` | `--tag=users`, `--exclude-tag=internal` |
+| `/api:diff` | `--tag=users`, `--list-tags` |
+| `/api:status` | `--tag=users`, `--list-tags` |
+| `/api:validate` | `--tag=users` |
+
+### 태그 기반 생성
+
+`--tag` 사용 시 매칭되는 태그의 엔드포인트만 처리:
+
+```bash
+/api:sync --tag=billing
+
+생성됨:
+  src/entities/billing/
+  ├── api/billing-api.ts        (8개 함수)
+  ├── api/billing-queries.ts    (8개 훅)
+  ├── config/billing-api-paths.ts
+  └── model/billing-types.ts    (12개 타입)
 ```
 
 ## Sync 모드
@@ -374,65 +436,13 @@ src/api/{tag}/
       "import": "import { createApi } from '@/shared/api'",       // 샘플 import에서 감지
       "usage": "createApi().{method}<{Type}>({path})",            // 샘플 코드에서 감지
       "responseAccess": ".data"                                   // 샘플 코드에서 감지
-    },
-    "dataFetching": {
-      "queryKeyPattern": "factory",                               // 샘플 훅에서 감지
-      "keysImport": "import { {domain}Keys } from './{domain}-keys'"
-    },
-    "naming": {
-      "functions": {
-        "get": "get{Entity}",         // 샘플 함수명에서 감지
-        "list": "get{Entity}List",
-        "create": "create{Entity}",
-        "update": "update{Entity}",
-        "delete": "delete{Entity}"
-      },
-      "hooks": {
-        "query": "use{Entity}",       // 샘플 훅 이름에서 감지
-        "queryList": "use{Entity}List",
-        "mutation": "use{Verb}{Entity}"
-      },
-      "types": {
-        "entity": "{Entity}",         // 샘플 타입명에서 감지
-        "request": "{Operation}Request",
-        "response": "{Operation}Response"
-      }
-    },
-    "codeStyle": {
-      "quotes": "single",             // 샘플 코드에서 감지
-      "semicolons": false,            // 샘플 코드에서 감지
-      "indentation": "2",             // 샘플 코드에서 감지
-      "trailingComma": "all"          // 샘플 코드에서 감지
     }
+    // naming, codeStyle: 샘플에서 자동 추론, 보통 설정 불필요
   },
 
-  // ⬇️ 선택: 수동 설정
+  // ⬇️ 선택: 검증 동작 오버라이드
   "validation": {
-    "ignoreExtra": false,
-    "ignoreNaming": true,
-    "ignorePaths": ["src/entities/legacy/*"],
-    "customRules": {
-      "requireJsDoc": false,
-      "requireTypes": true
-    }
-  },
-
-  "lint": {
-    "spec": {
-      "rules": {
-        "response-key-consistency": "warning",
-        "id-type-consistency": "error"
-      }
-    },
-    "code": {
-      "rules": {
-        "type-naming-convention": "warning",
-        "export-pattern-consistency": "info"
-      },
-      "thresholds": {
-        "majorityThreshold": 60
-      }
-    }
+    "ignorePaths": ["src/entities/legacy/*"]                      // 레거시 코드 스킵
   },
 
   "tagMapping": {
@@ -463,17 +473,66 @@ src/api/{tag}/
 
 ### 설정 필드 레퍼런스
 
+#### 루트 필드
+
+| 필드 | 필수 | 설명 |
+|------|------|------|
+| `$schema` | | IDE 자동완성용 JSON 스키마 URL |
+| `version` | | 설정 파일 버전 (예: "1.0.0") |
+
+#### openapi
+
 | 필드 | 필수 | 설명 |
 |------|------|------|
 | `openapi.source` | ✅ | OpenAPI 스펙 경로 또는 URL |
 | `openapi.remote` | | 원격 URL (로컬 파일과 다를 때) |
-| `samples.*` | ✅ | 학습할 샘플 코드 경로 |
-| `project.*` | | package.json에서 자동 감지 |
-| `patterns.*` | | 샘플에서 자동 감지 |
-| `validation.*` | | /api:validate용 검증 규칙 |
-| `lint.*` | | /api:lint용 린트 규칙 |
-| `tagMapping` | | 스펙 태그를 도메인명에 매핑 |
-| `ignore` | | 무시할 경로 |
+| `openapi.title` | | API 제목 (스펙 info.title에서 자동 입력) |
+| `openapi.version` | | API 버전 (스펙 info.version에서 자동 입력) |
+
+#### samples
+
+| 필드 | 필수 | 설명 |
+|------|------|------|
+| `samples.api` | ✅ | API 함수 샘플 파일 경로 |
+| `samples.types` | | TypeScript 타입 샘플 파일 경로 |
+| `samples.hooks` | | React Query/SWR 훅 샘플 파일 경로 |
+| `samples.keys` | | Query key factory 샘플 파일 경로 |
+
+#### project (자동 감지)
+
+| 필드 | 설명 |
+|------|------|
+| `project.framework` | 프레임워크: react, vue, angular, svelte, next, nuxt 등 |
+| `project.language` | 언어: typescript 또는 javascript |
+| `project.httpClient` | HTTP 클라이언트: axios, fetch, ky, 또는 커스텀 래퍼명 |
+| `project.dataFetching` | 데이터 페칭 라이브러리: react-query, swr, 또는 none |
+
+#### patterns (자동 감지)
+
+| 필드 | 설명 |
+|------|------|
+| `patterns.structure.type` | 구조 타입: fsd, feature, flat |
+| `patterns.structure.apiPath` | `{domain}` 플레이스홀더가 포함된 API 파일 경로 템플릿 |
+| `patterns.structure.typesPath` | 타입 파일 경로 템플릿 |
+| `patterns.structure.hooksPath` | 훅 파일 경로 템플릿 |
+| `patterns.httpClient.import` | HTTP 클라이언트 import 문 |
+| `patterns.httpClient.usage` | HTTP 클라이언트 사용 패턴 |
+| `patterns.httpClient.responseAccess` | 응답 데이터 접근 방식 (예: ".data") |
+
+> **참고:** `patterns.naming.*`과 `patterns.codeStyle.*`은 샘플에서 자동 추론됩니다. 수동 설정은 거의 필요 없습니다.
+
+#### validation
+
+| 필드 | 기본값 | 설명 |
+|------|--------|------|
+| `validation.ignorePaths` | [] | 스킵할 경로 Glob 패턴 (예: `["src/legacy/*"]`) |
+
+#### 기타
+
+| 필드 | 설명 |
+|------|------|
+| `tagMapping` | OpenAPI 태그를 도메인명에 매핑 (예: `{"user-controller": "user"}`) |
+| `ignore` | 무시할 엔드포인트 경로 (예: `["/health", "/internal/*"]`) |
 
 ## 캐시 파일
 

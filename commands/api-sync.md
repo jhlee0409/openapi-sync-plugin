@@ -299,22 +299,84 @@ Next: Review generated code and run your type checker
 
 *Trust Cache: May miss changes if server ETag/Last-Modified errors or cache corruption
 
-## Partial Sync
+## Tag Filtering
 
-Selective synchronization for specific parts:
+Filter endpoints by OpenAPI tags. Tags are extracted from the `tags` field in each endpoint definition.
 
-### By Tag
+### How Tags Work
+
+OpenAPI spec defines tags per endpoint:
+```yaml
+paths:
+  /workspaces/{id}/credit-usage:
+    get:
+      tags:
+        - workspace    # ← Primary tag (used for filtering)
+        - billing      # ← Secondary tags also searchable
+      operationId: getWorkspaceCreditUsage
+```
+
+### Tag Filter Options
 
 ```bash
-# Specific tag only
-/api:sync --tag=users
-/api:sync --tag=clips
+# Single tag - sync only endpoints with this tag
+/api:sync --tag=workspace
 
-# Multiple tags
-/api:sync --tag=users --tag=projects
+# Multiple tags - sync endpoints matching ANY tag (OR)
+/api:sync --tag=workspace --tag=billing
 
-# Exclude tag
+# Exclude tag - sync all EXCEPT this tag
 /api:sync --exclude-tag=internal
+
+# Combined - specific tags, excluding some
+/api:sync --tag=workspace --exclude-tag=deprecated
+
+# List available tags first
+/api:sync --list-tags
+```
+
+### Tag Discovery
+
+Before filtering, see what tags are available:
+
+```
+/api:sync --list-tags
+
+📋 Available Tags (from OpenAPI spec):
+
+Tag              Endpoints   Status
+─────────────────────────────────────
+workspace        18          ⚠️ Partial (14/18)
+user             12          ✅ Complete
+project          28          ✅ Complete
+billing          8           ❌ Missing
+auth             10          ✅ Complete
+clips            15          ✅ Complete
+internal         5           ⚠️ Partial (2/5)
+deprecated       3           ⚠️ Has code
+
+Total: 7 tags, 99 endpoints
+```
+
+### Tag-Based Generation
+
+When using `--tag`, the generator:
+
+1. Filters endpoints by matching tag(s)
+2. Creates domain directory named after primary tag
+3. Generates only types used by filtered endpoints
+
+```bash
+/api:sync --tag=billing
+
+Generated:
+  src/entities/billing/
+  ├── api/
+  │   ├── billing-api.ts        (8 functions)
+  │   ├── billing-api-paths.ts  (8 paths)
+  │   └── billing-queries.ts    (8 hooks)
+  └── model/
+      └── billing-types.ts      (12 types)
 ```
 
 ### By Endpoint

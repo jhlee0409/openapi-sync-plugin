@@ -132,6 +132,84 @@ Run /api:init to initialize OpenAPI sync.
 --check-remote    # Compare with remote spec hash
 --json            # JSON format output
 --quiet           # Summary only
+--tag=name        # Filter status by specific tag(s)
+--list-tags       # List all available tags with coverage
+```
+
+## Tag Filtering
+
+Filter status view by specific tags:
+
+### Filter by Tag
+
+```bash
+# Status for specific tag only
+/api:status --tag=workspace
+
+═══════════════════════════════════════════════════
+  API Status: workspace tag
+═══════════════════════════════════════════════════
+
+📊 Coverage (workspace):
+   ✅ Implemented: 14/18 endpoints (78%)
+   ❌ Missing: 4 endpoints
+
+───────────────────────────────────────────────────
+✅ IMPLEMENTED (14)
+───────────────────────────────────────────────────
+  GET    /workspaces                    getMyWorkspaces
+  GET    /workspaces/organization       getOrganizationWorkspaces
+  GET    /workspaces/{id}               getWorkspaceDetail
+  POST   /workspaces/{id}/switch        switchWorkspace
+  ...
+
+───────────────────────────────────────────────────
+❌ MISSING (4)
+───────────────────────────────────────────────────
+  GET    /workspaces/{id}/credit-usage    ← NEW in spec
+  GET    /workspaces/{id}/transactions    ← NEW in spec
+  GET    /workspaces/{id}/usage-report    ← NEW in spec
+  GET    /workspaces/{id}/icon/default    ← NEW in spec
+
+💡 Run: /api:sync --tag=workspace
+```
+
+### List All Tags
+
+```bash
+/api:status --list-tags
+
+📋 Tags Overview:
+
+Tag              Implemented   Total   Coverage   Actions
+─────────────────────────────────────────────────────────────
+workspace        14            18      78%        /api:sync --tag=workspace
+user             12            12      100%       ✓ Complete
+project          28            28      100%       ✓ Complete
+billing          0             8       0%         /api:sync --tag=billing
+auth             10            10      100%       ✓ Complete
+clips            15            15      100%       ✓ Complete
+public           0             1       0%         /api:sync --tag=public
+
+Summary:
+  ✅ Complete: 4 tags
+  ⚠️ Partial: 1 tag
+  ❌ Missing: 2 tags
+
+Total coverage: 79/92 endpoints (86%)
+```
+
+### Multiple Tags
+
+```bash
+# Status for multiple tags
+/api:status --tag=workspace --tag=billing
+
+📊 Coverage (workspace + billing):
+   workspace: 14/18 (78%)
+   billing:   0/8   (0%)
+
+   Combined: 14/26 (54%)
 ```
 
 ## Performance

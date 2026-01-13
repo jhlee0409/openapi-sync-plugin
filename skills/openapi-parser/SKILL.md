@@ -187,6 +187,106 @@ Organize endpoints by tag for domain-based generation:
 }
 ```
 
+### Step 7: Tag Filtering
+
+Apply tag filters when requested:
+
+```typescript
+interface TagFilterOptions {
+  include?: string[]     // Only these tags (OR logic)
+  exclude?: string[]     // Exclude these tags
+}
+
+function filterByTags(
+  parsed: ParsedSpec,
+  options: TagFilterOptions
+): ParsedSpec {
+  const { include, exclude } = options
+
+  // Filter endpoints
+  const filteredTags: Record<string, TagGroup> = {}
+
+  for (const [tagName, tagGroup] of Object.entries(parsed.tags)) {
+    // Skip if tag is excluded
+    if (exclude?.includes(tagName)) continue
+
+    // Skip if include specified and tag not in list
+    if (include && !include.includes(tagName)) continue
+
+    filteredTags[tagName] = tagGroup
+  }
+
+  // Collect schemas used by filtered endpoints
+  const usedSchemas = collectUsedSchemas(filteredTags)
+
+  return {
+    ...parsed,
+    tags: filteredTags,
+    schemas: filterSchemas(parsed.schemas, usedSchemas),
+    stats: {
+      endpointCount: countEndpoints(filteredTags),
+      tagCount: Object.keys(filteredTags).length,
+      schemaCount: usedSchemas.size,
+    }
+  }
+}
+```
+
+**Multi-tag endpoint handling:**
+
+Endpoints can have multiple tags. When filtering:
+
+```yaml
+# OpenAPI spec
+/workspaces/{id}/credit-usage:
+  get:
+    tags:
+      - workspace   # Primary
+      - billing     # Secondary
+```
+
+```bash
+# Both filters will include this endpoint:
+--tag=workspace    # ✓ Matches primary tag
+--tag=billing      # ✓ Matches secondary tag
+
+# Exclude takes precedence:
+--tag=workspace --exclude-tag=billing  # ✗ Excluded
+```
+
+**Tag statistics output:**
+
+```typescript
+interface TagStats {
+  name: string
+  description?: string
+  endpointCount: number
+  endpoints: {
+    operationId: string
+    method: string
+    path: string
+    tags: string[]  // All tags for this endpoint
+  }[]
+  schemas: string[]
+}
+
+// Output for --list-tags
+function getTagStats(parsed: ParsedSpec): TagStats[] {
+  return Object.entries(parsed.tags).map(([name, group]) => ({
+    name,
+    description: group.description,
+    endpointCount: group.endpoints.length,
+    endpoints: group.endpoints.map(e => ({
+      operationId: e.operationId,
+      method: e.method,
+      path: e.path,
+      tags: e.tags,
+    })),
+    schemas: group.schemas,
+  }))
+}
+```
+
 ## Type Mapping
 
 Map OpenAPI types to TypeScript:

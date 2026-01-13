@@ -181,11 +181,86 @@ Automatically detect breaking changes:
 
 ## Flags
 
+```bash
+--remote          Compare with remote spec
+--json            Output in JSON format
+--breaking-only   Show breaking changes only
+--tag=name        Filter by specific tag(s)
+--exclude-tag=n   Exclude specific tag(s)
+--list-tags       Show available tags with change summary
 ```
---remote        Compare with remote spec
---json          Output in JSON format
---breaking-only Show breaking changes only
---tag=name      Compare specific tag only
+
+## Tag Filtering
+
+Filter diff results by OpenAPI tags:
+
+### Filter by Tag
+
+```bash
+# Diff only workspace-related endpoints
+/api:diff --tag=workspace
+
+# Diff multiple tags
+/api:diff --tag=workspace --tag=billing --remote
+
+# Exclude internal endpoints from diff
+/api:diff --exclude-tag=internal --remote
+```
+
+### Tag Change Summary
+
+See which tags have changes:
+
+```bash
+/api:diff --list-tags --remote
+
+📋 Tag Change Summary:
+
+Tag              Added   Changed   Removed   Total
+──────────────────────────────────────────────────
+workspace        +4      ~2        -0        18
+billing          +2      ~0        -0        8
+user             +0      ~1        -0        12
+internal         +0      ~0        -3        5 ⚠️
+clips            +0      ~0        -0        15 ✓
+
+Changes by tag:
+  workspace: Most changes (+4 new endpoints)
+  internal: ⚠️ 3 endpoints removed (breaking)
+
+/api:diff --tag=workspace --remote   # See workspace details
+```
+
+### Tag-Filtered Output
+
+```
+/api:diff --tag=workspace --remote
+
+═══════════════════════════════════════════════════
+  API Diff: workspace tag only
+═══════════════════════════════════════════════════
+
+📊 Summary (workspace):
+   +4 added, ~2 changed, 12 unchanged
+
+✅ ADDED (4)
+───────────────────────────────────────────────────
++ GET /workspaces/{id}/credit-usage
++ GET /workspaces/{id}/transactions
++ GET /workspaces/{id}/usage-report
++ GET /workspaces/{id}/icon/default
+
+⚠️ CHANGED (2)
+───────────────────────────────────────────────────
+~ GET /workspaces/{id}
+  Response: WorkspaceDetail
+    + credit_balance: number (added)
+
+~ POST /workspaces
+  Request: CreateWorkspaceRequest
+    + template_id: string (added, optional)
+
+═══════════════════════════════════════════════════
 ```
 
 ## Cache Management

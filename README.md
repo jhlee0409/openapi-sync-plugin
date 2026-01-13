@@ -214,8 +214,70 @@ Quick status check from cache.
 ```bash
 /api:status                  # Instant status (~0.1s)
 /api:status --check-remote   # Check remote spec hash (~1s)
+/api:status --tag=users      # Status for specific tag
+/api:status --list-tags      # Show all tags with coverage
 /api:status --json           # JSON output
 /api:status --quiet          # Summary only
+```
+
+## Tag Filtering
+
+Filter operations by OpenAPI tags. Tags are extracted from the `tags` field in each endpoint.
+
+### Discover Tags
+
+```bash
+# See all available tags
+/api:sync --list-tags
+
+📋 Available Tags:
+
+Tag              Endpoints   Status
+─────────────────────────────────────
+workspace        18          ⚠️ Partial (14/18)
+user             12          ✅ Complete
+billing          8           ❌ Missing
+...
+```
+
+### Filter by Tag
+
+```bash
+# Sync only specific tag
+/api:sync --tag=workspace
+
+# Multiple tags (OR logic)
+/api:sync --tag=workspace --tag=billing
+
+# Exclude tags
+/api:sync --exclude-tag=internal
+
+# Combined
+/api:sync --tag=workspace --exclude-tag=deprecated
+```
+
+### Tag Commands
+
+| Command | Example |
+|---------|---------|
+| `/api:sync` | `--tag=users`, `--exclude-tag=internal` |
+| `/api:diff` | `--tag=users`, `--list-tags` |
+| `/api:status` | `--tag=users`, `--list-tags` |
+| `/api:validate` | `--tag=users` |
+
+### Tag-Based Generation
+
+When using `--tag`, only endpoints with matching tags are processed:
+
+```bash
+/api:sync --tag=billing
+
+Generated:
+  src/entities/billing/
+  ├── api/billing-api.ts        (8 functions)
+  ├── api/billing-queries.ts    (8 hooks)
+  ├── config/billing-api-paths.ts
+  └── model/billing-types.ts    (12 types)
 ```
 
 ## Sync Modes
@@ -374,65 +436,13 @@ The following shows what `/api:init` generates after scanning your codebase.
       "import": "import { createApi } from '@/shared/api'",       // detected from sample imports
       "usage": "createApi().{method}<{Type}>({path})",            // detected from sample code
       "responseAccess": ".data"                                   // detected from sample code
-    },
-    "dataFetching": {
-      "queryKeyPattern": "factory",                               // detected from sample hooks
-      "keysImport": "import { {domain}Keys } from './{domain}-keys'"
-    },
-    "naming": {
-      "functions": {
-        "get": "get{Entity}",         // detected from sample function names
-        "list": "get{Entity}List",
-        "create": "create{Entity}",
-        "update": "update{Entity}",
-        "delete": "delete{Entity}"
-      },
-      "hooks": {
-        "query": "use{Entity}",       // detected from sample hook names
-        "queryList": "use{Entity}List",
-        "mutation": "use{Verb}{Entity}"
-      },
-      "types": {
-        "entity": "{Entity}",         // detected from sample type names
-        "request": "{Operation}Request",
-        "response": "{Operation}Response"
-      }
-    },
-    "codeStyle": {
-      "quotes": "single",             // detected from sample code
-      "semicolons": false,            // detected from sample code
-      "indentation": "2",             // detected from sample code
-      "trailingComma": "all"          // detected from sample code
     }
+    // naming, codeStyle: auto-inferred from samples, usually no need to configure
   },
 
-  // ⬇️ Optional: manual configuration
+  // ⬇️ Optional: override validation behavior
   "validation": {
-    "ignoreExtra": false,
-    "ignoreNaming": true,
-    "ignorePaths": ["src/entities/legacy/*"],
-    "customRules": {
-      "requireJsDoc": false,
-      "requireTypes": true
-    }
-  },
-
-  "lint": {
-    "spec": {
-      "rules": {
-        "response-key-consistency": "warning",
-        "id-type-consistency": "error"
-      }
-    },
-    "code": {
-      "rules": {
-        "type-naming-convention": "warning",
-        "export-pattern-consistency": "info"
-      },
-      "thresholds": {
-        "majorityThreshold": 60
-      }
-    }
+    "ignorePaths": ["src/entities/legacy/*"]                      // skip legacy code
   },
 
   "tagMapping": {
@@ -463,17 +473,66 @@ The following shows what `/api:init` generates after scanning your codebase.
 
 ### Config Field Reference
 
+#### Root Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `$schema` | | JSON schema URL for IDE autocompletion |
+| `version` | | Config file version (e.g., "1.0.0") |
+
+#### openapi
+
 | Field | Required | Description |
 |-------|----------|-------------|
 | `openapi.source` | ✅ | OpenAPI spec path or URL |
-| `openapi.remote` | | Remote URL (if local file differs) |
-| `samples.*` | ✅ | Sample code paths to learn from |
-| `project.*` | | Auto-detected from package.json |
-| `patterns.*` | | Auto-detected from samples |
-| `validation.*` | | Validation rules for /api:validate |
-| `lint.*` | | Lint rules for /api:lint |
-| `tagMapping` | | Map spec tags to domain names |
-| `ignore` | | Paths to ignore |
+| `openapi.remote` | | Remote URL (if local file differs from source) |
+| `openapi.title` | | API title (auto-filled from spec info.title) |
+| `openapi.version` | | API version (auto-filled from spec info.version) |
+
+#### samples
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `samples.api` | ✅ | API functions sample file path |
+| `samples.types` | | TypeScript types sample file path |
+| `samples.hooks` | | React Query/SWR hooks sample file path |
+| `samples.keys` | | Query key factory sample file path |
+
+#### project (Auto-detected)
+
+| Field | Description |
+|-------|-------------|
+| `project.framework` | Framework: react, vue, angular, svelte, next, nuxt, etc. |
+| `project.language` | Language: typescript or javascript |
+| `project.httpClient` | HTTP client: axios, fetch, ky, or custom wrapper name |
+| `project.dataFetching` | Data fetching lib: react-query, swr, or none |
+
+#### patterns (Auto-detected)
+
+| Field | Description |
+|-------|-------------|
+| `patterns.structure.type` | Structure type: fsd, feature, flat |
+| `patterns.structure.apiPath` | API file path template with `{domain}` placeholder |
+| `patterns.structure.typesPath` | Types file path template |
+| `patterns.structure.hooksPath` | Hooks file path template |
+| `patterns.httpClient.import` | HTTP client import statement |
+| `patterns.httpClient.usage` | HTTP client usage pattern |
+| `patterns.httpClient.responseAccess` | Response data access (e.g., ".data") |
+
+> **Note:** `patterns.naming.*` and `patterns.codeStyle.*` are auto-inferred from samples. Manual configuration is rarely needed.
+
+#### validation
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `validation.ignorePaths` | [] | Glob patterns for paths to skip (e.g., `["src/legacy/*"]`) |
+
+#### Other
+
+| Field | Description |
+|-------|-------------|
+| `tagMapping` | Map OpenAPI tags to domain names (e.g., `{"user-controller": "user"}`) |
+| `ignore` | Endpoint paths to ignore (e.g., `["/health", "/internal/*"]`) |
 
 ## Cache Files
 
