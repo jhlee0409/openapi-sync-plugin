@@ -242,3 +242,38 @@ Total coverage: 79/92 endpoints (86%)
 | `/oas:sync --offline` | Offline sync | Instant | Cache-based |
 
 *Smart mode: HEAD request to detect changes, full fetch only when needed
+
+---
+
+## Error Handling
+
+For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+
+| Error | Code | Description | Recovery |
+|-------|------|-------------|----------|
+| Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
+| Cache not found | E601 | No cache file exists | Run /oas:sync first |
+| Network error | E101/E102 | Cannot reach remote (--check-remote) | Show cached status only |
+| Cache corrupted | E602 | Cannot parse cache file | Delete cache, run /oas:sync |
+
+**No Cache State:**
+```
+/oas:status
+
+⚠️ No cache found
+
+This project hasn't been synced yet.
+Run /oas:init to initialize OpenAPI sync.
+```
+
+**Network Error (--check-remote):**
+```
+/oas:status --check-remote
+
+⚠️ [E102] Cannot reach remote server
+   Showing cached status only
+
+📄 Spec: My API v2.0.0 (cached)
+   Last sync: 2024-01-13 12:00:00
+   ...
+```

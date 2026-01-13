@@ -7,6 +7,22 @@ description: Beautiful ASCII art output formatting guidelines for all plugin com
 
 All plugin outputs should be visually clear and beautiful. Choose the format that best fits the content.
 
+---
+
+## EXECUTION INSTRUCTIONS
+
+When generating output for any OAS plugin command, Claude MUST:
+
+1. **Select appropriate format** based on content type (see Format Selection below)
+2. **Use consistent styling** within a single output
+3. **Keep width under 80 characters** for terminal compatibility
+4. **Use emojis sparingly** - only for status indicators
+5. **Add blank lines** between sections for readability
+
+This is a REFERENCE skill - use it to format outputs from other commands.
+
+---
+
 ## Format Selection
 
 ```

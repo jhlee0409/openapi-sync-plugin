@@ -6,6 +6,23 @@ description: Sync codebase with OpenAPI spec - generate types and API code (100%
 
 Generate or update API code based on OpenAPI spec and detected project patterns.
 
+---
+
+## EXECUTION INSTRUCTIONS
+
+When `/oas:sync` is invoked, Claude MUST perform these steps in order:
+
+1. **Check prerequisites** - Verify `.openapi-sync.json` exists (run `/oas:init` if not)
+2. **Use skill: cache-manager** - Check cache, fetch spec if needed
+3. **Use skill: openapi-parser** - Parse spec, compute diff with cache
+4. **Show diff summary** - Display changes to user
+5. **Get user confirmation** - Proceed or select specific items
+6. **Use skill: code-generator** - Generate code matching project patterns
+7. **Update cache** - Save new state to cache files
+8. **Report results** - Show generated/updated files
+
+---
+
 ## Prerequisites
 
 1. Check `.openapi-sync.json` exists - if not, run `/oas:init`
@@ -474,3 +491,38 @@ CHANGED (2):
 어떤 항목을 처리할까요?
 (전체, 특정 번호, 또는 태그로 선택 가능)
 ```
+
+---
+
+## Error Handling
+
+For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+
+| Error | Code | Description | Recovery |
+|-------|------|-------------|----------|
+| Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
+| Network error | E101/E102 | Cannot fetch spec | Use --offline with cache |
+| Parse error | E201/E202 | Invalid spec format | Fix spec syntax |
+| Cache not found | E601 | No cache (with --offline) | Run /oas:sync first without --offline |
+| Write error | E303 | Cannot write generated files | Check directory permissions |
+| Pattern not found | E402 | No sample code to learn from | Provide sample file path |
+
+**Recovery Actions:**
+```
+E501 → "Run /oas:init to initialize the project"
+E101 + cache exists → "Use --offline to sync with cached version"
+E601 → "Run /oas:sync without --offline first to create cache"
+E402 → "Provide sample: /oas:init with sample path"
+```
+
+---
+
+## Migration Guide
+
+For handling breaking changes after sync, see [../MIGRATION.md](../MIGRATION.md).
+
+When `/oas:sync` shows breaking changes:
+1. Review removed endpoints and changed types
+2. Follow migration workflow in MIGRATION.md
+3. Use `--dry-run` first to preview changes
+4. Run `/oas:validate` after sync to check coverage

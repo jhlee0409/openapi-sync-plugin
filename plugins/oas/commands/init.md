@@ -21,6 +21,22 @@ Initialize OpenAPI sync by learning your project's existing patterns. Works with
 /oas:init ./docs/openapi.yaml
 ```
 
+---
+
+## EXECUTION INSTRUCTIONS
+
+When `/oas:init` is invoked, Claude MUST perform these steps in order:
+
+1. **Get spec location** - Ask user or use provided argument
+2. **Use skill: openapi-parser** - Load and validate the spec
+3. **Use skill: pattern-detector** - Detect project patterns
+4. **Confirm with user** - Show detected patterns, get approval
+5. **Generate config** - Write `.openapi-sync.json`
+6. **Security check** - Verify .gitignore includes cache files
+7. **Report summary** - Show next steps
+
+---
+
 ## First Step: Ask for Spec Location
 
 **IMPORTANT: Always start by asking the user for the OpenAPI spec location.**
@@ -241,7 +257,32 @@ Alternative:
 }
 ```
 
-## Step 6: Summary
+## Step 6: Security Check
+
+**Check .gitignore for cache files:**
+
+```
+1. Check if .gitignore exists
+2. Check if cache files are in .gitignore:
+   - .openapi-sync.cache.json
+   - .openapi-sync.state.json
+
+3. If not in .gitignore:
+   ⚠️ Warning: Cache files should be in .gitignore
+
+   Add these lines to .gitignore:
+   # OpenAPI Sync cache files (contain potentially sensitive data)
+   .openapi-sync.cache.json
+   .openapi-sync.state.json
+
+4. Ask user: "Add these entries to .gitignore? [y/n]"
+   - If yes → Append to .gitignore
+   - If no → Show warning and continue
+```
+
+For more security guidelines, see [../SECURITY.md](../SECURITY.md).
+
+## Step 7: Summary
 
 ```
 ✅ OpenAPI Sync initialization complete

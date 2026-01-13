@@ -213,3 +213,36 @@ Configure validation in `.openapi-sync.json`:
 ```
 
 > **Note:** Most validation behavior is auto-detected from your project's patterns. Only `ignorePaths` needs manual configuration.
+
+---
+
+## Error Handling
+
+For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+
+| Error | Code | Description | Recovery |
+|-------|------|-------------|----------|
+| Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
+| Network error | E101/E102 | Cannot fetch spec | Use --offline with cache |
+| Parse error | E201/E202 | Invalid spec format | Fix spec syntax |
+| Cache not found | E601 | No cache (with --offline) | Run /oas:sync first |
+| File read error | E302 | Cannot read source files | Check file permissions |
+
+**Validation Failure Levels:**
+
+```
+FATAL (validation cannot proceed):
+  - E501: Config not found → Run /oas:init
+  - E201/E202: Cannot parse spec → Fix spec format
+  - E101 + no cache: Cannot access spec → Check network
+
+ERROR (validation found issues):
+  - Missing endpoints
+  - Required fields missing
+  - Type mismatches (breaking)
+
+WARNING (should review):
+  - Extra code not in spec
+  - Non-breaking type differences
+  - Naming inconsistencies
+```
