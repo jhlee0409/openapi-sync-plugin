@@ -1,5 +1,5 @@
 ---
-name: oas:diff
+name: oas-diff
 description: Compare OpenAPI spec changes between versions
 argument-hint: [old-spec] [new-spec] | [--remote]
 uses-skills: [output-format]
@@ -13,16 +13,16 @@ Compare OpenAPI spec changes to see what's new, changed, or removed.
 
 ```bash
 # Current spec vs latest remote spec
-/oas:diff --remote
+/oas-diff --remote
 
 # Compare two files
-/oas:diff ./old-openapi.json ./new-openapi.json
+/oas-diff ./old-openapi.json ./new-openapi.json
 
 # Current spec vs specific file
-/oas:diff ./previous-version.json
+/oas-diff ./previous-version.json
 
 # Compare with cached previous version
-/oas:diff
+/oas-diff
 ```
 
 ## Diff Process
@@ -129,8 +129,8 @@ For each schema:
 ═══════════════════════════════════════════════════
 
 🔄 Next steps:
-   /oas:sync              - Apply changes
-   /oas:sync --only=clips - Update clips only
+   /oas-sync              - Apply changes
+   /oas-sync --only=clips - Update clips only
 ```
 
 ## Change Detection Details
@@ -215,13 +215,13 @@ Filter diff results by OpenAPI tags:
 
 ```bash
 # Diff only workspace-related endpoints
-/oas:diff --tag=workspace
+/oas-diff --tag=workspace
 
 # Diff multiple tags
-/oas:diff --tag=workspace --tag=billing --remote
+/oas-diff --tag=workspace --tag=billing --remote
 
 # Exclude internal endpoints from diff
-/oas:diff --exclude-tag=internal --remote
+/oas-diff --exclude-tag=internal --remote
 ```
 
 ### Tag Change Summary
@@ -229,7 +229,7 @@ Filter diff results by OpenAPI tags:
 See which tags have changes:
 
 ```bash
-/oas:diff --list-tags --remote
+/oas-diff --list-tags --remote
 
 📋 Tag Change Summary:
 
@@ -245,13 +245,13 @@ Changes by tag:
   workspace: Most changes (+4 new endpoints)
   internal: ⚠️ 3 endpoints removed (breaking)
 
-/oas:diff --tag=workspace --remote   # See workspace details
+/oas-diff --tag=workspace --remote   # See workspace details
 ```
 
 ### Tag-Filtered Output
 
 ```
-/oas:diff --tag=workspace --remote
+/oas-diff --tag=workspace --remote
 
 ═══════════════════════════════════════════════════
   API Diff: workspace tag only

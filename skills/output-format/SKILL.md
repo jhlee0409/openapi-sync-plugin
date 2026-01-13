@@ -327,7 +327,7 @@ Code Changes Required:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Next Steps:
-  1. Run /oas:sync --tag=user to auto-generate
+  1. Run /oas-sync --tag=user to auto-generate
   2. Or manually update the files above
 ```
 

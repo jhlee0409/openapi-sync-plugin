@@ -1,5 +1,5 @@
 ---
-name: oas:sync
+name: oas-sync
 description: Sync codebase with OpenAPI spec - generate types and API code (100% accuracy by default)
 argument-hint: [--dry-run] [--force] [--tag=name] [--trust-cache]
 uses-skills: [output-format]
@@ -11,7 +11,7 @@ Generate or update API code based on OpenAPI spec and detected project patterns.
 
 ## Prerequisites
 
-1. Check `.openapi-sync.json` exists - if not, run `/oas:init`
+1. Check `.openapi-sync.json` exists - if not, run `/oas-init`
 2. Load config and detected patterns
 
 ## Sync Process (Conservative Mode - Default)
@@ -39,7 +39,7 @@ Cache is used as "hint" only. 100% accuracy guaranteed.
 
 **Output:**
 ```
-/oas:sync
+/oas-sync
 
 🔍 Verifying against spec...
    Cache hint: likely unchanged (hash match)
@@ -52,7 +52,7 @@ No changes needed.
 
 **--trust-cache mode (fast, risky):**
 ```
-/oas:sync --trust-cache
+/oas-sync --trust-cache
 
 ⚡ Trust cache mode
    Cache hash: abc123... (matched)
@@ -278,25 +278,25 @@ Next: Review generated code and run your type checker
 
 ```bash
 # Preview only (no file generation)
-/oas:sync --dry-run
+/oas-sync --dry-run
 
 # Types only
-/oas:sync --only-types
+/oas-sync --only-types
 
 # Force overwrite (ignore existing code)
-/oas:sync --force
+/oas-sync --force
 
 # Trust cache mode (fast, skip verification - use with caution!)
-/oas:sync --trust-cache
+/oas-sync --trust-cache
 ```
 
 ## Sync Modes
 
 | Mode | Command | Speed | Accuracy | When to use |
 |------|---------|-------|----------|-------------|
-| Conservative (default) | `/oas:sync` | Medium | 100% | Always recommended |
-| Trust Cache | `/oas:sync --trust-cache` | Fast | 99%* | Quick check needed |
-| Force | `/oas:sync --force` | Slow | 100% | Ignore cache, full regeneration |
+| Conservative (default) | `/oas-sync` | Medium | 100% | Always recommended |
+| Trust Cache | `/oas-sync --trust-cache` | Fast | 99%* | Quick check needed |
+| Force | `/oas-sync --force` | Slow | 100% | Ignore cache, full regeneration |
 
 *Trust Cache: May miss changes if server ETag/Last-Modified errors or cache corruption
 
@@ -321,19 +321,19 @@ paths:
 
 ```bash
 # Single tag - sync only endpoints with this tag
-/oas:sync --tag=workspace
+/oas-sync --tag=workspace
 
 # Multiple tags - sync endpoints matching ANY tag (OR)
-/oas:sync --tag=workspace --tag=billing
+/oas-sync --tag=workspace --tag=billing
 
 # Exclude tag - sync all EXCEPT this tag
-/oas:sync --exclude-tag=internal
+/oas-sync --exclude-tag=internal
 
 # Combined - specific tags, excluding some
-/oas:sync --tag=workspace --exclude-tag=deprecated
+/oas-sync --tag=workspace --exclude-tag=deprecated
 
 # List available tags first
-/oas:sync --list-tags
+/oas-sync --list-tags
 ```
 
 ### Tag Discovery
@@ -341,7 +341,7 @@ paths:
 Before filtering, see what tags are available:
 
 ```
-/oas:sync --list-tags
+/oas-sync --list-tags
 
 📋 Available Tags (from OpenAPI spec):
 
@@ -368,7 +368,7 @@ When using `--tag`, the generator:
 3. Generates only types used by filtered endpoints
 
 ```bash
-/oas:sync --tag=billing
+/oas-sync --tag=billing
 
 Generated:
   src/entities/billing/
@@ -384,53 +384,53 @@ Generated:
 
 ```bash
 # Specific endpoint only
-/oas:sync --endpoint=/api/v1/users
-/oas:sync --endpoint="/api/v1/users/{id}"
+/oas-sync --endpoint=/api/v1/users
+/oas-sync --endpoint="/api/v1/users/{id}"
 
 # Pattern matching
-/oas:sync --endpoint="/api/v1/clips/*"
+/oas-sync --endpoint="/api/v1/clips/*"
 ```
 
 ### By Change Type
 
 ```bash
 # New additions only
-/oas:sync --only-added
+/oas-sync --only-added
 
 # Changes only
-/oas:sync --only-changed
+/oas-sync --only-changed
 
 # New + changed
-/oas:sync --only-added --only-changed
+/oas-sync --only-added --only-changed
 ```
 
 ### By File Type
 
 ```bash
 # Types only
-/oas:sync --only-types
+/oas-sync --only-types
 
 # API functions only (no types)
-/oas:sync --only-api
+/oas-sync --only-api
 
 # Hooks only
-/oas:sync --only-hooks
+/oas-sync --only-hooks
 
 # Combined
-/oas:sync --only-types --only-api
+/oas-sync --only-types --only-api
 ```
 
 ## Partial Sync Examples
 
 ```bash
 # Generate types only for new endpoints in clips tag
-/oas:sync --tag=clips --only-added --only-types
+/oas-sync --tag=clips --only-added --only-types
 
 # Preview changes for users only
-/oas:sync --tag=users --only-changed --dry-run
+/oas-sync --tag=users --only-changed --dry-run
 
 # Full generation for specific endpoint
-/oas:sync --endpoint="/api/v1/clips/{id}/render"
+/oas-sync --endpoint="/api/v1/clips/{id}/render"
 ```
 
 ## Interactive Selection
@@ -438,7 +438,7 @@ Generated:
 Select changes when running without flags:
 
 ```
-/oas:sync
+/oas-sync
 
 📊 Changes Detected:
 
