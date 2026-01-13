@@ -310,7 +310,7 @@ Alternative:
    - If no → Show warning and continue
 ```
 
-For more security guidelines, see [../SECURITY.md](../SECURITY.md).
+For more security guidelines, see [../docs/SECURITY.md](../docs/SECURITY.md).
 
 ## Step 9: Summary
 

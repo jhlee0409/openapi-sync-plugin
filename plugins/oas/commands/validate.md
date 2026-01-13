@@ -219,7 +219,7 @@ Configure validation in `.openapi-sync.json`:
 
 ## Error Handling
 
-For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+For full error code reference, see [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md).
 
 | Error | Code | Description | Recovery |
 |-------|------|-------------|----------|

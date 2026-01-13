@@ -541,7 +541,7 @@ Which items do you want to process?
 
 ## Error Handling
 
-For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+For full error code reference, see [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md).
 
 | Error | Code | Description | Recovery |
 |-------|------|-------------|----------|
@@ -564,7 +564,7 @@ E402 → "Provide sample: /oas:init with sample path"
 
 ## Migration Guide
 
-For handling breaking changes after sync, see [../MIGRATION.md](../MIGRATION.md).
+For handling breaking changes after sync, see [../docs/MIGRATION.md](../docs/MIGRATION.md).
 
 When `/oas:sync` shows breaking changes:
 1. Review removed endpoints and changed types

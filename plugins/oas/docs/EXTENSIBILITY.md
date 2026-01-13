@@ -761,4 +761,4 @@ description: Brief description for help
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Plugin architecture
 - [EXAMPLES.md](./EXAMPLES.md) - Code examples
-- [skills/pattern-detector/SKILL.md](./skills/pattern-detector/SKILL.md) - Pattern detection
+- [skills/pattern-detector/SKILL.md](../skills/pattern-detector/SKILL.md) - Pattern detection

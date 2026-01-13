@@ -708,7 +708,7 @@ The majority pattern in your codebase becomes the "standard" - we find inconsist
 
 ## Error Handling
 
-For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+For full error code reference, see [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md).
 
 | Error | Code | Description | Recovery |
 |-------|------|-------------|----------|
@@ -732,7 +732,7 @@ If --code has no files:
 
 ## Migration Guide
 
-For handling deprecations and breaking changes detected by lint, see [../MIGRATION.md](../MIGRATION.md).
+For handling deprecations and breaking changes detected by lint, see [../docs/MIGRATION.md](../docs/MIGRATION.md).
 
 When `/oas:lint` detects deprecated endpoints or breaking inconsistencies:
 1. Review deprecation timeline (x-sunset-date if available)

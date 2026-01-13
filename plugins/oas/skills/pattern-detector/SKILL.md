@@ -121,7 +121,7 @@ If user provides no sample:
 
 ## ERROR HANDLING
 
-For full error code reference, see [../../ERROR-CODES.md](../../ERROR-CODES.md).
+For full error code reference, see [../../docs/ERROR-CODES.md](../../docs/ERROR-CODES.md).
 
 ### package.json Not Found [E501]
 

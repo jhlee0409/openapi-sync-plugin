@@ -94,7 +94,7 @@ Write to `.openapi-sync.cache.json` with this structure:
 
 ## ERROR HANDLING
 
-For full error code reference, see [../../ERROR-CODES.md](../../ERROR-CODES.md).
+For full error code reference, see [../../docs/ERROR-CODES.md](../../docs/ERROR-CODES.md).
 
 ### Network Error During HEAD Request [E101, E102]
 
@@ -224,7 +224,7 @@ Use these exact messages for consistency:
 
 ## REFERENCE: Performance Optimization
 
-For detailed performance optimization strategies, see [../../PERFORMANCE.md](../../PERFORMANCE.md).
+For detailed performance optimization strategies, see [../../docs/PERFORMANCE.md](../../docs/PERFORMANCE.md).
 
 Key optimizations implemented:
 - HEAD requests for cache validation (minimal network cost)

@@ -203,7 +203,7 @@ export const useCreateProject = () => {
 
 ## ERROR HANDLING
 
-For full error code reference, see [../../ERROR-CODES.md](../../ERROR-CODES.md).
+For full error code reference, see [../../docs/ERROR-CODES.md](../../docs/ERROR-CODES.md).
 
 ### Sample File Not Found [E401]
 
@@ -304,7 +304,7 @@ import type { Project, GetProjectRequest } from '../model/types'
 
 ## REFERENCE: Security
 
-When generating code, follow security guidelines in [../../SECURITY.md](../../SECURITY.md):
+When generating code, follow security guidelines in [../../docs/SECURITY.md](../../docs/SECURITY.md):
 
 - **Sanitize all identifiers** from OpenAPI spec before use in code
 - **Escape strings** in template literals (backticks, dollar signs)
