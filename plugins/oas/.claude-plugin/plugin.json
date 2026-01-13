@@ -16,8 +16,5 @@
     "codegen",
     "react-query",
     "typescript"
-  ],
-  "engines": {
-    "claude-code": ">=1.0.33"
-  }
+  ]
 }
