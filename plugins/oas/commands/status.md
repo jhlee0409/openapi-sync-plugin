@@ -77,16 +77,26 @@ Read cache files only for instant display:
 
 ## Check Remote (--check-remote)
 
-Check remote spec hash only (fast, no full download):
+Smart check using HEAD request (ETag/Last-Modified):
+
+```
+Use skill: cache-manager
+
+Smart validation:
+  - Remote URL → HEAD request only (no full download)
+  - Compare ETag/Last-Modified with cache
+  - Fast and bandwidth-efficient
+```
 
 ```
 /oas:status --check-remote
 
 Checking remote spec...
+   HEAD https://api.example.com/openapi.json
 
 📄 Spec Status:
-   Local hash:  abc123...
-   Remote hash: def456...
+   Cached ETag:  "abc123"
+   Remote ETag:  "def456"
    Status: ⚠️ SPEC CHANGED
 
 🔄 Changes since last sync:
@@ -100,11 +110,23 @@ Or:
 /oas:status --check-remote
 
 📄 Spec Status:
-   Local hash:  abc123...
-   Remote hash: abc123...
+   Cached ETag:  "abc123"
+   Remote ETag:  "abc123"
    Status: ✅ UP TO DATE
 
 No changes since last sync.
+```
+
+**For local files:**
+
+```
+/oas:status --check-remote
+
+📄 Spec Status (local file):
+   Source: ./openapi.json
+   Cached mtime: 2024-01-13 10:00:00
+   Current mtime: 2024-01-13 10:00:00
+   Status: ✅ UP TO DATE
 ```
 
 ## Cache Files Read
@@ -212,10 +234,12 @@ Total coverage: 79/92 endpoints (86%)
 
 ## Accuracy vs Speed
 
-| Command | Purpose | Accuracy |
-|---------|---------|----------|
-| `/oas:status` | Quick status check | Cache-based |
-| `/oas:sync` | Actual sync | 100% (always verified) |
-| `/oas:sync --trust-cache` | Fast sync | 99%* |
+| Command | Purpose | Speed | Accuracy |
+|---------|---------|-------|----------|
+| `/oas:status` | Quick status | Instant | Cache-based |
+| `/oas:status --check-remote` | Check for changes | Fast (HEAD) | ETag/mtime |
+| `/oas:sync` | Actual sync | Smart* | 100% |
+| `/oas:sync --force` | Force sync | Slow | 100% |
+| `/oas:sync --offline` | Offline sync | Instant | Cache-based |
 
-*May miss changes if cache is corrupted or server error occurs
+*Smart mode: HEAD request to detect changes, full fetch only when needed

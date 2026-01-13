@@ -11,35 +11,36 @@ Generate or update API code based on OpenAPI spec and detected project patterns.
 1. Check `.openapi-sync.json` exists - if not, run `/oas:init`
 2. Load config and detected patterns
 
-## Sync Process (Conservative Mode - Default)
+## Sync Process (Smart Caching - Default)
 
-### Step 0: Cache-Assisted Verification
+### Step 0: Smart Cache Check
 
 ```
 Use skill: cache-manager
 
-Cache is used as "hint" only. 100% accuracy guaranteed.
+Smart caching: Fast when unchanged, accurate when changed.
 
-1. Check cache files
+1. Check cache exists
    - .openapi-sync.cache.json (spec cache)
    - .openapi-sync.state.json (implementation state)
 
-2. Quick hash comparison (hint only)
-   - Hash matches → "Likely no changes" displayed
-   - Hash differs → "Changes detected" displayed
+2. Smart validation (not full fetch!)
+   - Remote URL → HEAD request (check ETag/Last-Modified)
+   - Local file → Check file mtime
 
-3. Always proceed to Step 1 (direct spec verification)
-   - Even if cache hash matches, compare actual spec with code
-   - Generate if different, skip if same
-   - 100% accuracy guaranteed
+3. Decision
+   - Unchanged → Use cached spec (fast ⚡)
+   - Changed → Full fetch, update cache
+   - --force → Always full fetch
+   - --offline → Use cache only
 ```
 
-**Output:**
+**Output (cache hit):**
 ```
 /oas:sync
 
-🔍 Verifying against spec...
-   Cache hint: likely unchanged (hash match)
+✅ Using cached spec (ETag unchanged)
+   Last sync: 2 hours ago
 
    Checking 150 endpoints against codebase...
    ✅ All endpoints up to date
@@ -47,17 +48,38 @@ Cache is used as "hint" only. 100% accuracy guaranteed.
 No changes needed.
 ```
 
-**--trust-cache mode (fast, risky):**
+**Output (cache miss):**
 ```
-/oas:sync --trust-cache
+/oas:sync
 
-⚡ Trust cache mode
-   Cache hash: abc123... (matched)
-   Skipping verification.
+🔄 Spec changed, fetching updates...
+   ETag: "abc123" → "def456"
 
-✅ No changes detected (cached)
+   Fetching spec...
+   📥 Downloaded 150 endpoints
 
-⚠️  Warning: Using cached state. Run without --trust-cache for full verification.
+   Checking against codebase...
+```
+
+**--force mode (bypass cache):**
+```
+/oas:sync --force
+
+🔄 Force mode: refetching spec...
+   Ignoring cache
+
+   Fetching spec...
+   📥 Downloaded 150 endpoints
+```
+
+**--offline mode (cache only):**
+```
+/oas:sync --offline
+
+📦 Offline mode: using cached spec
+   Cache from: 2024-01-13 12:00:00
+
+   Checking 150 endpoints against codebase...
 ```
 
 ### Step 1: Fetch & Diff (only when changes detected)
@@ -280,22 +302,22 @@ Next: Review generated code and run your type checker
 # Types only
 /oas:sync --only-types
 
-# Force overwrite (ignore existing code)
+# Force fetch (ignore cache, always fetch)
 /oas:sync --force
 
-# Trust cache mode (fast, skip verification - use with caution!)
-/oas:sync --trust-cache
+# Offline mode (use cache only, no network)
+/oas:sync --offline
 ```
 
 ## Sync Modes
 
 | Mode | Command | Speed | Accuracy | When to use |
 |------|---------|-------|----------|-------------|
-| Conservative (default) | `/oas:sync` | Medium | 100% | Always recommended |
-| Trust Cache | `/oas:sync --trust-cache` | Fast | 99%* | Quick check needed |
-| Force | `/oas:sync --force` | Slow | 100% | Ignore cache, full regeneration |
+| Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
+| Force | `/oas:sync --force` | Slow | 100% | Cache seems stale, debugging |
+| Offline | `/oas:sync --offline` | Instant | Cache-based | Airplane mode, CI without network |
 
-*Trust Cache: May miss changes if server ETag/Last-Modified errors or cache corruption
+*Smart mode: HEAD request to check changes, full fetch only when needed
 
 ## Tag Filtering
 

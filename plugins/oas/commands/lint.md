@@ -17,7 +17,7 @@ Check OpenAPI spec and codebase for consistency. Finds inconsistencies in manual
 ## Usage
 
 ```bash
-# Full check
+# Full check (smart caching for spec)
 /oas:lint
 
 # Specific rule only
@@ -26,6 +26,26 @@ Check OpenAPI spec and codebase for consistency. Finds inconsistencies in manual
 
 # Fix suggestions
 /oas:lint --fix
+
+# Force fetch spec (bypass cache)
+/oas:lint --force
+
+# Use cached spec only (offline)
+/oas:lint --offline
+```
+
+## Smart Caching
+
+```
+Use skill: cache-manager
+
+When linting spec (--spec or default):
+  1. Check if spec changed (HEAD request / mtime)
+  2. If unchanged → Use cached spec
+  3. If changed → Fetch new spec, update cache
+
+When linting code only (--code):
+  → No spec fetch needed
 ```
 
 ## Part 1: Spec Lint Rules (--spec)
@@ -658,6 +678,8 @@ Show migration guide? [y/n]
 --rule=name       # Run specific rule only
 --ignore=pattern  # Ignore specific path/schema
 --fix             # Show fix suggestions
+--force           # Force fetch spec (bypass cache)
+--offline         # Use cached spec only (no network)
 --json            # JSON format output
 --severity=level  # Filter by critical/warning/info
 --output=file     # Save results to file

@@ -9,7 +9,7 @@ Validate that your code matches the OpenAPI spec. Suitable for CI/CD pipelines.
 ## Usage
 
 ```bash
-# Basic validation
+# Basic validation (smart caching)
 /oas:validate
 
 # Strict mode (warnings treated as errors)
@@ -17,6 +17,27 @@ Validate that your code matches the OpenAPI spec. Suitable for CI/CD pipelines.
 
 # Auto-fix suggestions
 /oas:validate --fix
+
+# Force fetch spec (bypass cache)
+/oas:validate --force
+
+# Use cached spec only (offline)
+/oas:validate --offline
+```
+
+## Smart Caching
+
+```
+Use skill: cache-manager
+
+Validation fetches spec for comparison:
+  1. Check if spec changed (HEAD request / mtime)
+  2. If unchanged → Use cached spec (fast)
+  3. If changed → Fetch new spec, update cache
+
+Benefits for CI/CD:
+  - Fast validation when spec hasn't changed
+  - Consistent results with --offline flag
 ```
 
 ## Validation Checks
@@ -189,6 +210,8 @@ Apply auto-fixes? [y/N]
 ```bash
 --strict      # Treat warnings as errors (for CI)
 --fix         # Auto-fix what's possible
+--force       # Force fetch spec (bypass cache)
+--offline     # Use cached spec only (no network)
 --json        # JSON format output
 --quiet       # Output errors only
 --tag=name    # Validate specific tag only

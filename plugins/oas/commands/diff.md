@@ -9,7 +9,7 @@ Compare OpenAPI spec changes to see what's new, changed, or removed.
 ## Usage
 
 ```bash
-# Current spec vs latest remote spec
+# Current spec vs latest remote spec (smart caching)
 /oas:diff --remote
 
 # Compare two files
@@ -20,6 +20,45 @@ Compare OpenAPI spec changes to see what's new, changed, or removed.
 
 # Compare with cached previous version
 /oas:diff
+
+# Force fetch remote (bypass cache)
+/oas:diff --remote --force
+
+# Use cached spec only (offline)
+/oas:diff --offline
+```
+
+## Smart Caching
+
+```
+Use skill: cache-manager
+
+When using --remote:
+  1. Check if spec changed (HEAD request)
+     - ETag/Last-Modified comparison
+  2. If unchanged → Use cached spec for "new" side
+  3. If changed → Fetch new spec, update cache
+
+Benefits:
+  - Fast when spec hasn't changed
+  - Saves bandwidth
+  - Always accurate when changes detected
+```
+
+**Output with cache hit:**
+```
+/oas:diff --remote
+
+✅ Using cached spec (ETag unchanged)
+   Comparing cached version vs codebase...
+```
+
+**Output with cache miss:**
+```
+/oas:diff --remote
+
+🔄 Spec changed, fetching updates...
+   Comparing new spec vs codebase...
 ```
 
 ## Diff Process
@@ -196,7 +235,9 @@ Automatically detect breaking changes:
 ## Flags
 
 ```bash
---remote          Compare with remote spec
+--remote          Compare with remote spec (smart caching)
+--force           Force fetch remote (bypass cache)
+--offline         Use cached spec only (no network)
 --json            Output in JSON format
 --breaking-only   Show breaking changes only
 --tag=name        Filter by specific tag(s)
