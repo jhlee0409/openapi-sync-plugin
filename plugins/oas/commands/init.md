@@ -28,12 +28,13 @@ Initialize OpenAPI sync by learning your project's existing patterns. Works with
 When `/oas:init` is invoked, Claude MUST perform these steps in order:
 
 1. **Get spec location** - Ask user or use provided argument
-2. **Use skill: openapi-parser** - Load and validate the spec
-3. **Use skill: pattern-detector** - Detect project patterns
-4. **Confirm with user** - Show detected patterns, get approval
-5. **Generate config** - Write `.openapi-sync.json`
-6. **Security check** - Verify .gitignore includes cache files
-7. **Report summary** - Show next steps
+2. **Use skill: cache-manager** - Fetch spec with caching (saves redundant fetch on first sync)
+3. **Use skill: openapi-parser** - Validate the fetched spec
+4. **Use skill: pattern-detector** - Detect project patterns
+5. **Confirm with user** - Show detected patterns, get approval
+6. **Generate config** - Write `.openapi-sync.json`
+7. **Security check** - Verify .gitignore includes cache files
+8. **Report summary** - Show next steps
 
 ---
 
@@ -58,16 +59,19 @@ If not, prompt for input before proceeding.
 ## Flow Overview
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    /oas:init                            │
-├─────────────────────────────────────────────────────┤
-│  1. Get OpenAPI spec location                           │
-│  2. Detect framework (package.json)                     │
-│  3. Find existing API code (sample discovery)           │
-│  4. Analyze samples OR ask user                         │
-│  5. Generate .openapi-sync.json                         │
-│  6. Show summary                                        │
-└─────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│                      /oas:init                        │
+├───────────────────────────────────────────────────────┤
+│  1. Get OpenAPI spec location                         │
+│  2. Fetch & cache spec (cache-manager)                │
+│  3. Validate spec (openapi-parser)                    │
+│  4. Detect framework (package.json)                   │
+│  5. Find existing API code (sample discovery)         │
+│  6. Analyze samples OR ask user                       │
+│  7. Generate .openapi-sync.json                       │
+│  8. Security check (.gitignore)                       │
+│  9. Show summary                                      │
+└───────────────────────────────────────────────────────┘
 ```
 
 ## Step 1: Get OpenAPI Spec Location
@@ -91,13 +95,39 @@ Otherwise → Read as local file
 3. If not found, request path/URL input
 ```
 
-**Validate:**
+## Step 2: Fetch & Cache Spec
+
+**Use cache-manager skill to fetch and cache:**
+
 ```
-- Verify OpenAPI 3.x or Swagger 2.x structure
-- Extract title, version, endpoints
+Invoke skill: cache-manager
+
+1. Fetch spec from source (URL or local file)
+2. Validate basic structure (has openapi/swagger field)
+3. Write .openapi-sync.cache.json immediately
+
+This ensures /oas:sync doesn't need to refetch.
 ```
 
-## Step 2: Framework Detection
+**Output:**
+```
+📥 Fetching spec from https://api.example.com/openapi.json...
+✅ Spec cached (150 endpoints, 45 schemas)
+```
+
+## Step 3: Validate Spec
+
+**Use openapi-parser skill:**
+
+```
+Invoke skill: openapi-parser
+
+- Verify OpenAPI 3.x or Swagger 2.x structure
+- Extract title, version, endpoints
+- Parse schemas and validate references
+```
+
+## Step 4: Framework Detection
 
 **Read package.json:**
 
@@ -122,7 +152,7 @@ const framework = detectFramework(packageJson)
   Data Fetching: @tanstack/react-query v5
 ```
 
-## Step 3: Sample Discovery
+## Step 5: Sample Discovery
 
 **Use pattern-detector skill:**
 
@@ -148,7 +178,7 @@ OUTCOME B: No samples found
   → Go to interactive mode
 ```
 
-## Step 4a: Sample Analysis (if samples found)
+## Step 6a: Sample Analysis (if samples found)
 
 **Analyze discovered files:**
 
@@ -186,7 +216,7 @@ Generate code using these patterns?
 (Let me know if you'd like any changes)
 ```
 
-## Step 4b: Interactive Mode (if no samples)
+## Step 6b: Interactive Mode (if no samples)
 
 **Ask user for guidance:**
 
@@ -221,7 +251,7 @@ Alternative:
 → Extract patterns
 ```
 
-## Step 5: Generate Config
+## Step 7: Generate Config
 
 **Create .openapi-sync.json:**
 
@@ -257,7 +287,7 @@ Alternative:
 }
 ```
 
-## Step 6: Security Check
+## Step 8: Security Check
 
 **Check .gitignore for cache files:**
 
@@ -282,7 +312,7 @@ Alternative:
 
 For more security guidelines, see [../SECURITY.md](../SECURITY.md).
 
-## Step 7: Summary
+## Step 9: Summary
 
 ```
 ✅ OpenAPI Sync initialization complete
@@ -303,7 +333,9 @@ For more security guidelines, see [../SECURITY.md](../SECURITY.md).
    Types: src/entities/user/model/types.ts
    Hooks: src/entities/user/api/queries.ts
 
-📝 Config saved: .openapi-sync.json
+📝 Files created:
+   .openapi-sync.json (config)
+   .openapi-sync.cache.json (spec cache)
 
 🚀 Next steps:
    /oas:analyze  - Detailed pattern analysis
