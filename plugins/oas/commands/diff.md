@@ -239,6 +239,7 @@ Automatically detect breaking changes:
 --force           Force fetch remote (bypass cache)
 --offline         Use cached spec only (no network)
 --breaking-only   Show breaking changes only
+--verbose         Show detailed diff information
 --tag=name        Filter by specific tag(s)
 --exclude-tag=n   Exclude specific tag(s)
 --list-tags       Show available tags with change summary
@@ -327,3 +328,36 @@ On diff execution:
 Cache location: .openapi-sync.cache.json
 Cache contents: { timestamp, spec, version }
 ```
+
+---
+
+## Error Handling
+
+For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+
+| Error | Code | Description | Recovery |
+|-------|------|-------------|----------|
+| Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
+| Network error | E101/E102 | Cannot fetch remote spec | Use --offline or cached version |
+| Parse error | E201/E202 | Invalid JSON/YAML in spec | Fix spec syntax |
+| File not found | E301 | Comparison file doesn't exist | Check file path |
+| Cache missing | E601 | No cached version for comparison | Run /oas:sync first |
+
+**Recovery Actions:**
+```
+E501 → "Run /oas:init to initialize the project"
+E101 → If cache exists, suggest: "Use --offline to diff with cached version"
+E601 → "Run /oas:sync to create initial cache"
+```
+
+---
+
+## Migration Guide
+
+For handling detected breaking changes and planning migrations, see [../MIGRATION.md](../MIGRATION.md).
+
+After running `/oas:diff --breaking-only`:
+1. Review severity of each change (🔴 Critical, 🟠 Breaking, 🟡 Deprecated)
+2. Follow migration workflow in MIGRATION.md
+3. Prioritize 🔴 Critical changes first
+4. Use `/oas:sync` to apply changes after planning

@@ -7,6 +7,22 @@ description: Beautiful ASCII art output formatting guidelines for all plugin com
 
 All plugin outputs should be visually clear and beautiful. Choose the format that best fits the content.
 
+---
+
+## EXECUTION INSTRUCTIONS
+
+When generating output for any OAS plugin command, Claude MUST:
+
+1. **Select appropriate format** based on content type (see Format Selection below)
+2. **Use consistent styling** within a single output
+3. **Keep width under 80 characters** for terminal compatibility
+4. **Use emojis sparingly** - only for status indicators
+5. **Add blank lines** between sections for readability
+
+This is a REFERENCE skill - use it to format outputs from other commands.
+
+---
+
 ## Format Selection
 
 ```
@@ -24,31 +40,31 @@ Timeline               → Timeline
 
 ---
 
-## 1. Tables (구조화된 데이터)
+## 1. Tables (Structured Data)
 
 For structured key-value or multi-column data:
 
 ```
 ┌──────────────┬─────────────────────────────────────┐
-│     항목     │                 내용                │
+│     Item     │              Content                │
 ├──────────────┼─────────────────────────────────────┤
-│ 수정할 파일  │ src/api/user-api.ts                 │
-│ 수정할 위치  │ getUserById() 함수 (45-52줄)        │
-│ 변경 사유    │ Response 타입에 email 필드 추가됨   │
+│ File         │ src/api/user-api.ts                 │
+│ Location     │ getUserById() function (line 45-52) │
+│ Reason       │ Response type: email field added    │
 └──────────────┴─────────────────────────────────────┘
 ```
 
 Simple aligned format (for fewer columns):
 
 ```
-파일:     src/api/user-api.ts
-위치:     getUserById() 함수 (45-52줄)
-변경사유: Response 타입에 email 필드 추가됨
+File:     src/api/user-api.ts
+Location: getUserById() function (line 45-52)
+Reason:   Response type: email field added
 ```
 
 ---
 
-## 2. Flow Diagrams (프로세스/단계)
+## 2. Flow Diagrams (Process/Steps)
 
 Horizontal flow:
 
@@ -112,7 +128,7 @@ Decision flow:
 
 ---
 
-## 3. Tree Structure (계층/구조)
+## 3. Tree Structure (Hierarchy)
 
 File tree:
 
@@ -151,7 +167,7 @@ Nested structure with status:
 
 ---
 
-## 4. Comparison (비교)
+## 4. Comparison (Diff)
 
 Side-by-side diff:
 
@@ -181,7 +197,7 @@ Response: UserResponse
 
 ---
 
-## 5. Progress & Status (진행/상태)
+## 5. Progress & Status
 
 Progress bar:
 
@@ -210,7 +226,7 @@ Status summary:
 
 ---
 
-## 6. Summary Box (요약)
+## 6. Summary Box
 
 Simple header:
 
@@ -246,7 +262,7 @@ Warning box:
 
 ---
 
-## 7. Checklist (체크리스트)
+## 7. Checklist
 
 Task list:
 
@@ -275,7 +291,7 @@ Validation result:
 
 ---
 
-## 8. Timeline (타임라인)
+## 8. Timeline
 
 ```
 📅 Sync History
@@ -291,7 +307,7 @@ Validation result:
 
 ---
 
-## 9. Impact Analysis (영향 분석)
+## 9. Impact Analysis
 
 ```
 ═══════════════════════════════════════════════════════════════

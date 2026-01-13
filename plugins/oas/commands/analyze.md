@@ -182,3 +182,29 @@ Extract patterns from existing code:
 
 - `--verbose`: Show all file paths and code samples
 - `--domain=name`: Analyze only specific domain
+
+---
+
+## Error Handling
+
+For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+
+| Error | Code | Description | Recovery |
+|-------|------|-------------|----------|
+| Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
+| Package.json not found | E501 | Not in project root | Navigate to project root |
+| No API files found | E402 | Cannot find API code | Provide sample path |
+| File read error | E302 | Cannot read source files | Check file permissions |
+
+**Fallback Behavior:**
+```
+If no patterns detected:
+  → "No existing API patterns found"
+  → Switch to interactive mode
+  → Ask: "Would you like to provide a sample file?"
+
+If partial patterns found:
+  → Show what was detected
+  → Mark missing patterns as "Unknown"
+  → Suggest: "Provide sample for <missing> pattern"
+```

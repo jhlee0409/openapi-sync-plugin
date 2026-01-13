@@ -60,8 +60,8 @@ claude --plugin-dir /path/to/claude-plugins
 Analyzes your existing API code to learn project patterns:
 
 ```bash
-/oas:init ./openapi.json                        # 로컬 파일
-/oas:init https://api.example.com/openapi.json  # 원격 URL
+/oas:init ./openapi.json                        # Local file
+/oas:init https://api.example.com/openapi.json  # Remote URL
 
 📄 OpenAPI: My API v2.0.0 (25 endpoints)
 
@@ -74,7 +74,7 @@ Analyzes your existing API code to learn project patterns:
   ✓ Structure: FSD (Feature-Sliced Design)
   ✓ Naming: camelCase functions, PascalCase types
 
-이 패턴으로 코드를 생성할까요?
+Generate code using these patterns?
 ```
 
 ### 2. Consistent Code Generation
@@ -160,10 +160,11 @@ Generate or update code based on OpenAPI spec.
 
 ```bash
 # Basic
-/oas:sync                    # Default (Conservative, 100% accuracy)
+/oas:sync                    # Default (Smart, 100% accuracy)
 /oas:sync --dry-run          # Preview only, no file changes
 /oas:sync --force            # Ignore cache, full regeneration
 /oas:sync --trust-cache      # Trust cache mode (faster, 99% accuracy)
+/oas:sync --offline          # Use cached spec only (no network)
 
 # Filter by tag
 /oas:sync --tag=users        # Specific tag only
@@ -193,6 +194,8 @@ Compare OpenAPI spec changes.
 /oas:diff --remote           # Compare with remote spec
 /oas:diff old.json new.json  # Compare two files
 /oas:diff --breaking-only    # Show breaking changes only
+/oas:diff --force            # Ignore cache, fetch fresh spec
+/oas:diff --offline          # Use cached spec only (no network)
 /oas:diff --tag=users        # Specific tag only
 /oas:diff --exclude-tag=internal  # Exclude specific tag
 /oas:diff --list-tags        # Show tags with change summary
@@ -206,6 +209,8 @@ Validate code matches spec.
 /oas:validate                # Basic validation
 /oas:validate --strict       # Warnings treated as errors
 /oas:validate --fix          # Auto-fix what's possible
+/oas:validate --force        # Ignore cache, fetch fresh spec
+/oas:validate --offline      # Use cached spec only (no network)
 /oas:validate --tag=users    # Specific tag only
 /oas:validate --quiet        # Errors only
 ```
@@ -222,6 +227,8 @@ Check spec and code for consistency.
 /oas:lint --rule=type-naming # Specific rule only
 /oas:lint --severity=critical # Filter by severity
 /oas:lint --ignore=pattern   # Ignore specific path/schema
+/oas:lint --force            # Ignore cache, fetch fresh spec
+/oas:lint --offline          # Use cached spec only (no network)
 ```
 
 ### /oas:status
@@ -234,6 +241,7 @@ Quick status check from cache.
 /oas:status --tag=users      # Status for specific tag
 /oas:status --list-tags      # Show all tags with coverage
 /oas:status --quiet          # Summary only
+/oas:status --verbose        # Show detailed coverage breakdown
 ```
 
 ### /oas:analyze
@@ -310,15 +318,17 @@ Generated:
 
 | Mode | Command | Speed | Accuracy | Use Case |
 |------|---------|-------|----------|----------|
-| Conservative (default) | `/oas:sync` | Medium | 100% | Always recommended |
+| Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
 | Trust Cache | `/oas:sync --trust-cache` | Fast | 99%* | Quick check needed |
 | Force | `/oas:sync --force` | Slow | 100% | Ignore cache, full regen |
+
+*Smart mode: HEAD request to check changes, full fetch only when needed
 
 *Trust Cache may miss changes if server ETag/Last-Modified errors or cache corrupted
 
 ## Interactive Selection
 
-When running `/oas:sync` without flags, you can select specific changes:
+When running `/oas:sync` without flags and changes are detected, Claude will show a preview and ask for confirmation before generating code:
 
 ```
 📊 Changes Detected:
@@ -332,9 +342,15 @@ CHANGED (2):
   4. GET /api/v1/users/{id} (users)
   5. POST /api/v1/projects (projects)
 
-어떤 항목을 처리할까요?
-(전체, 특정 번호, 또는 태그로 선택 가능)
+Proceed with generation?
+(You can select specific items or proceed with all)
 ```
+
+**Response Options:**
+- "Yes" or "Proceed" - Process all changes
+- "Only 1, 2" - Process specific numbered items
+- "Only clips" - Process by tag name
+- "Skip" or "No" - Cancel generation
 
 ## Breaking Changes Detection
 
@@ -362,6 +378,8 @@ CHANGED (2):
    GET /api/v1/legacy/export
    → Remove usage code
 ```
+
+For detailed migration strategies and handling breaking changes, see [MIGRATION.md](./MIGRATION.md).
 
 ## Generated File Structures
 
@@ -578,6 +596,30 @@ Cache is automatically invalidated when:
 - **Data Fetching:** React Query, SWR, others (auto-detected)
 - **Frameworks:** React, Vue, Angular, Svelte (auto-detected)
 - **Structure:** FSD, Feature-based, Flat, others (auto-detected)
+
+## Security Flags
+
+For development environments, additional flags are available:
+
+| Flag | Description | Use Case |
+|------|-------------|----------|
+| `--insecure` | Skip SSL certificate verification | Self-signed certs in development |
+| `--allow-internal` | Allow internal/private IP addresses | Local API servers |
+
+**Examples:**
+
+```bash
+# Access spec with self-signed certificate (development only)
+/oas:init https://dev-api.local/openapi.json --insecure
+
+# Access spec on internal network
+/oas:init https://192.168.1.100/openapi.json --allow-internal
+
+# Combine flags for local development
+/oas:sync --allow-internal --insecure
+```
+
+> **Warning:** These flags bypass security protections. Never use in production or with untrusted URLs. See [SECURITY.md](./SECURITY.md) for detailed guidelines.
 
 ## Troubleshooting
 

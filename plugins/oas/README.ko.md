@@ -160,10 +160,11 @@ OpenAPI 스펙 기반 코드 생성/업데이트.
 
 ```bash
 # 기본
-/oas:sync                    # 기본 (Conservative, 100% 정확도)
+/oas:sync                    # 기본 (Smart, 100% 정확도)
 /oas:sync --dry-run          # 미리보기만, 파일 변경 없음
 /oas:sync --force            # 캐시 무시, 전체 재생성
 /oas:sync --trust-cache      # 캐시 신뢰 모드 (빠름, 99% 정확도)
+/oas:sync --offline          # 캐시된 스펙만 사용 (네트워크 없음)
 
 # 태그별 필터
 /oas:sync --tag=users        # 특정 태그만
@@ -193,6 +194,8 @@ OpenAPI 스펙 변경사항 비교.
 /oas:diff --remote           # 원격 스펙과 비교
 /oas:diff old.json new.json  # 두 파일 비교
 /oas:diff --breaking-only    # Breaking changes만 표시
+/oas:diff --force            # 캐시 무시, 새 스펙 가져오기
+/oas:diff --offline          # 캐시된 스펙만 사용 (네트워크 없음)
 /oas:diff --tag=users        # 특정 태그만
 /oas:diff --exclude-tag=internal  # 특정 태그 제외
 /oas:diff --list-tags        # 태그별 변경 요약 표시
@@ -206,6 +209,8 @@ OpenAPI 스펙 변경사항 비교.
 /oas:validate                # 기본 검증
 /oas:validate --strict       # 경고도 에러로 처리
 /oas:validate --fix          # 자동 수정 가능한 것 수정
+/oas:validate --force        # 캐시 무시, 새 스펙 가져오기
+/oas:validate --offline      # 캐시된 스펙만 사용 (네트워크 없음)
 /oas:validate --tag=users    # 특정 태그만
 /oas:validate --quiet        # 에러만 출력
 ```
@@ -222,6 +227,8 @@ OpenAPI 스펙 변경사항 비교.
 /oas:lint --rule=type-naming # 특정 규칙만
 /oas:lint --severity=critical # 심각도별 필터
 /oas:lint --ignore=pattern   # 특정 경로/스키마 무시
+/oas:lint --force            # 캐시 무시, 새 스펙 가져오기
+/oas:lint --offline          # 캐시된 스펙만 사용 (네트워크 없음)
 ```
 
 ### /oas:status
@@ -234,6 +241,7 @@ OpenAPI 스펙 변경사항 비교.
 /oas:status --tag=users      # 특정 태그 상태 확인
 /oas:status --list-tags      # 모든 태그 커버리지 표시
 /oas:status --quiet          # 요약만
+/oas:status --verbose        # 상세 커버리지 분석
 ```
 
 ### /oas:analyze
@@ -310,9 +318,11 @@ billing          8           ❌ 미구현
 
 | 모드 | 커맨드 | 속도 | 정확도 | 사용 시점 |
 |------|--------|------|--------|----------|
-| Conservative (기본) | `/oas:sync` | 보통 | 100% | 항상 권장 |
+| Smart (기본) | `/oas:sync` | 빠름* | 100% | 항상 권장 |
 | Trust Cache | `/oas:sync --trust-cache` | 빠름 | 99%* | 빠른 체크 필요 시 |
 | Force | `/oas:sync --force` | 느림 | 100% | 캐시 무시, 전체 재생성 |
+
+*Smart mode: HEAD 요청으로 변경 확인, 필요 시에만 전체 fetch
 
 *Trust Cache: 서버 ETag/Last-Modified 오류나 캐시 손상 시 변경 누락 가능
 

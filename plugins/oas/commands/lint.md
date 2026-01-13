@@ -681,6 +681,7 @@ Show migration guide? [y/n]
 --force           # Force fetch spec (bypass cache)
 --offline         # Use cached spec only (no network)
 --severity=level  # Filter by critical/warning/info
+--verbose         # Show detailed lint results
 ```
 
 ## Config
@@ -703,3 +704,38 @@ The majority pattern in your codebase becomes the "standard" - we find inconsist
 /oas:lint --severity=critical
 ```
 
+---
+
+## Error Handling
+
+For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+
+| Error | Code | Description | Recovery |
+|-------|------|-------------|----------|
+| Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
+| Network error | E101/E102 | Cannot fetch spec (--spec mode) | Use --offline or --code only |
+| Parse error | E201/E202 | Invalid spec format | Fix spec syntax |
+| File read error | E302 | Cannot read source files | Check file permissions |
+| No patterns found | E402 | Cannot detect code patterns | Provide sample file path |
+
+**Graceful Degradation:**
+```
+If --spec fails:
+  → "Spec lint skipped, checking code only..."
+
+If --code has no files:
+  → "No API code found in standard locations"
+  → Suggest: "Specify sample path or run /oas:init"
+```
+
+---
+
+## Migration Guide
+
+For handling deprecations and breaking changes detected by lint, see [../MIGRATION.md](../MIGRATION.md).
+
+When `/oas:lint` detects deprecated endpoints or breaking inconsistencies:
+1. Review deprecation timeline (x-sunset-date if available)
+2. Follow deprecation handling workflow in MIGRATION.md
+3. Plan migration before sunset date
+4. Use `/oas:sync` to update code after planning

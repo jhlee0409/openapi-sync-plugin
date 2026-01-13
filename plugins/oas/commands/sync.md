@@ -6,6 +6,23 @@ description: Sync codebase with OpenAPI spec - generate types and API code (100%
 
 Generate or update API code based on OpenAPI spec and detected project patterns.
 
+---
+
+## EXECUTION INSTRUCTIONS
+
+When `/oas:sync` is invoked, Claude MUST perform these steps in order:
+
+1. **Check prerequisites** - Verify `.openapi-sync.json` exists (run `/oas:init` if not)
+2. **Use skill: cache-manager** - Check cache, fetch spec if needed
+3. **Use skill: openapi-parser** - Parse spec, compute diff with cache
+4. **Show diff summary** - Display changes to user
+5. **Get user confirmation** - Proceed or select specific items
+6. **Use skill: code-generator** - Generate code matching project patterns
+7. **Update cache** - Save new state to cache files
+8. **Report results** - Show generated/updated files
+
+---
+
 ## Prerequisites
 
 1. Check `.openapi-sync.json` exists - if not, run `/oas:init`
@@ -296,18 +313,61 @@ Next: Review generated code and run your type checker
 
 ## Flags
 
+### Cache & Network
+| Flag | Description |
+|------|-------------|
+| `--force` | Ignore cache, always fetch fresh |
+| `--trust-cache` | Fast mode, trust cache (99% accuracy) |
+| `--offline` | Use cached spec only, no network |
+
+### Output Control
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Preview only, no file changes |
+| `--verbose` | Show detailed progress |
+
+### Tag Filtering
+| Flag | Description |
+|------|-------------|
+| `--tag=<name>` | Process specific tag(s) only |
+| `--exclude-tag=<name>` | Exclude specific tag(s) |
+| `--list-tags` | Show available tags with status |
+
+### Endpoint Filtering
+| Flag | Description |
+|------|-------------|
+| `--endpoint=<path>` | Process specific endpoint(s) |
+| `--only-added` | Process new endpoints only |
+| `--only-changed` | Process modified endpoints only |
+
+### File Type Filtering
+| Flag | Description |
+|------|-------------|
+| `--only-types` | Generate types only |
+| `--only-api` | Generate API functions only |
+| `--only-hooks` | Generate hooks only |
+
+### Examples
+
 ```bash
-# Preview only (no file generation)
-/oas:sync --dry-run
+# Basic
+/oas:sync                    # Smart mode (default)
+/oas:sync --dry-run          # Preview changes
+/oas:sync --force            # Fresh fetch
+/oas:sync --trust-cache      # Fast mode
 
-# Types only
-/oas:sync --only-types
+# Tag filtering
+/oas:sync --tag=users        # Single tag
+/oas:sync --tag=users --tag=billing  # Multiple tags
+/oas:sync --exclude-tag=internal     # Exclude tag
 
-# Force fetch (ignore cache, always fetch)
-/oas:sync --force
+# Endpoint filtering
+/oas:sync --endpoint="/api/v1/users/{id}"
+/oas:sync --only-added       # New endpoints only
 
-# Offline mode (use cache only, no network)
-/oas:sync --offline
+# File type filtering
+/oas:sync --only-types       # Types only
+/oas:sync --only-api         # API functions only
 ```
 
 ## Sync Modes
@@ -315,10 +375,12 @@ Next: Review generated code and run your type checker
 | Mode | Command | Speed | Accuracy | When to use |
 |------|---------|-------|----------|-------------|
 | Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
+| Trust Cache | `/oas:sync --trust-cache` | Instant | 99%** | Quick iterations, know spec unchanged |
 | Force | `/oas:sync --force` | Slow | 100% | Cache seems stale, debugging |
 | Offline | `/oas:sync --offline` | Instant | Cache-based | Airplane mode, no network access |
 
 *Smart mode: HEAD request to check changes, full fetch only when needed
+**Trust Cache may miss changes if server ETag/Last-Modified errors or cache corrupted
 
 ## Tag Filtering
 
@@ -471,6 +533,41 @@ CHANGED (2):
   4. GET /api/v1/users/{id} (users)
   5. POST /api/v1/projects (projects)
 
-어떤 항목을 처리할까요?
-(전체, 특정 번호, 또는 태그로 선택 가능)
+Which items do you want to process?
+(Select all, specific numbers, or filter by tag)
 ```
+
+---
+
+## Error Handling
+
+For full error code reference, see [../ERROR-CODES.md](../ERROR-CODES.md).
+
+| Error | Code | Description | Recovery |
+|-------|------|-------------|----------|
+| Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
+| Network error | E101/E102 | Cannot fetch spec | Use --offline with cache |
+| Parse error | E201/E202 | Invalid spec format | Fix spec syntax |
+| Cache not found | E601 | No cache (with --offline) | Run /oas:sync first without --offline |
+| Write error | E303 | Cannot write generated files | Check directory permissions |
+| Pattern not found | E402 | No sample code to learn from | Provide sample file path |
+
+**Recovery Actions:**
+```
+E501 → "Run /oas:init to initialize the project"
+E101 + cache exists → "Use --offline to sync with cached version"
+E601 → "Run /oas:sync without --offline first to create cache"
+E402 → "Provide sample: /oas:init with sample path"
+```
+
+---
+
+## Migration Guide
+
+For handling breaking changes after sync, see [../MIGRATION.md](../MIGRATION.md).
+
+When `/oas:sync` shows breaking changes:
+1. Review removed endpoints and changed types
+2. Follow migration workflow in MIGRATION.md
+3. Use `--dry-run` first to preview changes
+4. Run `/oas:validate` after sync to check coverage

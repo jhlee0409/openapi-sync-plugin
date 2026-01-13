@@ -3,193 +3,112 @@ name: code-generator
 description: Universal code generator - clones your existing code style exactly
 ---
 
-# Universal Code Generator
+# Code Generator
 
-Generate API code that perfectly matches your project's existing patterns. Works by cloning sample code structure, not predefined templates.
+Generate API code that perfectly matches your project's existing patterns.
 
-## Core Principle
+**Core Principle:** Your code style is the template.
 
+---
+
+## EXECUTION INSTRUCTIONS
+
+When this skill is invoked, Claude MUST perform these steps in order:
+
+### Step 1: Receive Inputs
+
+This skill requires:
+1. **Detected patterns** from `pattern-detector` skill
+2. **Parsed endpoints** from `openapi-parser` skill
+3. **Target tag** or list of endpoints to generate
+
+Verify all inputs are present before proceeding.
+
+### Step 2: Load Sample Code
+
+1. Read the sample files from detected patterns:
+   - `samples.api` → API function patterns
+   - `samples.types` → Type definition patterns
+   - `samples.hooks` → Hook patterns (if applicable)
+
+2. For each sample, extract:
+   - Import statements
+   - Export patterns
+   - Function/type structure
+   - Naming conventions
+   - Code style (quotes, semicolons, indentation)
+
+### Step 3: Generate File Paths
+
+Based on detected structure pattern, generate target file paths:
+
+**FSD Pattern:**
 ```
-INPUT:  Sample code + OpenAPI endpoint
-OUTPUT: New code that looks like your team wrote it
-
-"Your code style is the template"
-```
-
-## Generation Modes
-
-### Mode 1: Sample-Based Generation (Preferred)
-
-When pattern-detector provides sample code:
-
-```
-SAMPLE (from your codebase):
-────────────────────────────
-export const getUser = async ({ id }: GetUserRequest): Promise<User> => {
-  const response = await createApi().get<User>(USER_PATHS.detail(id))
-  return response.data
-}
-
-OPENAPI ENDPOINT:
-────────────────────────────
-POST /api/v1/projects
-Body: { name: string, workspaceId: string }
-Response: Project
-
-GENERATED (cloning your style):
-────────────────────────────
-export const createProject = async ({ name, workspaceId }: CreateProjectRequest): Promise<Project> => {
-  const response = await createApi().post<Project>(PROJECT_PATHS.create(), { name, workspaceId })
-  return response.data
-}
-```
-
-### Mode 2: Framework-Based Generation
-
-When no samples but framework detected:
-
-```
-React + Axios + React Query → React template
-Vue + Fetch + Pinia → Vue template
-Angular + HttpClient + RxJS → Angular template
-Svelte + Ky + Svelte Query → Svelte template
+src/entities/{tag}/
+├── api/
+│   ├── {tag}-api.ts
+│   ├── {tag}-api-paths.ts
+│   └── {tag}-queries.ts
+└── model/
+    └── {tag}-types.ts
 ```
 
-### Mode 3: Interactive Generation
-
-When nothing detected:
-
+**Feature-based Pattern:**
 ```
-Ask: "What style should I generate?"
-Options:
-  - Paste sample code (recommended)
-  - Use default templates
-  - Choose framework
+src/features/{tag}/
+├── api.ts
+├── hooks.ts
+└── types.ts
 ```
 
-## Sample Cloning Algorithm
+**Flat Pattern:**
+```
+src/api/{tag}/
+├── api.ts
+├── hooks.ts
+└── types.ts
+```
 
-### Step 1: Parse Sample Structure
+### Step 4: Generate Types
+
+For each schema used by target endpoints:
+
+1. **Determine type style** from sample (interface vs type)
+2. **Generate TypeScript definition:**
 
 ```typescript
-// INPUT SAMPLE
-export const getUser = async ({ id }: GetUserRequest): Promise<User> => {
-  const response = await createApi().get<User>(USER_PATHS.detail(id))
-  return response.data
+// If sample uses interface:
+export interface User {
+  id: string
+  name: string
+  email?: string  // optional if not in required array
 }
 
-// PARSED STRUCTURE
-{
-  "export": "named",                    // export const vs export default
-  "functionStyle": "arrow",             // arrow vs function declaration
-  "async": true,
-  "paramStyle": "destructured-typed",   // { id }: Type vs (id: string)
-  "returnType": "explicit",             // Promise<T> vs inferred
-  "httpClient": {
-    "call": "createApi().get",
-    "generic": true,                    // <Type> position
-    "pathArg": "first",
-    "dataArg": "second"
-  },
-  "responseHandling": ".data",          // return response.data vs return response
-  "naming": {
-    "pattern": "verb + Entity",         // getUser, createUser
-    "requestType": "VerbEntityRequest", // GetUserRequest
-    "responseType": "Entity"            // User (not GetUserResponse)
-  }
+// If sample uses type:
+export type User = {
+  id: string
+  name: string
+  email?: string
 }
 ```
 
-### Step 2: Create Transformation Rules
+3. **Generate Request/Response types:**
+   - Follow naming convention from sample
+   - Examples: `GetUserRequest`, `CreateUserRequest`, `UserResponse`
+
+### Step 5: Generate Path Constants
+
+Clone the path constant pattern from sample:
 
 ```typescript
-// TRANSFORMATION RULES FROM SAMPLE
-{
-  "functionTemplate": `export const {verb}{Entity} = async ({ {params} }: {Verb}{Entity}Request): Promise<{ReturnType}> => {
-  const response = await createApi().{method}<{ReturnType}>({pathCall}{bodyArg})
-  return response.data
-}`,
-
-  "verbMapping": {
-    "GET (single)": "get",
-    "GET (list)": "get{Entity}List",
-    "POST": "create",
-    "PUT": "update",
-    "PATCH": "update",
-    "DELETE": "delete"
-  },
-
-  "pathPattern": "{ENTITY}_PATHS.{operation}({pathParams})"
-}
-```
-
-### Step 3: Apply to OpenAPI Endpoints
-
-```typescript
-// FOR EACH ENDPOINT
-{
-  method: "POST",
-  path: "/api/v1/projects",
-  operationId: "createProject",
-  requestBody: { name: string, workspaceId: string },
-  response: Project
-}
-
-// APPLY TRANSFORMATION
-{
-  verb: "create",
-  Entity: "Project",
-  params: "name, workspaceId",
-  ReturnType: "Project",
-  method: "post",
-  pathCall: "PROJECT_PATHS.create()",
-  bodyArg: ", { name, workspaceId }"
-}
-
-// OUTPUT
-export const createProject = async ({ name, workspaceId }: CreateProjectRequest): Promise<Project> => {
-  const response = await createApi().post<Project>(PROJECT_PATHS.create(), { name, workspaceId })
-  return response.data
-}
-```
-
-## Multi-File Generation
-
-### Determine File Structure from Samples
-
-```
-DETECTED STRUCTURE:
-  src/entities/user/
-  ├── api/
-  │   ├── user-api.ts      ← API functions sample
-  │   ├── user-paths.ts    ← Path constants sample
-  │   └── queries.ts       ← React Query hooks sample
-  └── model/
-      └── types.ts         ← Types sample
-
-FOR NEW DOMAIN "project":
-  src/entities/project/
-  ├── api/
-  │   ├── project-api.ts   ← Clone user-api.ts structure
-  │   ├── project-paths.ts ← Clone user-paths.ts structure
-  │   └── queries.ts       ← Clone queries.ts structure
-  └── model/
-      └── types.ts         ← Clone types.ts structure
-```
-
-### File Content Cloning
-
-For each file type, clone the exact structure:
-
-```typescript
-// SAMPLE: user-paths.ts
+// Sample pattern: function-based
 export const USER_PATHS = {
   list: () => '/api/v1/users',
   detail: (id: string) => `/api/v1/users/${id}`,
   create: () => '/api/v1/users',
 } as const
 
-// GENERATED: project-paths.ts (same structure)
+// Generated: same pattern for new tag
 export const PROJECT_PATHS = {
   list: () => '/api/v1/projects',
   detail: (id: string) => `/api/v1/projects/${id}`,
@@ -197,71 +116,41 @@ export const PROJECT_PATHS = {
 } as const
 ```
 
-## Type Generation
+### Step 6: Generate API Functions
 
-### From Sample Type Patterns
+For each endpoint, generate function matching sample style:
+
+1. **Parse sample function structure:**
+   - Async arrow vs function declaration
+   - Parameter style (destructured, typed object)
+   - Return type annotation
+   - HTTP client call pattern
+   - Response access pattern (.data, direct)
+
+2. **Apply to each endpoint:**
 
 ```typescript
-// SAMPLE TYPES
-export interface User {
-  id: string
-  name: string
-  email: string
+// Sample:
+export const getUser = async ({ id }: GetUserRequest): Promise<User> => {
+  const response = await createApi().get<User>(USER_PATHS.detail(id))
+  return response.data
 }
 
-export interface GetUserRequest {
-  id: string
+// Generated (same pattern):
+export const getProject = async ({ id }: GetProjectRequest): Promise<Project> => {
+  const response = await createApi().get<Project>(PROJECT_PATHS.detail(id))
+  return response.data
 }
-
-export type GetUserResponse = User
-
-// DETECTED PATTERN
-{
-  entityStyle: "interface",
-  requestStyle: "interface",
-  responseStyle: "type-alias",
-  propertyStyle: "required-by-default",
-  optionalMarker: "?"
-}
-
-// GENERATED TYPES (same pattern)
-export interface Project {
-  id: string
-  name: string
-  workspaceId: string
-}
-
-export interface CreateProjectRequest {
-  name: string
-  workspaceId: string
-}
-
-export type CreateProjectResponse = Project
 ```
 
-### OpenAPI to TypeScript Mapping
+### Step 7: Generate Hooks (if applicable)
+
+If project uses React Query/SWR, generate hooks:
+
+1. **Clone hook pattern from sample:**
 
 ```typescript
-// Preserve nullability as in sample
-SAMPLE: email?: string    → optional with ?
-OPENAPI: nullable: true   → Generate as optional?
-
-SAMPLE: status: Status    → Uses type alias
-OPENAPI: enum: [...]      → Generate type alias
-
-// Match sample's handling of:
-- Arrays: items[] vs Array<Item>
-- Objects: Record<string, T> vs { [key: string]: T }
-- Unions: A | B vs union type
-- Dates: string vs Date
-```
-
-## Hook Generation
-
-### Clone Hook Patterns
-
-```typescript
-// SAMPLE HOOK
+// Sample:
 export const useUser = (id: string) => {
   return useQuery({
     queryKey: userKeys.detail(id),
@@ -269,26 +158,18 @@ export const useUser = (id: string) => {
   })
 }
 
-// GENERATED HOOK (same pattern)
+// Generated:
 export const useProject = (id: string) => {
   return useQuery({
     queryKey: projectKeys.detail(id),
     queryFn: () => projectApi.getProject({ id }),
   })
 }
+```
 
-// SAMPLE MUTATION
-export const useCreateUser = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: userApi.createUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() })
-    },
-  })
-}
+2. **Generate mutations for POST/PUT/DELETE:**
 
-// GENERATED MUTATION (same pattern)
+```typescript
 export const useCreateProject = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -300,128 +181,171 @@ export const useCreateProject = () => {
 }
 ```
 
-## Import Statement Cloning
+### Step 8: Write Files
+
+1. Check if file already exists
+   - If exists and `--force` flag → Overwrite
+   - If exists and no flag → Ask user: "File exists. Overwrite? [y/n]"
+   - If not exists → Create new
+
+2. Use `Write` tool to create each file
+
+3. Report generated files:
+   ```
+   Generated:
+     ✓ src/entities/project/model/project-types.ts (5 types)
+     ✓ src/entities/project/api/project-api-paths.ts (8 paths)
+     ✓ src/entities/project/api/project-api.ts (8 functions)
+     ✓ src/entities/project/api/project-queries.ts (8 hooks)
+   ```
+
+---
+
+## ERROR HANDLING
+
+For full error code reference, see [../../ERROR-CODES.md](../../ERROR-CODES.md).
+
+### Sample File Not Found [E401]
+
+```
+Error: "[E401] ❌ Sample file not found: <path>"
+Cause: Configured sample path doesn't exist
+Fix: Check samples path in .openapi-sync.json
+Recovery: Falls back to --interactive mode
+```
+
+### Pattern Extraction Failed [E402]
+
+```
+Warning: "[E402] ⚠️ Could not extract pattern from sample"
+Cause: Sample file too complex or uses unusual patterns
+Fix: Provide a simpler sample file
+Recovery: Uses default patterns
+```
+
+### File Write Failed [E303]
+
+```
+Error: "[E303] ❌ Failed to write file: <path>"
+Cause: Permission denied or directory doesn't exist
+Fix: Check permissions: chmod +w <directory>
+Action: Abort file generation for this file
+```
+
+### File Already Exists [E305]
+
+```
+Warning: "[E305] ⚠️ File already exists: <path>"
+Fix: Use --force to overwrite or --backup to create backup
+Recovery: Prompts user for action
+```
+
+### Invalid Identifier [E403]
+
+```
+Warning: "[E403] ⚠️ Invalid identifier: <name>"
+Cause: Name contains invalid characters or is reserved word
+Recovery: Sanitizes to valid identifier (logs original name)
+```
+
+### Duplicate Identifier [E404]
+
+```
+Warning: "[E404] ⚠️ Duplicate identifier: <name>"
+Cause: Multiple operations with same operationId
+Recovery: Appends suffix to make unique (e.g., getUsers_admin)
+```
+
+---
+
+## REFERENCE: Verb Mapping
+
+| HTTP Method | Default Verb | Alternative |
+|-------------|--------------|-------------|
+| GET (single) | `get` | `fetch`, `retrieve` |
+| GET (list) | `getList`, `list` | `fetchAll`, `getAll` |
+| POST | `create` | `add`, `post` |
+| PUT | `update` | `modify`, `put` |
+| PATCH | `patch` | `update`, `modify` |
+| DELETE | `delete` | `remove`, `destroy` |
+
+## REFERENCE: Naming Conventions
+
+Detect from sample and apply consistently:
+
+| Pattern | Example | Detection |
+|---------|---------|-----------|
+| camelCase | `getUser` | Lowercase first letter |
+| PascalCase | `GetUser` | Uppercase first letter |
+| snake_case | `get_user` | Underscore separator |
+| kebab-case | `get-user` | Hyphen separator |
+
+## REFERENCE: Import Cloning
+
+Clone import structure from sample:
 
 ```typescript
-// SAMPLE IMPORTS
+// Sample imports:
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
-import * as userApi from './user-api'
+import { createApi } from '@/shared/api'
 import { userKeys } from './user-keys'
 import type { User, GetUserRequest } from '../model/types'
 
-// GENERATED IMPORTS (same structure)
+// Generated imports (same structure):
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
-import * as projectApi from './project-api'
+import { createApi } from '@/shared/api'
 import { projectKeys } from './project-keys'
-import type { Project, CreateProjectRequest } from '../model/types'
+import type { Project, GetProjectRequest } from '../model/types'
 ```
 
-## Code Style Preservation
+---
 
-Detect and preserve from samples:
+## REFERENCE: Security
 
-```typescript
-{
-  // Formatting
-  "indentation": "2-spaces",      // from sample indentation
-  "quotes": "single",             // from sample strings
-  "semicolons": true,             // from sample line endings
-  "trailingComma": "all",         // from sample objects/arrays
+When generating code, follow security guidelines in [../../SECURITY.md](../../SECURITY.md):
 
-  // Conventions
-  "blankLines": {
-    "beforeExport": 1,
-    "betweenFunctions": 1,
-    "afterImports": 1
-  },
+- **Sanitize all identifiers** from OpenAPI spec before use in code
+- **Escape strings** in template literals (backticks, dollar signs)
+- **Never use** `eval()`, `new Function()`, or dynamic code execution
+- **Use environment variables** for API keys/credentials
+- **Include safe defaults** in generated HTTP client code (timeouts, size limits)
 
-  // Comments (preserve if sample has them)
-  "jsdoc": true,                  // /** */ style
-  "inlineComments": false
-}
-```
+---
 
-## Handling Variations
+## OUTPUT: Generation Report
 
-### When Multiple Samples Disagree
+Report to user upon completion:
 
 ```
-Sample 1: getUser()     (verb + Entity)
-Sample 2: fetchProject() (different verb)
-Sample 3: getUserById()  (verb + Entity + "ById")
+═══════════════════════════════════════════════════
+  Code Generation Complete
+═══════════════════════════════════════════════════
 
-STRATEGY:
-1. Group by pattern
-2. Use majority pattern
-3. Report inconsistencies to user
-
-"Found mixed naming: getUser (2 files) vs fetchProject (1 file)
-Using 'get' pattern. Override in config if needed."
-```
-
-### When Sample Doesn't Cover a Case
-
-```
-SAMPLE: Only has GET endpoints
-NEEDED: POST endpoint
-
-STRATEGY:
-1. Infer from GET pattern
-2. Apply common conventions for POST
-3. Or ask user for POST sample
-
-"Your samples only have GET. For POST:
-- Use 'create' prefix? (recommended based on GET 'get' pattern)
-- Provide a sample POST function?"
-```
-
-## Output Format
-
-```
-=== Code Generation Complete ===
-
-Created:
-  ✓ src/entities/project/model/types.ts
+Generated files:
+  ✓ src/entities/project/model/project-types.ts
     - Project (interface)
     - CreateProjectRequest (interface)
-    - CreateProjectResponse (type)
+    - UpdateProjectRequest (interface)
 
-  ✓ src/entities/project/api/project-paths.ts
+  ✓ src/entities/project/api/project-api-paths.ts
     - PROJECT_PATHS (const)
 
   ✓ src/entities/project/api/project-api.ts
     - createProject (function)
     - getProject (function)
-    - getProjectList (function)
+    - updateProject (function)
+    - deleteProject (function)
 
-  ✓ src/entities/project/api/project-keys.ts
-    - projectKeys (const)
-
-  ✓ src/entities/project/api/queries.ts
+  ✓ src/entities/project/api/project-queries.ts
     - useProject (hook)
-    - useProjectList (hook)
     - useCreateProject (hook)
+    - useUpdateProject (hook)
+    - useDeleteProject (hook)
 
 Style: Cloned from src/entities/user/
 Confidence: 95% (all patterns matched)
-```
 
-## Fallback: No Samples Available
-
-When working with empty/new project:
-
-```typescript
-// Ask user preference
-"This appears to be a new project. What style should I generate?"
-
-Options:
-1. "React + Axios + React Query (modern)"
-2. "React + Fetch + SWR"
-3. "Vue + Axios + Pinia"
-4. "Provide sample directly"
-5. "Generate types only (minimal)"
-
-// Then use framework-specific sensible defaults
+Next: Run TypeScript compiler to verify types
 ```

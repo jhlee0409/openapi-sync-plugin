@@ -3,391 +3,272 @@ name: pattern-detector
 description: Universal pattern detector - learns from ANY codebase through sample analysis
 ---
 
-# Universal Pattern Detector
+# Pattern Detector
 
-Analyze ANY codebase to learn existing API patterns. Works with any framework, structure, or convention by analyzing actual code samples.
+Analyze ANY codebase to learn existing API patterns. Works with any framework, structure, or convention.
 
-## Core Philosophy
+---
 
+## EXECUTION INSTRUCTIONS
+
+When this skill is invoked, Claude MUST perform these steps in order:
+
+### Step 1: Read package.json
+
+1. Use `Read` tool to read `package.json` in project root
+2. Extract dependency information:
+   - `dependencies`
+   - `devDependencies`
+3. If package.json not found → Report error and abort
+
+### Step 2: Detect Framework Stack
+
+From package.json, identify:
+
+| Category | Check for | Result |
+|----------|-----------|--------|
+| Framework | `react`, `vue`, `@angular/core`, `svelte` | Set `framework` |
+| HTTP Client | `axios`, `ky`, `got` | Set `httpClient` |
+| Data Fetching | `@tanstack/react-query`, `swr`, `@reduxjs/toolkit` | Set `dataFetching` |
+| Language | `typescript` in devDeps | Set `language` to `typescript` or `javascript` |
+
+Report findings:
 ```
-DON'T: Match against predefined patterns
-DO:    Learn from existing code samples
-
-"Show me one API file, I'll generate 100 more like it"
-```
-
-## Detection Strategy (Priority Order)
-
-### Phase 1: Framework Detection (package.json)
-
-```
-Read package.json dependencies + devDependencies
-
-FRONTEND FRAMEWORKS:
-  "react" → React ecosystem
-  "vue" → Vue ecosystem
-  "@angular/core" → Angular ecosystem
-  "svelte" → Svelte ecosystem
-  "solid-js" → SolidJS ecosystem
-  "next" → Next.js (React SSR)
-  "nuxt" → Nuxt (Vue SSR)
-  "@remix-run/react" → Remix
-
-HTTP CLIENTS:
-  "axios" → Axios
-  "ky" → Ky
-  "got" → Got (Node)
-  "node-fetch" → Fetch polyfill
-  "ofetch" → oFetch (Nuxt)
-  "@angular/common/http" → Angular HttpClient
-  (none) → Native fetch
-
-STATE/DATA FETCHING:
-  "@tanstack/react-query" → TanStack Query (React)
-  "@tanstack/vue-query" → TanStack Query (Vue)
-  "@tanstack/solid-query" → TanStack Query (Solid)
-  "@tanstack/svelte-query" → TanStack Query (Svelte)
-  "swr" → SWR
-  "@reduxjs/toolkit" → RTK Query (check for createApi)
-  "pinia" → Pinia (Vue)
-  "@ngrx/store" → NgRx (Angular)
-  "rxjs" → RxJS (Angular)
-  "apollo" / "@apollo/client" → GraphQL Apollo
-  "urql" → GraphQL URQL
-  (none) → No data fetching library
-
-TYPE SYSTEM:
-  "typescript" → TypeScript
-  (none) → JavaScript
-
-Output: { framework, httpClient, dataFetching, language }
+📦 package.json analysis:
+  Framework: <framework> + <language>
+  HTTP Client: <httpClient or "fetch (native)">
+  Data Fetching: <dataFetching or "none detected">
 ```
 
-### Phase 2: Find Existing API Code (Sample Discovery)
+### Step 3: Search for Existing API Code
+
+Use `Glob` tool with these patterns in order:
 
 ```
-SEARCH STRATEGY (broadest first):
-
-1. Common API locations:
-   Glob: src/**/api/**/*.{ts,js,tsx,jsx}
-   Glob: src/**/services/**/*.{ts,js}
-   Glob: src/**/hooks/**/*{api,query,fetch}*.{ts,js}
-   Glob: lib/api/**/*.{ts,js}
-   Glob: api/**/*.{ts,js}
-
-2. HTTP client usage:
-   Grep: "axios\." OR "fetch(" OR "ky\." OR "http\."
-   → Find files with HTTP calls
-
-3. Data fetching hooks:
-   Grep: "useQuery|useMutation|useSWR|createAsyncThunk"
-   → Find files with data fetching
-
-4. Type definitions:
-   Grep: "Response|Request|Dto|Entity" in type/interface
-   → Find API-related types
-
-IF NO FILES FOUND:
-   → Go to Phase 4 (Interactive)
+1. src/**/api/**/*.{ts,js,tsx,jsx}
+2. src/**/services/**/*.{ts,js}
+3. src/**/hooks/**/*{api,query,fetch}*.{ts,js}
+4. lib/api/**/*.{ts,js}
+5. api/**/*.{ts,js}
 ```
 
-### Phase 3: Sample Analysis (THE KEY)
+If NO files found:
+- Report: `🔍 No existing API code found`
+- Skip to Step 6 (Interactive Fallback)
 
-**For each discovered sample file, extract:**
+If files found:
+- Report: `🔍 Found <count> potential API files`
+- Continue to Step 4
 
-```typescript
-ANALYZE FILE STRUCTURE:
-{
-  // File metadata
-  "filePath": "src/entities/user/api/user-api.ts",
-  "fileName": "user-api.ts",
-  "folderStructure": ["src", "entities", "user", "api"],
+### Step 4: Analyze Sample Files
 
-  // Imports analysis
-  "imports": {
-    "httpClient": {
-      "source": "@/shared/api",
-      "named": ["createApi"],
-      "pattern": "custom-wrapper"
-    },
-    "types": {
-      "source": "../model/types",
-      "named": ["User", "GetUserRequest"]
-    },
-    "external": ["@tanstack/react-query"]
-  },
+For each discovered file (max 5 files):
 
-  // Export analysis
-  "exports": {
-    "functions": ["getUser", "createUser", "updateUser"],
-    "hooks": ["useUser", "useCreateUser"],
-    "constants": ["userKeys", "USER_API_PATHS"],
-    "types": ["UserResponse"]
-  },
+1. Use `Read` tool to read file content
+2. Extract patterns:
+   - **Import patterns**: What modules are imported, how (named, default, namespace)
+   - **Export patterns**: Named exports, default exports, barrel exports
+   - **Function patterns**: Arrow vs declaration, async, parameter style
+   - **HTTP call patterns**: How HTTP requests are made
+   - **Type patterns**: Interface vs type, naming conventions
+   - **Hook patterns**: If React Query/SWR hooks present
 
-  // Function patterns
-  "functionPatterns": [
-    {
-      "name": "getUser",
-      "type": "async-arrow|async-function|sync",
-      "params": "({ id }: GetUserRequest)",
-      "returnType": "Promise<User>",
-      "httpCall": {
-        "method": "get",
-        "client": "createApi()",
-        "pathPattern": "USER_API_PATHS.detail(id)",
-        "responseAccess": ".data"
-      }
-    }
-  ],
+3. Record findings in structured format:
+   ```
+   File: <path>
+   - Imports: <pattern>
+   - Exports: <pattern>
+   - Functions: <pattern>
+   - HTTP: <pattern>
+   - Types: <pattern>
+   ```
 
-  // Hook patterns (if present)
-  "hookPatterns": [
-    {
-      "name": "useUser",
-      "library": "react-query",
-      "type": "query|mutation",
-      "keyPattern": "userKeys.detail(id)",
-      "fnPattern": "userApi.getUser({ id })"
-    }
-  ],
+### Step 5: Synthesize Patterns
 
-  // Naming conventions (extracted)
-  "naming": {
-    "filePattern": "{domain}-api.ts",
-    "functionPrefix": "get|create|update|delete",
-    "hookPrefix": "use",
-    "typePattern": "{Entity}Response"
-  }
-}
-```
-
-**Multi-sample correlation:**
+1. Compare patterns across all analyzed files
+2. Calculate majority pattern for each category
+3. Calculate confidence score (percentage of files matching majority)
+4. Report findings:
 
 ```
-IF multiple samples found:
-  → Compare patterns across files
-  → Find common conventions
-  → Calculate consistency score
-  → Use majority pattern
+📂 Detected patterns:
+  Structure: <pattern> (confidence: <X>%)
+  HTTP Client: <pattern>
+  Data Fetching: <pattern>
+  Types: <pattern>
+  Naming: <pattern>
 
-EXAMPLE:
-  File1: getUser, createUser (camelCase, verb+Entity)
-  File2: fetchProject, addProject (camelCase, verb+Entity)
-  File3: get_clip, create_clip (snake_case)
-
-  → Majority: camelCase + verb+Entity
-  → Confidence: 66%
-  → Note: File3 uses different convention
+📁 Sample files:
+  API: <best sample path>
+  Types: <best sample path>
+  Hooks: <best sample path>
 ```
 
-### Phase 4: Interactive Fallback
+### Step 6: Interactive Fallback (if no patterns detected)
 
-**When detection fails or confidence < 50%:**
+If Step 3 found no files OR Step 5 confidence < 50%:
+
+1. Ask user: "No clear patterns detected. Please provide a sample API file path:"
+2. Wait for user response
+3. Read the provided file
+4. Analyze that single file as the pattern source
+
+If user provides no sample:
+1. Ask for framework preference
+2. Use sensible defaults based on detected framework
+
+---
+
+## ERROR HANDLING
+
+For full error code reference, see [../../ERROR-CODES.md](../../ERROR-CODES.md).
+
+### package.json Not Found [E501]
 
 ```
-ASK USER:
-
-Q1: "Please provide the folder or file path where API code is located"
-    → User provides: "src/api/userService.ts"
-    → Analyze that specific file
-
-Q2: "Which HTTP client are you using?"
-    Options: [Axios, Fetch, Ky, Custom, Other]
-
-Q3: "Are you using a data fetching library?"
-    Options: [React Query, SWR, RTK Query, None, Other]
-
-Q4: "Would you like to provide sample code for reference?"
-    → User pastes code
-    → Analyze pasted code directly
+Error: "[E501] ❌ Cannot find package.json"
+Cause: Not in project root or no package.json exists
+Fix: Run from project root directory
+Action: Abort operation
 ```
 
-### Phase 5: Pattern Synthesis
+### Config File Not Found [E501]
 
-**Combine all gathered information:**
+```
+Error: "[E501] ❌ Configuration file not found: .openapi-sync.json"
+Cause: Project not initialized
+Fix: Run /oas:init to initialize
+Action: Abort operation
+```
+
+### No Files Match Glob Patterns [E402]
+
+```
+Warning: "[E402] ⚠️ No API files found in standard locations"
+Cause: Project uses non-standard structure
+Fix: Specify sample file manually
+Recovery: Proceed to Interactive Fallback
+```
+
+### File Read Error [E302]
+
+```
+Warning: "[E302] ⚠️ Could not read <filepath>, skipping..."
+Cause: Permission denied or file corrupted
+Recovery: Continue with other files
+```
+
+### Invalid Sample File [E402]
+
+```
+Warning: "[E402] ⚠️ Sample file doesn't contain extractable patterns"
+Cause: File is empty, too simple, or uses unusual syntax
+Fix: Provide a more representative sample
+Recovery: Uses default patterns
+```
+
+### Conflicting Patterns
+
+```
+Warning: "⚠️ Inconsistent patterns detected across files"
+Detail: "Found: camelCase (60%), snake_case (40%)"
+Recovery: Use majority pattern, report inconsistency
+```
+
+---
+
+## REFERENCE: Common API Locations
+
+```
+FSD (Feature-Sliced Design):
+  src/entities/{domain}/api/{domain}-api.ts
+  src/entities/{domain}/model/types.ts
+  src/features/{feature}/api/
+
+Feature-based:
+  src/features/{feature}/api.ts
+  src/features/{feature}/hooks.ts
+
+Flat:
+  src/api/{domain}.ts
+  src/hooks/use{Domain}.ts
+
+Service-based:
+  src/services/{domain}.service.ts
+  src/services/{domain}Service.ts
+```
+
+## REFERENCE: Detection Patterns
+
+### HTTP Client Detection
+
+| Package | Import Pattern | Usage Pattern |
+|---------|---------------|---------------|
+| axios | `import axios` or `import { } from 'axios'` | `axios.get()`, `axios.create()` |
+| ky | `import ky from 'ky'` | `ky.get()`, `ky.post()` |
+| fetch | (native) | `fetch(url)` |
+| custom | `import { api } from '@/shared/api'` | `api.get()`, `createApi()` |
+
+### Data Fetching Detection
+
+| Package | Import Pattern | Usage Pattern |
+|---------|---------------|---------------|
+| React Query | `from '@tanstack/react-query'` | `useQuery()`, `useMutation()` |
+| SWR | `import useSWR` | `useSWR(key, fetcher)` |
+| RTK Query | `createApi` from toolkit | `api.endpoints.getX.useQuery()` |
+
+### Type Pattern Detection
+
+| Pattern | Example | Identification |
+|---------|---------|----------------|
+| Interface | `interface User { }` | Uses `interface` keyword |
+| Type alias | `type User = { }` | Uses `type` keyword |
+| Request suffix | `GetUserRequest` | Type name ends with `Request` |
+| Response suffix | `GetUserResponse` | Type name ends with `Response` |
+| DTO suffix | `UserDTO`, `UserDto` | Type name ends with `DTO`/`Dto` |
+
+---
+
+## OUTPUT: Pattern Result Structure
+
+Return this structure to the calling command:
 
 ```json
 {
   "meta": {
-    "detectionMethod": "sample-analysis|package-json|interactive",
+    "detectionMethod": "sample-analysis",
     "confidence": 0.85,
     "samplesAnalyzed": 5,
     "framework": "react"
   },
-
   "structure": {
-    "type": "custom",
+    "type": "fsd",
     "pattern": "src/entities/{domain}/api/{domain}-api.ts",
-    "discovered": [
-      "src/entities/user/api/user-api.ts",
-      "src/entities/project/api/project-api.ts"
-    ]
+    "discovered": ["src/entities/user/api/user-api.ts"]
   },
-
   "httpClient": {
     "type": "custom-wrapper",
     "import": "import { createApi } from '@/shared/api'",
-    "usage": "createApi().{method}<{Type}>(path)",
-    "responseAccess": ".data"
+    "usage": "createApi().{method}<{Type}>(path)"
   },
-
   "dataFetching": {
     "library": "react-query",
     "version": "5",
-    "patterns": {
-      "queryKey": "factory",
-      "queryKeyImport": "import { {domain}Keys } from './{domain}-keys'",
-      "hookLocation": "same-file|separate-file"
-    }
+    "keyPattern": "factory"
   },
-
   "types": {
     "location": "src/entities/{domain}/model/types.ts",
     "style": "interface",
     "naming": {
       "request": "{Operation}Request",
-      "response": "{Operation}Response",
+      "response": "{Entity}",
       "entity": "{Entity}"
     }
   },
-
-  "codeStyle": {
-    "quotes": "single|double",
-    "semicolons": true,
-    "trailingComma": "es5|all|none",
-    "indentation": "2-spaces|4-spaces|tabs",
-    "functionStyle": "arrow|declaration"
-  },
-
   "samples": {
-    "api": {
-      "path": "src/entities/user/api/user-api.ts",
-      "content": "// actual sample code for reference"
-    },
-    "types": {
-      "path": "src/entities/user/model/types.ts",
-      "content": "// actual sample code"
-    },
-    "hooks": {
-      "path": "src/entities/user/api/queries.ts",
-      "content": "// actual sample code"
-    }
+    "api": { "path": "...", "content": "..." },
+    "types": { "path": "...", "content": "..." },
+    "hooks": { "path": "...", "content": "..." }
   }
 }
-```
-
-## Universal Template Extraction
-
-**From any sample, extract a reusable template:**
-
-```typescript
-// ORIGINAL SAMPLE
-export const getUser = async ({ id }: GetUserRequest): Promise<User> => {
-  const response = await createApi().get<User>(`/api/v1/users/${id}`)
-  return response.data
-}
-
-// EXTRACTED TEMPLATE
-export const {functionName} = async ({ {params} }: {RequestType}): Promise<{ResponseType}> => {
-  const response = await {httpClient}.{method}<{ResponseType}>({pathExpression})
-  return response.data
-}
-
-// TEMPLATE VARIABLES
-{
-  "functionName": "get{Entity}",
-  "params": "id",
-  "RequestType": "Get{Entity}Request",
-  "ResponseType": "{Entity}",
-  "httpClient": "createApi()",
-  "method": "get",
-  "pathExpression": "`/api/v1/{entities}/${id}`"
-}
-```
-
-## Handling Unknown Patterns
-
-```
-UNKNOWN HTTP CLIENT:
-  → Extract the import statement
-  → Extract the call pattern
-  → Store as "custom" with raw pattern
-
-UNKNOWN STRUCTURE:
-  → Record the actual paths found
-  → Use those paths as template
-
-UNKNOWN CONVENTION:
-  → Ask user for one sample
-  → Clone that exact style
-
-NO EXISTING CODE:
-  → Ask user preference
-  → Or use sensible defaults based on framework
-```
-
-## Output for Code Generator
-
-Provide everything code-generator needs:
-
-```json
-{
-  "templates": {
-    "apiFunction": "// extracted template with placeholders",
-    "queryHook": "// extracted template",
-    "mutationHook": "// extracted template",
-    "types": "// extracted template",
-    "pathConstants": "// extracted template"
-  },
-
-  "paths": {
-    "api": "src/entities/{domain}/api/{domain}-api.ts",
-    "types": "src/entities/{domain}/model/types.ts",
-    "hooks": "src/entities/{domain}/api/queries.ts",
-    "keys": "src/entities/{domain}/api/{domain}-keys.ts"
-  },
-
-  "imports": {
-    "httpClient": "import { createApi } from '@/shared/api'",
-    "queryLibrary": "import { useQuery, useMutation } from '@tanstack/react-query'",
-    "types": "import type { {Types} } from '../model/types'"
-  },
-
-  "samples": {
-    // Raw samples for reference/fallback
-  }
-}
-```
-
-## Special Cases
-
-### Monorepo Detection
-```
-Check for:
-  - pnpm-workspace.yaml
-  - lerna.json
-  - nx.json
-  - turbo.json
-  - packages/ or apps/ directory
-
-If monorepo:
-  → Ask which package to analyze
-  → Or detect from current working directory
-```
-
-### GraphQL Projects
-```
-If Apollo/URQL detected:
-  → Look for .graphql files
-  → Look for gql`` template literals
-  → Adjust generation for GraphQL patterns
-```
-
-### Backend/Full-stack
-```
-If Express/Fastify/NestJS detected:
-  → This is a backend project
-  → Adjust to generate route handlers instead of client code
-  → Or ask if generating client SDK
 ```
