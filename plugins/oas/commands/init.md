@@ -6,6 +6,39 @@ description: Initialize OpenAPI sync - learns your project patterns automaticall
 
 Initialize OpenAPI sync by learning your project's existing patterns. Works with ANY codebase.
 
+## Usage
+
+```bash
+/oas:init <spec-url-or-path>
+```
+
+**Examples:**
+```bash
+# From URL
+/oas:init https://api.example.com/openapi.json
+
+# From local file
+/oas:init ./docs/openapi.yaml
+```
+
+## First Step: Ask for Spec Location
+
+**IMPORTANT: Always start by asking the user for the OpenAPI spec location.**
+
+```
+🚀 OpenAPI Sync 초기화
+
+OpenAPI spec의 URL 또는 파일 경로를 입력해주세요:
+
+예시:
+  • https://api.example.com/openapi.json
+  • ./openapi.json
+  • ./docs/swagger.yaml
+```
+
+If user provided argument with command, use that directly.
+If not, prompt for input before proceeding.
+
 ## Flow Overview
 
 ```
