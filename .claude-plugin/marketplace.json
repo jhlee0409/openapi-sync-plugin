@@ -3,10 +3,7 @@
   "tags": ["api", "openapi", "codegen", "typescript", "react-query"],
   "featured": false,
   "icon": "sync",
-  "screenshots": [
-    "https://raw.githubusercontent.com/jhlee0409/openapi-sync-plugin/main/assets/demo-init.png",
-    "https://raw.githubusercontent.com/jhlee0409/openapi-sync-plugin/main/assets/demo-sync.png"
-  ],
+  "screenshots": [],
   "shortDescription": "Learn project patterns, generate API code from OpenAPI specs",
   "longDescription": "OpenAPI Sync automatically detects your project's code patterns (folder structure, HTTP client, state management) and generates type-safe API code that matches your conventions. Supports FSD, feature-based, and flat architectures with Axios, Fetch, React Query, SWR, and more."
 }
