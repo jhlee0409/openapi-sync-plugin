@@ -1,5 +1,5 @@
 ---
-name: api:analyze
+name: oas:analyze
 description: Deep analysis of project's API code patterns
 argument-hint: [--verbose] [--domain=name]
 uses-skills: [output-format]
@@ -11,7 +11,7 @@ Perform deep analysis of the project's existing API-related code patterns.
 
 ## Prerequisites
 
-Check if `.openapi-sync.json` exists. If not, suggest running `/api:init` first.
+Check if `.openapi-sync.json` exists. If not, suggest running `/oas:init` first.
 
 ## Analysis Scope
 

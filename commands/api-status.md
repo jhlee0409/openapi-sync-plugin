@@ -1,5 +1,5 @@
 ---
-name: api:status
+name: oas:status
 description: Quick status check - show sync state without fetching spec
 argument-hint: [--check-remote] [--tag=name] [--list-tags]
 uses-skills: [output-format]
@@ -13,10 +13,10 @@ Cache-based quick status check. Shows results instantly without fetching spec.
 
 ```bash
 # Local cache-based status (instant)
-/api:status
+/oas:status
 
 # Compare with remote spec (slower)
-/api:status --check-remote
+/oas:status --check-remote
 ```
 
 ## Quick Status (Default)
@@ -73,9 +73,9 @@ Read cache files only for instant display:
 ═══════════════════════════════════════════════════
 
 💡 Quick actions:
-   /api:sync --tag=workspace  - Complete workspace
-   /api:sync --tag=tools      - Add tools domain
-   /api:diff --check-remote   - Check for spec changes
+   /oas:sync --tag=workspace  - Complete workspace
+   /oas:sync --tag=tools      - Add tools domain
+   /oas:diff --check-remote   - Check for spec changes
 ```
 
 ## Check Remote (--check-remote)
@@ -83,7 +83,7 @@ Read cache files only for instant display:
 Check remote spec hash only (fast, no full download):
 
 ```
-/api:status --check-remote
+/oas:status --check-remote
 
 Checking remote spec...
 
@@ -93,14 +93,14 @@ Checking remote spec...
    Status: ⚠️ SPEC CHANGED
 
 🔄 Changes since last sync:
-   Run /api:diff to see details
-   Run /api:sync to update
+   Run /oas:diff to see details
+   Run /oas:sync to update
 ```
 
 Or:
 
 ```
-/api:status --check-remote
+/oas:status --check-remote
 
 📄 Spec Status:
    Local hash:  abc123...
@@ -120,11 +120,11 @@ No changes since last sync.
 ## No Cache (First Run)
 
 ```
-/api:status
+/oas:status
 
 ⚠️ No cache found
 
-Run /api:init to initialize OpenAPI sync.
+Run /oas:init to initialize OpenAPI sync.
 ```
 
 ## Flags
@@ -145,7 +145,7 @@ Filter status view by specific tags:
 
 ```bash
 # Status for specific tag only
-/api:status --tag=workspace
+/oas:status --tag=workspace
 
 ═══════════════════════════════════════════════════
   API Status: workspace tag
@@ -172,25 +172,25 @@ Filter status view by specific tags:
   GET    /workspaces/{id}/usage-report    ← NEW in spec
   GET    /workspaces/{id}/icon/default    ← NEW in spec
 
-💡 Run: /api:sync --tag=workspace
+💡 Run: /oas:sync --tag=workspace
 ```
 
 ### List All Tags
 
 ```bash
-/api:status --list-tags
+/oas:status --list-tags
 
 📋 Tags Overview:
 
 Tag              Implemented   Total   Coverage   Actions
 ─────────────────────────────────────────────────────────────
-workspace        14            18      78%        /api:sync --tag=workspace
+workspace        14            18      78%        /oas:sync --tag=workspace
 user             12            12      100%       ✓ Complete
 project          28            28      100%       ✓ Complete
-billing          0             8       0%         /api:sync --tag=billing
+billing          0             8       0%         /oas:sync --tag=billing
 auth             10            10      100%       ✓ Complete
 clips            15            15      100%       ✓ Complete
-public           0             1       0%         /api:sync --tag=public
+public           0             1       0%         /oas:sync --tag=public
 
 Summary:
   ✅ Complete: 4 tags
@@ -204,7 +204,7 @@ Total coverage: 79/92 endpoints (86%)
 
 ```bash
 # Status for multiple tags
-/api:status --tag=workspace --tag=billing
+/oas:status --tag=workspace --tag=billing
 
 📊 Coverage (workspace + billing):
    workspace: 14/18 (78%)
@@ -217,8 +217,8 @@ Total coverage: 79/92 endpoints (86%)
 
 | Command | Purpose | Accuracy |
 |---------|---------|----------|
-| `/api:status` | Quick status check | Cache-based |
-| `/api:sync` | Actual sync | 100% (always verified) |
-| `/api:sync --trust-cache` | Fast sync | 99%* |
+| `/oas:status` | Quick status check | Cache-based |
+| `/oas:sync` | Actual sync | 100% (always verified) |
+| `/oas:sync --trust-cache` | Fast sync | 99%* |
 
 *May miss changes if cache is corrupted or server error occurs

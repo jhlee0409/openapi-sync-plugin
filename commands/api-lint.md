@@ -1,5 +1,5 @@
 ---
-name: api:lint
+name: oas:lint
 description: Lint OpenAPI spec AND codebase for inconsistencies
 argument-hint: [--spec] [--code] [--fix] [--rule=name]
 uses-skills: [output-format]
@@ -12,23 +12,23 @@ Check OpenAPI spec and codebase for consistency. Finds inconsistencies in manual
 ## Target Selection
 
 ```
-/api:lint           → Check both spec + code (default)
-/api:lint --spec    → Check OpenAPI spec only
-/api:lint --code    → Check codebase only
+/oas:lint           → Check both spec + code (default)
+/oas:lint --spec    → Check OpenAPI spec only
+/oas:lint --code    → Check codebase only
 ```
 
 ## Usage
 
 ```bash
 # Full check
-/api:lint
+/oas:lint
 
 # Specific rule only
-/api:lint --rule=naming
-/api:lint --rule=response-structure
+/oas:lint --rule=naming
+/oas:lint --rule=response-structure
 
 # Fix suggestions
-/api:lint --fix
+/oas:lint --fix
 ```
 
 ## Part 1: Spec Lint Rules (--spec)
@@ -612,13 +612,13 @@ Return type annotation:
 
 ═══════════════════════════════════════════════════
 
-💡 Run /api:lint --fix to see suggested fixes
+💡 Run /oas:lint --fix to see suggested fixes
 ```
 
 ## Fix Suggestions
 
 ```bash
-/api:lint --fix
+/oas:lint --fix
 ```
 
 ```
@@ -672,18 +672,18 @@ Lint rules are auto-detected from your project's patterns. No manual configurati
 
 The majority pattern in your codebase becomes the "standard" - we find inconsistencies, not enforce external rules.
 
-> **Note:** Advanced lint configuration is stored internally by `/api:init`. Manual override is not recommended.
+> **Note:** Advanced lint configuration is stored internally by `/oas:init`. Manual override is not recommended.
 
 ## Integration with Other Commands
 
 ```bash
 # Lint then sync
-/api:lint && /api:sync
+/oas:lint && /oas:sync
 
 # Stop on critical in CI
-/api:lint --severity=critical
+/oas:lint --severity=critical
 
 # Apply lint results to sync (generate consistent code)
-/api:sync --normalize
+/oas:sync --normalize
 ```
 

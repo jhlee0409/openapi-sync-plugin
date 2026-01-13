@@ -227,7 +227,7 @@ async function getQuickHash(url: string): Promise<string> {
 
 ```
 Cache invalidation conditions:
-1. Manual request: /api:sync --force
+1. Manual request: /oas:sync --force
 2. Cache file not found
 3. Cache version mismatch
 4. More than 24 hours elapsed (optional)

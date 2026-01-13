@@ -30,26 +30,26 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 
 ```bash
 # 1. 프로젝트 초기화
-/api:init
+/oas:init
 
 # 2. 스펙 기반 코드 생성
-/api:sync
+/oas:sync
 
 # 3. 일관성 검사
-/api:lint
+/oas:lint
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/api:init` | 프로젝트 초기화, 패턴 학습, 설정 파일 생성 |
-| `/api:sync` | OpenAPI 스펙 기반 코드 생성/동기화 |
-| `/api:status` | 캐시 기반 빠른 상태 확인 |
-| `/api:diff` | 스펙 변경사항 비교 |
-| `/api:validate` | 코드-스펙 일치 검증 |
-| `/api:lint` | 스펙 + 코드 일관성 검사 |
-| `/api:analyze` | 감지된 패턴 심층 분석 |
+| `/oas:init` | 프로젝트 초기화, 패턴 학습, 설정 파일 생성 |
+| `/oas:sync` | OpenAPI 스펙 기반 코드 생성/동기화 |
+| `/oas:status` | 캐시 기반 빠른 상태 확인 |
+| `/oas:diff` | 스펙 변경사항 비교 |
+| `/oas:validate` | 코드-스펙 일치 검증 |
+| `/oas:lint` | 스펙 + 코드 일관성 검사 |
+| `/oas:analyze` | 감지된 패턴 심층 분석 |
 
 ## 핵심 기능
 
@@ -58,8 +58,8 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 기존 API 코드를 분석해서 프로젝트 패턴을 학습:
 
 ```bash
-/api:init ./openapi.json                        # 로컬 파일
-/api:init https://api.example.com/openapi.json  # 원격 URL
+/oas:init ./openapi.json                        # 로컬 파일
+/oas:init https://api.example.com/openapi.json  # 원격 URL
 
 📄 OpenAPI: My API v2.0.0 (25 endpoints)
 
@@ -80,7 +80,7 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 학습된 패턴으로 새 API 코드 생성:
 
 ```bash
-/api:sync --tag=publisher
+/oas:sync --tag=publisher
 
 생성됨:
   ✓ src/entities/publisher/api/publisher-api.ts
@@ -95,14 +95,14 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 변경된 부분만 처리해서 토큰/시간 절약:
 
 ```bash
-/api:sync
+/oas:sync
 
 ✓ 스펙 변경 없음 (캐시 힌트)
 ✓ 코드-스펙 직접 비교 완료
 ✓ 변경 필요 없음
 
 # 변경 있을 때
-/api:sync
+/oas:sync
 
 변경 감지:
   +2 added, ~1 modified, -0 removed
@@ -119,7 +119,7 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 프로젝트 자체의 majority 패턴을 기준으로 불일치 탐지:
 
 ```bash
-/api:lint
+/oas:lint
 
 프로젝트 패턴 분석...
   Type naming: PascalCase (97.5%)
@@ -130,7 +130,7 @@ claude --plugin-dir /path/to/openapi-sync-plugin
   🟡 upload-types.ts: 8개 타입이 camelCase 사용
      → 프로젝트 기준(PascalCase)과 다름
 
-/api:lint --fix
+/oas:lint --fix
 
   ✓ 8개 타입 PascalCase로 변환
   ✓ 3개 파일 import 업데이트
@@ -139,114 +139,114 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 
 ## Command 레퍼런스
 
-### /api:init
+### /oas:init
 
 프로젝트 초기화 및 패턴 학습.
 
 ```bash
-/api:init                      # 자동 패턴 감지
-/api:init ./openapi.json       # 로컬 스펙 파일 사용
-/api:init https://api.com/spec # 원격 스펙 URL 사용
-/api:init --force              # 기존 설정 덮어쓰기
-/api:init --interactive        # 자동 감지 스킵, 수동 설정
-/api:init --sample=path        # 특정 샘플 파일 지정
+/oas:init                      # 자동 패턴 감지
+/oas:init ./openapi.json       # 로컬 스펙 파일 사용
+/oas:init https://api.com/spec # 원격 스펙 URL 사용
+/oas:init --force              # 기존 설정 덮어쓰기
+/oas:init --interactive        # 자동 감지 스킵, 수동 설정
+/oas:init --sample=path        # 특정 샘플 파일 지정
 ```
 
-### /api:sync
+### /oas:sync
 
 OpenAPI 스펙 기반 코드 생성/업데이트.
 
 ```bash
 # 기본
-/api:sync                    # 기본 (Conservative, 100% 정확도)
-/api:sync --dry-run          # 미리보기만, 파일 변경 없음
-/api:sync --force            # 캐시 무시, 전체 재생성
-/api:sync --trust-cache      # 캐시 신뢰 모드 (빠름, 99% 정확도)
+/oas:sync                    # 기본 (Conservative, 100% 정확도)
+/oas:sync --dry-run          # 미리보기만, 파일 변경 없음
+/oas:sync --force            # 캐시 무시, 전체 재생성
+/oas:sync --trust-cache      # 캐시 신뢰 모드 (빠름, 99% 정확도)
 
 # 태그별 필터
-/api:sync --tag=users        # 특정 태그만
-/api:sync --tag=users --tag=projects  # 여러 태그
-/api:sync --exclude-tag=internal      # 태그 제외
+/oas:sync --tag=users        # 특정 태그만
+/oas:sync --tag=users --tag=projects  # 여러 태그
+/oas:sync --exclude-tag=internal      # 태그 제외
 
 # 엔드포인트별 필터
-/api:sync --endpoint="/api/v1/users/{id}"
-/api:sync --endpoint="/api/v1/clips/*"  # 와일드카드
+/oas:sync --endpoint="/api/v1/users/{id}"
+/oas:sync --endpoint="/api/v1/clips/*"  # 와일드카드
 
 # 변경 타입별 필터
-/api:sync --only-added       # 새 엔드포인트만
-/api:sync --only-changed     # 수정된 엔드포인트만
+/oas:sync --only-added       # 새 엔드포인트만
+/oas:sync --only-changed     # 수정된 엔드포인트만
 
 # 파일 타입별 필터
-/api:sync --only-types       # 타입만
-/api:sync --only-api         # API 함수만
-/api:sync --only-hooks       # 훅만
+/oas:sync --only-types       # 타입만
+/oas:sync --only-api         # API 함수만
+/oas:sync --only-hooks       # 훅만
 ```
 
-### /api:diff
+### /oas:diff
 
 OpenAPI 스펙 변경사항 비교.
 
 ```bash
-/api:diff                    # 캐시 vs 현재 비교
-/api:diff --remote           # 원격 스펙과 비교
-/api:diff old.json new.json  # 두 파일 비교
-/api:diff --breaking-only    # Breaking changes만 표시
-/api:diff --tag=users        # 특정 태그만
-/api:diff --exclude-tag=internal  # 특정 태그 제외
-/api:diff --list-tags        # 태그별 변경 요약 표시
-/api:diff --json             # JSON 출력
+/oas:diff                    # 캐시 vs 현재 비교
+/oas:diff --remote           # 원격 스펙과 비교
+/oas:diff old.json new.json  # 두 파일 비교
+/oas:diff --breaking-only    # Breaking changes만 표시
+/oas:diff --tag=users        # 특정 태그만
+/oas:diff --exclude-tag=internal  # 특정 태그 제외
+/oas:diff --list-tags        # 태그별 변경 요약 표시
+/oas:diff --json             # JSON 출력
 ```
 
-### /api:validate
+### /oas:validate
 
 코드-스펙 일치 검증 (CI/CD 친화적).
 
 ```bash
-/api:validate                # 기본 검증
-/api:validate --strict       # 경고도 에러 처리 (CI용)
-/api:validate --fix          # 자동 수정 가능한 것 수정
-/api:validate --tag=users    # 특정 태그만
-/api:validate --json         # JSON 출력
-/api:validate --quiet        # 에러만 출력
+/oas:validate                # 기본 검증
+/oas:validate --strict       # 경고도 에러 처리 (CI용)
+/oas:validate --fix          # 자동 수정 가능한 것 수정
+/oas:validate --tag=users    # 특정 태그만
+/oas:validate --json         # JSON 출력
+/oas:validate --quiet        # 에러만 출력
 ```
 
-### /api:lint
+### /oas:lint
 
 스펙 + 코드 일관성 검사.
 
 ```bash
-/api:lint                    # 스펙 + 코드 전체 검사
-/api:lint --spec             # 스펙만 검사
-/api:lint --code             # 코드만 검사
-/api:lint --fix              # 수정 제안 표시
-/api:lint --rule=type-naming # 특정 규칙만
-/api:lint --severity=critical # 심각도별 필터
-/api:lint --ignore=pattern   # 특정 경로/스키마 무시
-/api:lint --output=file      # 결과 파일로 저장
-/api:lint --json             # JSON 출력
+/oas:lint                    # 스펙 + 코드 전체 검사
+/oas:lint --spec             # 스펙만 검사
+/oas:lint --code             # 코드만 검사
+/oas:lint --fix              # 수정 제안 표시
+/oas:lint --rule=type-naming # 특정 규칙만
+/oas:lint --severity=critical # 심각도별 필터
+/oas:lint --ignore=pattern   # 특정 경로/스키마 무시
+/oas:lint --output=file      # 결과 파일로 저장
+/oas:lint --json             # JSON 출력
 ```
 
-### /api:status
+### /oas:status
 
 캐시 기반 빠른 상태 확인.
 
 ```bash
-/api:status                  # 즉시 상태 (~0.1초)
-/api:status --check-remote   # 원격 스펙 hash 확인 (~1초)
-/api:status --tag=users      # 특정 태그 상태 확인
-/api:status --list-tags      # 모든 태그 커버리지 표시
-/api:status --json           # JSON 출력
-/api:status --quiet          # 요약만
+/oas:status                  # 즉시 상태 (~0.1초)
+/oas:status --check-remote   # 원격 스펙 hash 확인 (~1초)
+/oas:status --tag=users      # 특정 태그 상태 확인
+/oas:status --list-tags      # 모든 태그 커버리지 표시
+/oas:status --json           # JSON 출력
+/oas:status --quiet          # 요약만
 ```
 
-### /api:analyze
+### /oas:analyze
 
 감지된 패턴 심층 분석.
 
 ```bash
-/api:analyze                 # 전체 패턴 분석
-/api:analyze --verbose       # 모든 파일 경로와 코드 샘플 표시
-/api:analyze --domain=users  # 특정 도메인만 분석
+/oas:analyze                 # 전체 패턴 분석
+/oas:analyze --verbose       # 모든 파일 경로와 코드 샘플 표시
+/oas:analyze --domain=users  # 특정 도메인만 분석
 ```
 
 ## 태그 필터링
@@ -257,7 +257,7 @@ OpenAPI 태그로 작업 필터링. 태그는 각 엔드포인트의 `tags` 필�
 
 ```bash
 # 사용 가능한 태그 목록
-/api:sync --list-tags
+/oas:sync --list-tags
 
 📋 사용 가능한 태그:
 
@@ -273,33 +273,33 @@ billing          8           ❌ 미구현
 
 ```bash
 # 특정 태그만 동기화
-/api:sync --tag=workspace
+/oas:sync --tag=workspace
 
 # 여러 태그 (OR 로직)
-/api:sync --tag=workspace --tag=billing
+/oas:sync --tag=workspace --tag=billing
 
 # 태그 제외
-/api:sync --exclude-tag=internal
+/oas:sync --exclude-tag=internal
 
 # 조합
-/api:sync --tag=workspace --exclude-tag=deprecated
+/oas:sync --tag=workspace --exclude-tag=deprecated
 ```
 
 ### 태그 지원 커맨드
 
 | 커맨드 | 예시 |
 |--------|------|
-| `/api:sync` | `--tag=users`, `--exclude-tag=internal` |
-| `/api:diff` | `--tag=users`, `--list-tags` |
-| `/api:status` | `--tag=users`, `--list-tags` |
-| `/api:validate` | `--tag=users` |
+| `/oas:sync` | `--tag=users`, `--exclude-tag=internal` |
+| `/oas:diff` | `--tag=users`, `--list-tags` |
+| `/oas:status` | `--tag=users`, `--list-tags` |
+| `/oas:validate` | `--tag=users` |
 
 ### 태그 기반 생성
 
 `--tag` 사용 시 매칭되는 태그의 엔드포인트만 처리:
 
 ```bash
-/api:sync --tag=billing
+/oas:sync --tag=billing
 
 생성됨:
   src/entities/billing/
@@ -313,15 +313,15 @@ billing          8           ❌ 미구현
 
 | 모드 | 커맨드 | 속도 | 정확도 | 사용 시점 |
 |------|--------|------|--------|----------|
-| Conservative (기본) | `/api:sync` | 보통 | 100% | 항상 권장 |
-| Trust Cache | `/api:sync --trust-cache` | 빠름 | 99%* | 빠른 체크 필요 시 |
-| Force | `/api:sync --force` | 느림 | 100% | 캐시 무시, 전체 재생성 |
+| Conservative (기본) | `/oas:sync` | 보통 | 100% | 항상 권장 |
+| Trust Cache | `/oas:sync --trust-cache` | 빠름 | 99%* | 빠른 체크 필요 시 |
+| Force | `/oas:sync --force` | 느림 | 100% | 캐시 무시, 전체 재생성 |
 
 *Trust Cache: 서버 ETag/Last-Modified 오류나 캐시 손상 시 변경 누락 가능
 
 ## 인터랙티브 선택
 
-`/api:sync` 플래그 없이 실행 시 변경 선택 가능:
+`/oas:sync` 플래그 없이 실행 시 변경 선택 가능:
 
 ```
 📊 변경 감지:
@@ -343,7 +343,7 @@ CHANGED (2):
 
 ## Breaking Changes 감지
 
-`/api:diff`가 자동으로 breaking changes 감지:
+`/oas:diff`가 자동으로 breaking changes 감지:
 
 ```
 🚨 BREAKING CHANGES:
@@ -404,7 +404,7 @@ src/api/{tag}/
 
 ### .openapi-sync.json
 
-> **참고:** 대부분의 값은 `/api:init` 실행 시 코드베이스에서 **자동 감지**됩니다.
+> **참고:** 대부분의 값은 `/oas:init` 실행 시 코드베이스에서 **자동 감지**됩니다.
 > `openapi.source`와 `samples`만 제공하면 나머지는 기존 코드에서 학습합니다.
 
 #### 최소 설정 (필수값만)
@@ -422,7 +422,7 @@ src/api/{tag}/
 
 #### 전체 설정 (자동 생성 예시)
 
-아래는 `/api:init`이 코드베이스 스캔 후 생성하는 예시입니다.
+아래는 `/oas:init`이 코드베이스 스캔 후 생성하는 예시입니다.
 **모든 값은 예시일 뿐** - 실제 값은 당신의 프로젝트 코드에서 감지됩니다.
 
 ```json
@@ -474,7 +474,7 @@ src/api/{tag}/
 | `ignore` | | 무시할 엔드포인트 경로 (예: `["/health", "/internal/*"]`) |
 | `validation.ignorePaths` | | 검증 스킵할 경로 Glob 패턴 |
 
-> **참고:** `project.*`와 `patterns.*`는 `/api:init`에서 샘플 코드를 분석해 자동 감지하고 내부적으로 저장됩니다. 수동 설정 불필요.
+> **참고:** `project.*`와 `patterns.*`는 `/oas:init`에서 샘플 코드를 분석해 자동 감지하고 내부적으로 저장됩니다. 수동 설정 불필요.
 
 ## 캐시 파일
 
@@ -489,9 +489,9 @@ src/api/{tag}/
 |------|------|------|
 | cache.json | `lastFetch` | OpenAPI 스펙을 서버에서 마지막으로 가져온 시간 |
 | state.json | `lastScan` | 코드베이스를 마지막으로 스캔한 시간 |
-| state.json | `lastSync` | `/api:sync`로 코드를 마지막으로 생성한 시간 |
+| state.json | `lastSync` | `/oas:sync`로 코드를 마지막으로 생성한 시간 |
 
-`/api:status`로 이 타임스탬프들을 확인할 수 있습니다.
+`/oas:status`로 이 타임스탬프들을 확인할 수 있습니다.
 
 ### 캐시 무효화
 
@@ -551,10 +551,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate API
-        run: claude /api:validate --strict
+        run: claude /oas:validate --strict
 
       - name: Lint API
-        run: claude /api:lint --severity=critical
+        run: claude /oas:lint --severity=critical
 ```
 
 ### Exit Codes
@@ -620,26 +620,26 @@ jobs:
 
 ```bash
 # 샘플 수동 지정
-/api:init --sample=src/api/user-api.ts
+/oas:init --sample=src/api/user-api.ts
 
 # 또는 인터랙티브 모드 사용
-/api:init --interactive
+/oas:init --interactive
 ```
 
 ### "Cache seems outdated"
 
 ```bash
 # 전체 sync 강제
-/api:sync --force
+/oas:sync --force
 
 # 또는 원격만 확인
-/api:status --check-remote
+/oas:status --check-remote
 ```
 
 ### "Generated code doesn't match my style"
 
 1. `.openapi-sync.json`의 샘플 파일 경로 확인
-2. `/api:analyze`로 감지된 패턴 확인
+2. `/oas:analyze`로 감지된 패턴 확인
 3. 필요시 config에서 patterns 수동 조정
 
 ## 라이선스

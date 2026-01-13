@@ -30,26 +30,26 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 
 ```bash
 # 1. Initialize project
-/api:init
+/oas:init
 
 # 2. Generate code from spec
-/api:sync
+/oas:sync
 
 # 3. Check consistency
-/api:lint
+/oas:lint
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/api:init` | Initialize project, learn patterns, create config |
-| `/api:sync` | Generate/sync code based on OpenAPI spec |
-| `/api:status` | Quick status check using cache |
-| `/api:diff` | Compare spec changes |
-| `/api:validate` | Validate code matches spec |
-| `/api:lint` | Check spec + code consistency |
-| `/api:analyze` | Deep analysis of detected patterns |
+| `/oas:init` | Initialize project, learn patterns, create config |
+| `/oas:sync` | Generate/sync code based on OpenAPI spec |
+| `/oas:status` | Quick status check using cache |
+| `/oas:diff` | Compare spec changes |
+| `/oas:validate` | Validate code matches spec |
+| `/oas:lint` | Check spec + code consistency |
+| `/oas:analyze` | Deep analysis of detected patterns |
 
 ## Key Features
 
@@ -58,8 +58,8 @@ claude --plugin-dir /path/to/openapi-sync-plugin
 Analyzes your existing API code to learn project patterns:
 
 ```bash
-/api:init ./openapi.json                        # 로컬 파일
-/api:init https://api.example.com/openapi.json  # 원격 URL
+/oas:init ./openapi.json                        # 로컬 파일
+/oas:init https://api.example.com/openapi.json  # 원격 URL
 
 📄 OpenAPI: My API v2.0.0 (25 endpoints)
 
@@ -80,7 +80,7 @@ Generate code using these patterns? [Y/n]
 Generates new API code using learned patterns:
 
 ```bash
-/api:sync --tag=publisher
+/oas:sync --tag=publisher
 
 Generated:
   ✓ src/entities/publisher/api/publisher-api.ts
@@ -95,14 +95,14 @@ Generated:
 Only processes changes to save tokens and time:
 
 ```bash
-/api:sync
+/oas:sync
 
 ✓ No spec changes (cache hint)
 ✓ Direct code-spec comparison complete
 ✓ No changes needed
 
 # When changes exist
-/api:sync
+/oas:sync
 
 Changes detected:
   +2 added, ~1 modified, -0 removed
@@ -119,7 +119,7 @@ Generating...
 Detects inconsistencies based on your project's majority patterns:
 
 ```bash
-/api:lint
+/oas:lint
 
 Analyzing project patterns...
   Type naming: PascalCase (97.5%)
@@ -130,7 +130,7 @@ Inconsistencies found:
   🟡 upload-types.ts: 8 types using camelCase
      → Differs from project standard (PascalCase)
 
-/api:lint --fix
+/oas:lint --fix
 
   ✓ Renamed 8 types to PascalCase
   ✓ Updated imports in 3 files
@@ -139,114 +139,114 @@ Inconsistencies found:
 
 ## Command Reference
 
-### /api:init
+### /oas:init
 
 Initialize project and learn patterns.
 
 ```bash
-/api:init                      # Auto-detect patterns
-/api:init ./openapi.json       # Use local spec file
-/api:init https://api.com/spec # Use remote spec URL
-/api:init --force              # Overwrite existing config
-/api:init --interactive        # Skip auto-detection, configure manually
-/api:init --sample=path        # Specify sample file to learn from
+/oas:init                      # Auto-detect patterns
+/oas:init ./openapi.json       # Use local spec file
+/oas:init https://api.com/spec # Use remote spec URL
+/oas:init --force              # Overwrite existing config
+/oas:init --interactive        # Skip auto-detection, configure manually
+/oas:init --sample=path        # Specify sample file to learn from
 ```
 
-### /api:sync
+### /oas:sync
 
 Generate or update code based on OpenAPI spec.
 
 ```bash
 # Basic
-/api:sync                    # Default (Conservative, 100% accuracy)
-/api:sync --dry-run          # Preview only, no file changes
-/api:sync --force            # Ignore cache, full regeneration
-/api:sync --trust-cache      # Trust cache mode (faster, 99% accuracy)
+/oas:sync                    # Default (Conservative, 100% accuracy)
+/oas:sync --dry-run          # Preview only, no file changes
+/oas:sync --force            # Ignore cache, full regeneration
+/oas:sync --trust-cache      # Trust cache mode (faster, 99% accuracy)
 
 # Filter by tag
-/api:sync --tag=users        # Specific tag only
-/api:sync --tag=users --tag=projects  # Multiple tags
-/api:sync --exclude-tag=internal      # Exclude tag
+/oas:sync --tag=users        # Specific tag only
+/oas:sync --tag=users --tag=projects  # Multiple tags
+/oas:sync --exclude-tag=internal      # Exclude tag
 
 # Filter by endpoint
-/api:sync --endpoint="/api/v1/users/{id}"
-/api:sync --endpoint="/api/v1/clips/*"  # Wildcard
+/oas:sync --endpoint="/api/v1/users/{id}"
+/oas:sync --endpoint="/api/v1/clips/*"  # Wildcard
 
 # Filter by change type
-/api:sync --only-added       # New endpoints only
-/api:sync --only-changed     # Modified endpoints only
+/oas:sync --only-added       # New endpoints only
+/oas:sync --only-changed     # Modified endpoints only
 
 # Filter by file type
-/api:sync --only-types       # Types only
-/api:sync --only-api         # API functions only
-/api:sync --only-hooks       # Hooks only
+/oas:sync --only-types       # Types only
+/oas:sync --only-api         # API functions only
+/oas:sync --only-hooks       # Hooks only
 ```
 
-### /api:diff
+### /oas:diff
 
 Compare OpenAPI spec changes.
 
 ```bash
-/api:diff                    # Compare cached vs current
-/api:diff --remote           # Compare with remote spec
-/api:diff old.json new.json  # Compare two files
-/api:diff --breaking-only    # Show breaking changes only
-/api:diff --tag=users        # Specific tag only
-/api:diff --exclude-tag=internal  # Exclude specific tag
-/api:diff --list-tags        # Show tags with change summary
-/api:diff --json             # JSON output
+/oas:diff                    # Compare cached vs current
+/oas:diff --remote           # Compare with remote spec
+/oas:diff old.json new.json  # Compare two files
+/oas:diff --breaking-only    # Show breaking changes only
+/oas:diff --tag=users        # Specific tag only
+/oas:diff --exclude-tag=internal  # Exclude specific tag
+/oas:diff --list-tags        # Show tags with change summary
+/oas:diff --json             # JSON output
 ```
 
-### /api:validate
+### /oas:validate
 
 Validate code matches spec (CI/CD friendly).
 
 ```bash
-/api:validate                # Basic validation
-/api:validate --strict       # Warnings as errors (for CI)
-/api:validate --fix          # Auto-fix what's possible
-/api:validate --tag=users    # Specific tag only
-/api:validate --json         # JSON output
-/api:validate --quiet        # Errors only
+/oas:validate                # Basic validation
+/oas:validate --strict       # Warnings as errors (for CI)
+/oas:validate --fix          # Auto-fix what's possible
+/oas:validate --tag=users    # Specific tag only
+/oas:validate --json         # JSON output
+/oas:validate --quiet        # Errors only
 ```
 
-### /api:lint
+### /oas:lint
 
 Check spec and code for consistency.
 
 ```bash
-/api:lint                    # Check spec + code
-/api:lint --spec             # Spec only
-/api:lint --code             # Code only
-/api:lint --fix              # Show fix suggestions
-/api:lint --rule=type-naming # Specific rule only
-/api:lint --severity=critical # Filter by severity
-/api:lint --ignore=pattern   # Ignore specific path/schema
-/api:lint --output=file      # Save results to file
-/api:lint --json             # JSON output
+/oas:lint                    # Check spec + code
+/oas:lint --spec             # Spec only
+/oas:lint --code             # Code only
+/oas:lint --fix              # Show fix suggestions
+/oas:lint --rule=type-naming # Specific rule only
+/oas:lint --severity=critical # Filter by severity
+/oas:lint --ignore=pattern   # Ignore specific path/schema
+/oas:lint --output=file      # Save results to file
+/oas:lint --json             # JSON output
 ```
 
-### /api:status
+### /oas:status
 
 Quick status check from cache.
 
 ```bash
-/api:status                  # Instant status (~0.1s)
-/api:status --check-remote   # Check remote spec hash (~1s)
-/api:status --tag=users      # Status for specific tag
-/api:status --list-tags      # Show all tags with coverage
-/api:status --json           # JSON output
-/api:status --quiet          # Summary only
+/oas:status                  # Instant status (~0.1s)
+/oas:status --check-remote   # Check remote spec hash (~1s)
+/oas:status --tag=users      # Status for specific tag
+/oas:status --list-tags      # Show all tags with coverage
+/oas:status --json           # JSON output
+/oas:status --quiet          # Summary only
 ```
 
-### /api:analyze
+### /oas:analyze
 
 Deep analysis of detected patterns.
 
 ```bash
-/api:analyze                 # Full pattern analysis
-/api:analyze --verbose       # Show all file paths and code samples
-/api:analyze --domain=users  # Analyze specific domain only
+/oas:analyze                 # Full pattern analysis
+/oas:analyze --verbose       # Show all file paths and code samples
+/oas:analyze --domain=users  # Analyze specific domain only
 ```
 
 ## Tag Filtering
@@ -257,7 +257,7 @@ Filter operations by OpenAPI tags. Tags are extracted from the `tags` field in e
 
 ```bash
 # See all available tags
-/api:sync --list-tags
+/oas:sync --list-tags
 
 📋 Available Tags:
 
@@ -273,33 +273,33 @@ billing          8           ❌ Missing
 
 ```bash
 # Sync only specific tag
-/api:sync --tag=workspace
+/oas:sync --tag=workspace
 
 # Multiple tags (OR logic)
-/api:sync --tag=workspace --tag=billing
+/oas:sync --tag=workspace --tag=billing
 
 # Exclude tags
-/api:sync --exclude-tag=internal
+/oas:sync --exclude-tag=internal
 
 # Combined
-/api:sync --tag=workspace --exclude-tag=deprecated
+/oas:sync --tag=workspace --exclude-tag=deprecated
 ```
 
 ### Tag Commands
 
 | Command | Example |
 |---------|---------|
-| `/api:sync` | `--tag=users`, `--exclude-tag=internal` |
-| `/api:diff` | `--tag=users`, `--list-tags` |
-| `/api:status` | `--tag=users`, `--list-tags` |
-| `/api:validate` | `--tag=users` |
+| `/oas:sync` | `--tag=users`, `--exclude-tag=internal` |
+| `/oas:diff` | `--tag=users`, `--list-tags` |
+| `/oas:status` | `--tag=users`, `--list-tags` |
+| `/oas:validate` | `--tag=users` |
 
 ### Tag-Based Generation
 
 When using `--tag`, only endpoints with matching tags are processed:
 
 ```bash
-/api:sync --tag=billing
+/oas:sync --tag=billing
 
 Generated:
   src/entities/billing/
@@ -313,15 +313,15 @@ Generated:
 
 | Mode | Command | Speed | Accuracy | Use Case |
 |------|---------|-------|----------|----------|
-| Conservative (default) | `/api:sync` | Medium | 100% | Always recommended |
-| Trust Cache | `/api:sync --trust-cache` | Fast | 99%* | Quick check needed |
-| Force | `/api:sync --force` | Slow | 100% | Ignore cache, full regen |
+| Conservative (default) | `/oas:sync` | Medium | 100% | Always recommended |
+| Trust Cache | `/oas:sync --trust-cache` | Fast | 99%* | Quick check needed |
+| Force | `/oas:sync --force` | Slow | 100% | Ignore cache, full regen |
 
 *Trust Cache may miss changes if server ETag/Last-Modified errors or cache corrupted
 
 ## Interactive Selection
 
-When running `/api:sync` without flags, you can select specific changes:
+When running `/oas:sync` without flags, you can select specific changes:
 
 ```
 📊 Changes Detected:
@@ -343,7 +343,7 @@ Generating selected endpoints...
 
 ## Breaking Changes Detection
 
-`/api:diff` automatically detects breaking changes:
+`/oas:diff` automatically detects breaking changes:
 
 ```
 🚨 BREAKING CHANGES:
@@ -404,7 +404,7 @@ src/api/{tag}/
 
 ### .openapi-sync.json
 
-> **Note:** Most values are **auto-detected** from your codebase by `/api:init`.
+> **Note:** Most values are **auto-detected** from your codebase by `/oas:init`.
 > You only need to provide `openapi.source` and `samples` - everything else is learned from your existing code.
 
 #### Minimal Config (Required Only)
@@ -422,7 +422,7 @@ src/api/{tag}/
 
 #### Full Config (Auto-Generated Example)
 
-The following shows what `/api:init` generates after scanning your codebase.
+The following shows what `/oas:init` generates after scanning your codebase.
 **All values below are examples** - actual values are detected from YOUR project's code.
 
 ```json
@@ -474,7 +474,7 @@ The following shows what `/api:init` generates after scanning your codebase.
 | `ignore` | | Endpoint paths to ignore (e.g., `["/health", "/internal/*"]`) |
 | `validation.ignorePaths` | | Glob patterns for paths to skip validation |
 
-> **Note:** `project.*` and `patterns.*` are auto-detected from your samples and stored internally by `/api:init`. Manual configuration is not needed.
+> **Note:** `project.*` and `patterns.*` are auto-detected from your samples and stored internally by `/oas:init`. Manual configuration is not needed.
 
 ## Cache Files
 
@@ -489,9 +489,9 @@ The following shows what `/api:init` generates after scanning your codebase.
 |------|-------|-------------|
 | cache.json | `lastFetch` | When the OpenAPI spec was last fetched from server |
 | state.json | `lastScan` | When the codebase was last scanned for implementations |
-| state.json | `lastSync` | When code was last generated by `/api:sync` |
+| state.json | `lastSync` | When code was last generated by `/oas:sync` |
 
-Use `/api:status` to view these timestamps.
+Use `/oas:status` to view these timestamps.
 
 ### Cache Invalidation
 
@@ -551,10 +551,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate API
-        run: claude /api:validate --strict
+        run: claude /oas:validate --strict
 
       - name: Lint API
-        run: claude /api:lint --severity=critical
+        run: claude /oas:lint --severity=critical
 ```
 
 ### Exit Codes
@@ -620,26 +620,26 @@ jobs:
 
 ```bash
 # Provide sample manually
-/api:init --sample=src/api/user-api.ts
+/oas:init --sample=src/api/user-api.ts
 
 # Or use interactive mode
-/api:init --interactive
+/oas:init --interactive
 ```
 
 ### "Cache seems outdated"
 
 ```bash
 # Force full sync
-/api:sync --force
+/oas:sync --force
 
 # Or just check remote
-/api:status --check-remote
+/oas:status --check-remote
 ```
 
 ### "Generated code doesn't match my style"
 
 1. Check if sample file is correct in `.openapi-sync.json`
-2. Run `/api:analyze` to see detected patterns
+2. Run `/oas:analyze` to see detected patterns
 3. Adjust patterns manually in config if needed
 
 ## License
