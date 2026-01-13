@@ -177,71 +177,15 @@ Alternative:
 
 **Create .openapi-sync.json:**
 
+> **Note:** `project.*` and `patterns.*` are auto-detected from samples and stored internally.
+> Only essential fields are saved to the config file.
+
 ```json
 {
-  "$schema": "https://openapi-sync.dev/schema/v1.json",
   "version": "1.0.0",
 
   "openapi": {
-    "source": "./openapi.json",
-    "remote": "https://api.example.com/openapi.json",
-    "title": "My API",
-    "version": "2.0.0"
-  },
-
-  "project": {
-    "framework": "react",
-    "language": "typescript",
-    "httpClient": "axios-custom",
-    "dataFetching": "react-query"
-  },
-
-  "patterns": {
-    "structure": {
-      "type": "fsd",
-      "apiPath": "src/entities/{domain}/api/{domain}-api.ts",
-      "typesPath": "src/entities/{domain}/model/types.ts",
-      "hooksPath": "src/entities/{domain}/api/queries.ts",
-      "keysPath": "src/entities/{domain}/api/{domain}-keys.ts"
-    },
-
-    "httpClient": {
-      "import": "import { createApi } from '@/shared/api'",
-      "usage": "createApi().{method}<{Type}>({path})",
-      "responseAccess": ".data"
-    },
-
-    "dataFetching": {
-      "queryKeyPattern": "factory",
-      "keysImport": "import { {domain}Keys } from './{domain}-keys'"
-    },
-
-    "naming": {
-      "functions": {
-        "get": "get{Entity}",
-        "list": "get{Entity}List",
-        "create": "create{Entity}",
-        "update": "update{Entity}",
-        "delete": "delete{Entity}"
-      },
-      "hooks": {
-        "query": "use{Entity}",
-        "queryList": "use{Entity}List",
-        "mutation": "use{Verb}{Entity}"
-      },
-      "types": {
-        "entity": "{Entity}",
-        "request": "{Operation}Request",
-        "response": "{Operation}Response"
-      }
-    },
-
-    "codeStyle": {
-      "quotes": "single",
-      "semicolons": false,
-      "indentation": "2",
-      "trailingComma": "all"
-    }
+    "source": "./openapi.json"
   },
 
   "samples": {
@@ -257,7 +201,11 @@ Alternative:
     "/health",
     "/metrics",
     "/internal/*"
-  ]
+  ],
+
+  "validation": {
+    "ignorePaths": []
+  }
 }
 ```
 

@@ -40,6 +40,7 @@ claude plugins install openapi-sync
 | `/api:diff` | Compare spec changes |
 | `/api:validate` | Validate code matches spec |
 | `/api:lint` | Check spec + code consistency |
+| `/api:analyze` | Deep analysis of detected patterns |
 
 ## Key Features
 
@@ -48,7 +49,8 @@ claude plugins install openapi-sync
 Analyzes your existing API code to learn project patterns:
 
 ```bash
-/api:init https://api.example.com/openapi.json
+/api:init ./openapi.json                        # 로컬 파일
+/api:init https://api.example.com/openapi.json  # 원격 URL
 
 📄 OpenAPI: My API v2.0.0 (25 endpoints)
 
