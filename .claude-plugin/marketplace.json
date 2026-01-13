@@ -1,0 +1,14 @@
+{
+  "name": "openapi-sync-marketplace",
+  "owner": {
+    "name": "Jack Lee",
+    "email": "jhlee0409@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "oas",
+      "source": "./plugins/oas",
+      "description": "Adaptive API code generator that learns your project patterns and syncs with OpenAPI specs"
+    }
+  ]
+}
