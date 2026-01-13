@@ -6,21 +6,21 @@ argument-hint: [--check-remote]
 
 # API Status
 
-캐시 기반 빠른 상태 확인. 스펙 fetch 없이 즉시 결과 표시.
+Cache-based quick status check. Shows results instantly without fetching spec.
 
 ## Usage
 
 ```bash
-# 로컬 캐시 기반 상태 (즉시)
+# Local cache-based status (instant)
 /api:status
 
-# 원격 스펙과 비교 (느림)
+# Compare with remote spec (slower)
 /api:status --check-remote
 ```
 
 ## Quick Status (Default)
 
-캐시 파일만 읽어서 즉시 표시:
+Read cache files only for instant display:
 
 ```
 ═══════════════════════════════════════════════════
@@ -79,7 +79,7 @@ argument-hint: [--check-remote]
 
 ## Check Remote (--check-remote)
 
-원격 스펙 hash만 확인 (빠름, 전체 다운로드 X):
+Check remote spec hash only (fast, no full download):
 
 ```
 /api:status --check-remote
@@ -96,7 +96,7 @@ Checking remote spec...
    Run /api:sync to update
 ```
 
-또는:
+Or:
 
 ```
 /api:status --check-remote
@@ -112,8 +112,8 @@ No changes since last sync.
 ## Cache Files Read
 
 ```
-.openapi-sync.cache.json  → 스펙 정보, hash
-.openapi-sync.state.json  → 구현 상태, 커버리지
+.openapi-sync.cache.json  → Spec info, hash
+.openapi-sync.state.json  → Implementation state, coverage
 ```
 
 ## No Cache (First Run)
@@ -129,27 +129,27 @@ Run /api:init to initialize OpenAPI sync.
 ## Flags
 
 ```bash
---check-remote    # 원격 스펙과 hash 비교
---json            # JSON 형식 출력
---quiet           # 요약만 출력
+--check-remote    # Compare with remote spec hash
+--json            # JSON format output
+--quiet           # Summary only
 ```
 
 ## Performance
 
 ```
-/api:status                → ~0.1초 (캐시 읽기만)
-/api:status --check-remote → ~1초 (HEAD 요청)
-/api:sync                  → ~5-8초 (Conservative, 정확도 100%)
-/api:sync --trust-cache    → ~1초 (캐시 신뢰, 빠름)
-/api:sync --force          → ~20초 (전체 재스캔)
+/api:status                → ~0.1s (cache read only)
+/api:status --check-remote → ~1s (HEAD request)
+/api:sync                  → ~5-8s (Conservative, 100% accuracy)
+/api:sync --trust-cache    → ~1s (trust cache, fast)
+/api:sync --force          → ~20s (full rescan)
 ```
 
-## 정확도 vs 속도
+## Accuracy vs Speed
 
-| 명령어 | 용도 | 정확도 |
-|-------|------|--------|
-| `/api:status` | 빠른 현황 확인 | 캐시 기반 |
-| `/api:sync` | 실제 동기화 | 100% (항상 검증) |
-| `/api:sync --trust-cache` | 빠른 동기화 | 99%* |
+| Command | Purpose | Accuracy |
+|---------|---------|----------|
+| `/api:status` | Quick status check | Cache-based |
+| `/api:sync` | Actual sync | 100% (always verified) |
+| `/api:sync --trust-cache` | Fast sync | 99%* |
 
-*캐시 손상/서버 오류 시 누락 가능
+*May miss changes if cache is corrupted or server error occurs

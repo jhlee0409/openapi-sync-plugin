@@ -6,27 +6,27 @@ argument-hint: [--spec] [--code] [--fix] [--rule=name]
 
 # API Lint
 
-OpenAPI 스펙과 코드베이스의 일관성을 검사. 수동으로 작성된 스펙/코드의 불일치를 찾아냄.
+Check OpenAPI spec and codebase for consistency. Finds inconsistencies in manually written specs/code.
 
-## 검사 대상
+## Target Selection
 
 ```
-/api:lint           → 스펙 + 코드 둘 다 검사 (기본)
-/api:lint --spec    → OpenAPI 스펙만 검사
-/api:lint --code    → 코드베이스만 검사
+/api:lint           → Check both spec + code (default)
+/api:lint --spec    → Check OpenAPI spec only
+/api:lint --code    → Check codebase only
 ```
 
 ## Usage
 
 ```bash
-# 전체 검사
+# Full check
 /api:lint
 
-# 특정 규칙만
+# Specific rule only
 /api:lint --rule=naming
 /api:lint --rule=response-structure
 
-# 수정 제안
+# Fix suggestions
 /api:lint --fix
 ```
 
@@ -34,7 +34,7 @@ OpenAPI 스펙과 코드베이스의 일관성을 검사. 수동으로 작성된
 
 ### 1. response-key-consistency
 
-List 응답의 키 이름 일관성 검사:
+Check list response key naming consistency:
 
 ```
 ⚠️ INCONSISTENT: List response keys vary
@@ -57,7 +57,7 @@ List 응답의 키 이름 일관성 검사:
 
 ### 2. timestamp-naming
 
-타임스탬프 필드명 일관성:
+Timestamp field naming consistency:
 
 ```
 ⚠️ INCONSISTENT: Timestamp field naming varies
@@ -78,7 +78,7 @@ List 응답의 키 이름 일관성 검사:
 
 ### 3. id-type-consistency
 
-ID 필드 타입 일관성:
+ID field type consistency:
 
 ```
 ⚠️ INCONSISTENT: ID field types vary
@@ -103,7 +103,7 @@ ID 필드 타입 일관성:
 
 ### 4. boolean-prefix
 
-Boolean 필드 prefix 일관성:
+Boolean field prefix consistency:
 
 ```
 ⚠️ INCONSISTENT: Boolean field prefixes vary
@@ -123,7 +123,7 @@ Boolean 필드 prefix 일관성:
 
 ### 5. operationId-format
 
-OperationId 형식 일관성:
+OperationId format consistency:
 
 ```
 ⚠️ INCONSISTENT: operationId formats vary
@@ -145,7 +145,7 @@ OperationId 형식 일관성:
 
 ### 6. required-fields
 
-Required 필드 일관성:
+Required fields consistency:
 
 ```
 ⚠️ INCONSISTENT: Required fields vary between similar schemas
@@ -165,7 +165,7 @@ Required 필드 일관성:
 
 ### 7. enum-casing
 
-Enum 값 케이싱 일관성:
+Enum value casing consistency:
 
 ```
 ⚠️ INCONSISTENT: Enum value casing varies
@@ -181,7 +181,7 @@ Enum 값 케이싱 일관성:
 
 ### 8. nullable-vs-optional
 
-Nullable과 Optional 사용 일관성:
+Nullable vs optional usage consistency:
 
 ```
 ⚠️ INCONSISTENT: Nullable vs Optional usage
@@ -203,7 +203,7 @@ Nullable과 Optional 사용 일관성:
 
 ### 9. description-coverage
 
-Description 커버리지:
+Description coverage:
 
 ```
 ⚠️ LOW COVERAGE: Many items lack descriptions
@@ -223,7 +223,7 @@ Description 커버리지:
 
 ### 10. path-naming
 
-Path 네이밍 패턴:
+Path naming patterns:
 
 ```
 ⚠️ INCONSISTENT: Path naming patterns vary
@@ -239,27 +239,27 @@ Path 네이밍 패턴:
 
 ## Part 2: Code Lint Rules (--code)
 
-코드베이스의 패턴 일관성 검사.
+Check codebase pattern consistency.
 
-### 핵심 원칙: 프로젝트 기준 감지
+### Core Principle: Project-Based Detection
 
 ```
-⚠️ 우리가 "표준"을 정하지 않음
-⚠️ 해당 프로젝트 내 패턴을 먼저 학습
-⚠️ 가장 많이 쓰인 패턴이 그 프로젝트의 기준
-⚠️ 기준에서 벗어난 것만 불일치로 표시
+⚠️ We don't define "the standard"
+⚠️ First learn patterns within the project
+⚠️ Most common pattern becomes the project standard
+⚠️ Only deviations from standard are flagged as inconsistent
 ```
 
-**예시:**
-- 프로젝트 A: camelCase 90% → camelCase가 기준, PascalCase가 불일치
-- 프로젝트 B: PascalCase 90% → PascalCase가 기준, camelCase가 불일치
-- 둘 다 "틀린 게" 아니라 "일관되지 않은 것"을 찾는 것
+**Example:**
+- Project A: 90% camelCase → camelCase is standard, PascalCase is inconsistent
+- Project B: 90% PascalCase → PascalCase is standard, camelCase is inconsistent
+- Neither is "wrong" - we're finding "inconsistencies", not enforcing external rules
 
-샘플 기반 분석으로 가장 많이 사용된 패턴을 기준으로 불일치 탐지.
+Sample-based analysis detects the most common pattern as the standard.
 
 ### 1. export-pattern-consistency
 
-Barrel export 패턴 일관성:
+Barrel export pattern consistency:
 
 ```
 ⚠️ INCONSISTENT: Export patterns vary across entities
@@ -281,7 +281,7 @@ Barrel export 패턴 일관성:
 
 ### 2. immutability-pattern
 
-Object immutability 패턴:
+Object immutability pattern:
 
 ```
 ⚠️ INCONSISTENT: Immutability patterns vary
@@ -304,7 +304,7 @@ Object immutability 패턴:
 
 ### 3. type-naming-convention
 
-Type 네이밍 컨벤션:
+Type naming convention:
 
 ```
 ⚠️ INCONSISTENT: Type naming conventions vary
@@ -332,7 +332,7 @@ Type 네이밍 컨벤션:
 
 ### 4. api-function-parameter-style
 
-API 함수 파라미터 스타일:
+API function parameter style:
 
 ```
 ⚠️ INCONSISTENT: API function parameter patterns vary
@@ -351,8 +351,8 @@ API 함수 파라미터 스타일:
 
     src/entities/upload/api/upload-api.ts:22
       const getVideoPreSignedUrl = async (
-        params: uploadVideoPresignedUrlQuery,
-      ): Promise<uploadVideoPresignedUrlResponse> => {
+        params: UploadVideoPresignedUrlQuery,
+      ): Promise<UploadVideoPresignedUrlResponse> => {
 
   💡 Recommendation:
     Standardize on one pattern:
@@ -362,7 +362,7 @@ API 함수 파라미터 스타일:
 
 ### 5. query-key-format
 
-Query key 네이밍 형식:
+Query key naming format:
 
 ```
 ⚠️ INCONSISTENT: Query key formats vary
@@ -389,7 +389,7 @@ Query key 네이밍 형식:
 
 ### 6. config-structure
 
-Config 파일 구조:
+Config file structure:
 
 ```
 ⚠️ INCONSISTENT: Config path structures vary
@@ -414,7 +414,7 @@ Config 파일 구조:
 
 ### 7. barrel-export-completeness
 
-Barrel export 완전성:
+Barrel export completeness:
 
 ```
 ⚠️ MISSING: Some entities missing barrel exports
@@ -434,7 +434,7 @@ Barrel export 완전성:
 
 ### 8. file-naming-convention
 
-파일 네이밍 컨벤션:
+File naming convention:
 
 ```
 ✅ CONSISTENT: File naming follows {entity}-{type}.ts pattern
@@ -453,7 +453,7 @@ Barrel export 완전성:
 
 ### 9. mutation-vs-query-separation
 
-Mutation과 Query 분리:
+Mutation and query separation:
 
 ```
 ✅ MOSTLY CONSISTENT: Mutations separated from queries
@@ -471,7 +471,7 @@ Mutation과 Query 분리:
 
 ### 10. return-type-annotation
 
-Return type 명시:
+Return type annotation:
 
 ```
 ⚠️ INCONSISTENT: Some API functions missing return types
@@ -655,17 +655,17 @@ Show migration guide? [y/n]
 ## Flags
 
 ```bash
---rule=name       # 특정 규칙만 실행
---ignore=pattern  # 특정 경로/스키마 무시
---fix             # 수정 제안 표시
---json            # JSON 형식 출력
---severity=level  # critical/warning/info 필터
---output=file     # 결과를 파일로 저장
+--rule=name       # Run specific rule only
+--ignore=pattern  # Ignore specific path/schema
+--fix             # Show fix suggestions
+--json            # JSON format output
+--severity=level  # Filter by critical/warning/info
+--output=file     # Save results to file
 ```
 
 ## Config
 
-`.openapi-sync.json`에서 lint 규칙 설정:
+Configure lint rules in `.openapi-sync.json`:
 
 ```json
 {
@@ -728,19 +728,19 @@ Show migration guide? [y/n]
 ## Integration with Other Commands
 
 ```bash
-# lint 후 sync
+# Lint then sync
 /api:lint && /api:sync
 
-# CI에서 lint 실패 시 중단
+# Stop on critical in CI
 /api:lint --severity=critical
 
-# lint 결과를 sync에 반영 (일관된 코드 생성)
+# Apply lint results to sync (generate consistent code)
 /api:sync --normalize
 ```
 
 ## Custom Rules
 
-프로젝트별 커스텀 규칙 추가:
+Add project-specific custom rules:
 
 ```json
 {

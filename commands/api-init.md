@@ -11,43 +11,43 @@ Initialize OpenAPI sync by learning your project's existing patterns. Works with
 ## Flow Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────┐
 │                    /api:init                            │
-├─────────────────────────────────────────────────────────┤
+├─────────────────────────────────────────────────────┤
 │  1. Get OpenAPI spec location                           │
 │  2. Detect framework (package.json)                     │
 │  3. Find existing API code (sample discovery)           │
 │  4. Analyze samples OR ask user                         │
 │  5. Generate .openapi-sync.json                         │
 │  6. Show summary                                        │
-└─────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────┘
 ```
 
 ## Step 1: Get OpenAPI Spec Location
 
 **Supported sources:**
 ```
-파일:  ./openapi.json, ./docs/swagger.yaml
-URL:   https://api.example.com/openapi.json
+File: ./openapi.json, ./docs/swagger.yaml
+URL:  https://api.example.com/openapi.json
 ```
 
 **If argument provided:**
 ```
-http:// or https:// → URL로 fetch
-그 외 → 로컬 파일로 읽기
+http:// or https:// → Fetch from URL
+Otherwise → Read as local file
 ```
 
 **If no argument:**
 ```
-1. 로컬에서 openapi.json, swagger.json 등 검색
-2. 있으면 사용할지 확인
-3. 없으면 경로/URL 입력 요청
+1. Search for openapi.json, swagger.json locally
+2. If found, ask to confirm usage
+3. If not found, request path/URL input
 ```
 
 **Validate:**
 ```
-- OpenAPI 3.x 또는 Swagger 2.x 구조 확인
-- title, version, endpoints 추출
+- Verify OpenAPI 3.x or Swagger 2.x structure
+- Extract title, version, endpoints
 ```
 
 ## Step 2: Framework Detection
@@ -69,7 +69,7 @@ const framework = detectFramework(packageJson)
 
 **Report:**
 ```
-📦 package.json 분석:
+📦 package.json analysis:
   Framework: React + TypeScript
   HTTP Client: axios
   Data Fetching: @tanstack/react-query v5
@@ -135,7 +135,7 @@ Analyzing samples...
 
 **Ask confirmation:**
 ```
-이 패턴들로 코드를 생성할까요? [Y/n/수정]
+Generate code using these patterns? [Y/n/modify]
 ```
 
 ## Step 4b: Interactive Mode (if no samples)
@@ -143,31 +143,31 @@ Analyzing samples...
 **Ask user for guidance:**
 
 ```
-Q1: "API 코드를 어디에 생성할까요?"
+Q1: "Where should API code be generated?"
     Options:
     - src/api/{domain}/ (flat)
     - src/features/{domain}/api/ (feature-based)
     - src/entities/{domain}/api/ (FSD)
-    - 직접 입력
+    - Custom path
 
-Q2: "HTTP 클라이언트는 무엇을 사용하나요?"
+Q2: "Which HTTP client are you using?"
     Options (based on package.json):
     - Axios (detected)
     - Fetch (native)
-    - 기타
+    - Other
 
-Q3: "데이터 페칭 라이브러리를 사용하나요?"
+Q3: "Are you using a data fetching library?"
     Options (based on package.json):
     - React Query (detected)
     - SWR
-    - 없음
+    - None
 
-Q4: "참고할 샘플 코드가 있나요?"
-    - 있음 → "파일 경로를 알려주세요" OR "코드를 붙여넣어 주세요"
-    - 없음 → Use framework defaults
+Q4: "Do you have sample code to reference?"
+    - Yes → "Please provide the file path" OR "Paste the code"
+    - No → Use framework defaults
 
 Alternative:
-"샘플 코드를 붙여넣으면 그 스타일을 복제합니다:"
+"Paste sample code and I'll replicate that style:"
 [User pastes code]
 → Analyze pasted code
 → Extract patterns
@@ -264,52 +264,52 @@ Alternative:
 ## Step 6: Summary
 
 ```
-✅ OpenAPI Sync 초기화 완료
+✅ OpenAPI Sync initialization complete
 
 📄 OpenAPI Spec:
    My API v2.0.0
    25 endpoints, 8 tags
    Source: ./openapi.json
 
-🔍 감지된 패턴:
+🔍 Detected patterns:
    Structure: FSD (Feature-Sliced Design)
    HTTP: createApi() (custom Axios wrapper)
    State: React Query v5 (factory pattern)
    Types: interface, separate files
 
-📁 샘플 코드:
+📁 Sample code:
    API: src/entities/user/api/user-api.ts
    Types: src/entities/user/model/types.ts
    Hooks: src/entities/user/api/queries.ts
 
-📝 설정 저장: .openapi-sync.json
+📝 Config saved: .openapi-sync.json
 
-🚀 다음 단계:
-   /api:analyze  - 패턴 상세 분석
-   /api:sync     - 코드 생성 시작
-   /api:sync --dry-run  - 생성될 파일 미리보기
+🚀 Next steps:
+   /api:analyze  - Detailed pattern analysis
+   /api:sync     - Start code generation
+   /api:sync --dry-run  - Preview files to generate
 ```
 
 ## Error Handling
 
 ```
-OpenAPI 스펙 오류:
-  → "유효하지 않은 OpenAPI 스펙입니다: {error}"
-  → "스펙 경로를 확인해주세요"
+OpenAPI spec error:
+  → "Invalid OpenAPI spec: {error}"
+  → "Please check the spec path"
 
-패턴 감지 실패:
-  → Interactive mode로 전환
-  → "패턴을 자동으로 감지하지 못했습니다. 몇 가지 질문을 드릴게요."
+Pattern detection failed:
+  → Switch to interactive mode
+  → "Could not detect patterns automatically. Let me ask a few questions."
 
-package.json 없음:
-  → "package.json을 찾을 수 없습니다. 프로젝트 루트에서 실행해주세요."
+package.json not found:
+  → "Cannot find package.json. Please run from project root."
 
-기존 설정 파일 존재:
-  → ".openapi-sync.json이 이미 있습니다. 덮어쓸까요? [y/N/merge]"
+Existing config file:
+  → ".openapi-sync.json already exists. Overwrite? [y/N/merge]"
 ```
 
 ## Flags
 
-- `--force`: 기존 설정 덮어쓰기
-- `--interactive`: 자동 감지 건너뛰고 직접 설정
-- `--sample=path`: 특정 샘플 파일 지정
+- `--force`: Overwrite existing config
+- `--interactive`: Skip auto-detection and configure manually
+- `--sample=path`: Specify a particular sample file

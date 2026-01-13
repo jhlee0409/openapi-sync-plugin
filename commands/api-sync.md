@@ -20,20 +20,20 @@ Generate or update API code based on OpenAPI spec and detected project patterns.
 ```
 Use skill: cache-manager
 
-캐시는 "힌트"로만 사용. 정확도 100% 보장.
+Cache is used as "hint" only. 100% accuracy guaranteed.
 
-1. 캐시 파일 확인
-   - .openapi-sync.cache.json (스펙 캐시)
-   - .openapi-sync.state.json (구현 상태)
+1. Check cache files
+   - .openapi-sync.cache.json (spec cache)
+   - .openapi-sync.state.json (implementation state)
 
-2. Quick hash 비교 (힌트용)
-   - hash 같음 → "변경 없을 가능성 높음" 표시
-   - hash 다름 → "변경 감지됨" 표시
+2. Quick hash comparison (hint only)
+   - Hash matches → "Likely no changes" displayed
+   - Hash differs → "Changes detected" displayed
 
-3. 항상 Step 1로 진행 (스펙 직접 검증)
-   - 캐시 hash가 같아도 실제 스펙과 코드 비교
-   - 차이 있으면 생성, 없으면 스킵
-   - 100% 정확도 보장
+3. Always proceed to Step 1 (direct spec verification)
+   - Even if cache hash matches, compare actual spec with code
+   - Generate if different, skip if same
+   - 100% accuracy guaranteed
 ```
 
 **Output:**
@@ -49,7 +49,7 @@ Use skill: cache-manager
 No changes needed.
 ```
 
-**--trust-cache 모드 (빠름, 위험):**
+**--trust-cache mode (fast, risky):**
 ```
 /api:sync --trust-cache
 
@@ -62,19 +62,19 @@ No changes needed.
 ⚠️  Warning: Using cached state. Run without --trust-cache for full verification.
 ```
 
-### Step 1: Fetch & Diff (변경 있을 때만)
+### Step 1: Fetch & Diff (only when changes detected)
 
 ```
-1. 새 스펙 fetch
-2. 캐시된 스펙과 diff 계산
+1. Fetch new spec
+2. Compute diff with cached spec
 
    Invoke skill: cache-manager (computeDiff)
 
-3. Diff 결과:
-   - added: 새로 추가된 엔드포인트
-   - modified: 변경된 엔드포인트
-   - removed: 삭제된 엔드포인트
-   - unchanged: 변경 없음 (스킵)
+3. Diff result:
+   - added: Newly added endpoints
+   - modified: Changed endpoints
+   - removed: Deleted endpoints
+   - unchanged: No changes (skip)
 ```
 
 **Output:**
@@ -84,10 +84,10 @@ No changes needed.
    (145 unchanged - skipping)
 ```
 
-### Step 2: Compare with Existing Code (변경분만)
+### Step 2: Compare with Existing Code (changes only)
 
 ```
-변경된 엔드포인트만 코드와 비교:
+Compare only changed endpoints with code:
 
 For each endpoint in (added + modified):
   1. Check if corresponding code exists
@@ -276,103 +276,103 @@ Next: Review generated code and run your type checker
 ## Flags
 
 ```bash
-# 미리보기 (파일 생성 안함)
+# Preview only (no file generation)
 /api:sync --dry-run
 
-# 타입만 생성
+# Types only
 /api:sync --only-types
 
-# 강제 덮어쓰기 (기존 코드 무시)
+# Force overwrite (ignore existing code)
 /api:sync --force
 
-# 캐시 신뢰 모드 (빠름, 검증 스킵 - 주의!)
+# Trust cache mode (fast, skip verification - use with caution!)
 /api:sync --trust-cache
 ```
 
 ## Sync Modes
 
-| 모드 | 명령어 | 속도 | 정확도 | 사용 시점 |
-|-----|--------|-----|--------|----------|
-| Conservative (기본) | `/api:sync` | 보통 | 100% | 항상 권장 |
-| Trust Cache | `/api:sync --trust-cache` | 빠름 | 99%* | 빠른 확인 필요 시 |
-| Force | `/api:sync --force` | 느림 | 100% | 캐시 무시하고 전체 재생성 |
+| Mode | Command | Speed | Accuracy | When to use |
+|------|---------|-------|----------|-------------|
+| Conservative (default) | `/api:sync` | Medium | 100% | Always recommended |
+| Trust Cache | `/api:sync --trust-cache` | Fast | 99%* | Quick check needed |
+| Force | `/api:sync --force` | Slow | 100% | Ignore cache, full regeneration |
 
-*Trust Cache: 서버 ETag/Last-Modified 오류, 캐시 손상 시 누락 가능
+*Trust Cache: May miss changes if server ETag/Last-Modified errors or cache corruption
 
-## Partial Sync (부분 동기화)
+## Partial Sync
 
-특정 부분만 선택적으로 동기화:
+Selective synchronization for specific parts:
 
 ### By Tag
 
 ```bash
-# 특정 태그만
+# Specific tag only
 /api:sync --tag=users
 /api:sync --tag=clips
 
-# 여러 태그
+# Multiple tags
 /api:sync --tag=users --tag=projects
 
-# 태그 제외
+# Exclude tag
 /api:sync --exclude-tag=internal
 ```
 
 ### By Endpoint
 
 ```bash
-# 특정 엔드포인트만
+# Specific endpoint only
 /api:sync --endpoint=/api/v1/users
 /api:sync --endpoint="/api/v1/users/{id}"
 
-# 패턴 매칭
+# Pattern matching
 /api:sync --endpoint="/api/v1/clips/*"
 ```
 
 ### By Change Type
 
 ```bash
-# 새로 추가된 것만
+# New additions only
 /api:sync --only-added
 
-# 변경된 것만
+# Changes only
 /api:sync --only-changed
 
-# 새로 추가 + 변경된 것
+# New + changed
 /api:sync --only-added --only-changed
 ```
 
 ### By File Type
 
 ```bash
-# 타입만
+# Types only
 /api:sync --only-types
 
-# API 함수만 (타입 제외)
+# API functions only (no types)
 /api:sync --only-api
 
-# 훅만
+# Hooks only
 /api:sync --only-hooks
 
-# 조합
+# Combined
 /api:sync --only-types --only-api
 ```
 
 ## Partial Sync Examples
 
 ```bash
-# clips 태그의 새 엔드포인트만 타입 생성
+# Generate types only for new endpoints in clips tag
 /api:sync --tag=clips --only-added --only-types
 
-# users 관련 변경사항만 미리보기
+# Preview changes for users only
 /api:sync --tag=users --only-changed --dry-run
 
-# 특정 엔드포인트 하나만 전체 생성
+# Full generation for specific endpoint
 /api:sync --endpoint="/api/v1/clips/{id}/render"
 ```
 
 ## Interactive Selection
 
-플래그 없이 실행 시 변경사항 선택 가능:
+Select changes when running without flags:
 
 ```
 /api:sync

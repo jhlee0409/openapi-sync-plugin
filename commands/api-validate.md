@@ -6,18 +6,18 @@ argument-hint: [--strict] [--fix]
 
 # API Validate
 
-코드가 OpenAPI 스펙과 일치하는지 검증합니다. CI/CD 파이프라인에서 사용 가능.
+Validate that your code matches the OpenAPI spec. Suitable for CI/CD pipelines.
 
 ## Usage
 
 ```bash
-# 기본 검증
+# Basic validation
 /api:validate
 
-# 엄격 모드 (warning도 error로)
+# Strict mode (warnings treated as errors)
 /api:validate --strict
 
-# 자동 수정 제안
+# Auto-fix suggestions
 /api:validate --fix
 ```
 
@@ -25,10 +25,10 @@ argument-hint: [--strict] [--fix]
 
 ### 1. Missing Endpoints
 
-스펙에는 있지만 코드에 없는 엔드포인트:
+Endpoints in spec but not in code:
 
 ```
-❌ MISSING: 스펙에 있지만 코드 없음
+❌ MISSING: In spec but no code
 
   POST /api/v1/clips/{id}/render
     → Expected: src/entities/clips/api/clips-api.ts
@@ -41,10 +41,10 @@ argument-hint: [--strict] [--fix]
 
 ### 2. Type Mismatches
 
-타입 정의가 스펙과 다른 경우:
+Type definitions differ from spec:
 
 ```
-⚠️ TYPE MISMATCH: 타입이 스펙과 다름
+⚠️ TYPE MISMATCH: Type differs from spec
 
   User (src/entities/user/model/types.ts:5)
     - status: string
@@ -57,10 +57,10 @@ argument-hint: [--strict] [--fix]
 
 ### 3. Extra Code
 
-코드에는 있지만 스펙에 없는 것:
+In code but not in spec:
 
 ```
-⚠️ EXTRA: 코드에 있지만 스펙에 없음
+⚠️ EXTRA: In code but not in spec
 
   src/entities/export/api/legacy-api.ts
     - GET /api/v1/legacy/export (removed from spec)
@@ -71,10 +71,10 @@ argument-hint: [--strict] [--fix]
 
 ### 4. Naming Inconsistencies
 
-네이밍 컨벤션 불일치:
+Naming convention mismatches:
 
 ```
-⚠️ NAMING: 네이밍 컨벤션 불일치
+⚠️ NAMING: Naming convention mismatch
 
   src/entities/user/api/user-api.ts:15
     - fetchUser() → should be getUser()
@@ -85,10 +85,10 @@ argument-hint: [--strict] [--fix]
 
 ### 5. Import/Path Issues
 
-잘못된 import나 path:
+Incorrect imports or paths:
 
 ```
-❌ PATH: 경로 불일치
+❌ PATH: Path mismatch
 
   src/entities/user/api/user-api.ts:20
     - path: '/users/{id}'
@@ -189,16 +189,16 @@ Apply auto-fixes? [y/N]
 ## Flags
 
 ```bash
---strict      # warnings도 error로 처리 (CI용)
---fix         # 자동 수정 가능한 것 수정
---json        # JSON 형식 출력
---quiet       # errors만 출력
---tag=name    # 특정 태그만 검증
+--strict      # Treat warnings as errors (for CI)
+--fix         # Auto-fix what's possible
+--json        # JSON format output
+--quiet       # Output errors only
+--tag=name    # Validate specific tag only
 ```
 
 ## Validation Config
 
-`.openapi-sync.json`에서 검증 규칙 설정:
+Configure validation rules in `.openapi-sync.json`:
 
 ```json
 {

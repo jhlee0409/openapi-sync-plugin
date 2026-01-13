@@ -188,17 +188,17 @@ EXAMPLE:
 ```
 ASK USER:
 
-Q1: "API 코드가 있는 폴더나 파일 경로를 알려주세요"
+Q1: "Please provide the folder or file path where API code is located"
     → User provides: "src/api/userService.ts"
     → Analyze that specific file
 
-Q2: "어떤 HTTP 클라이언트를 사용하나요?"
-    Options: [Axios, Fetch, Ky, 커스텀, 기타]
+Q2: "Which HTTP client are you using?"
+    Options: [Axios, Fetch, Ky, Custom, Other]
 
-Q3: "데이터 페칭 라이브러리를 사용하나요?"
-    Options: [React Query, SWR, RTK Query, 없음, 기타]
+Q3: "Are you using a data fetching library?"
+    Options: [React Query, SWR, RTK Query, None, Other]
 
-Q4: "생성할 코드의 참고 샘플을 보여주시겠어요?"
+Q4: "Would you like to provide sample code for reference?"
     → User pastes code
     → Analyze pasted code directly
 ```

@@ -11,16 +11,16 @@ Compare OpenAPI spec changes to see what's new, changed, or removed.
 ## Usage
 
 ```bash
-# 현재 스펙 vs 원격 최신 스펙
+# Current spec vs latest remote spec
 /api:diff --remote
 
-# 두 파일 비교
+# Compare two files
 /api:diff ./old-openapi.json ./new-openapi.json
 
-# 현재 스펙 vs 특정 파일
+# Current spec vs specific file
 /api:diff ./previous-version.json
 
-# 캐시된 이전 버전과 비교
+# Compare with cached previous version
 /api:diff
 ```
 
@@ -30,35 +30,35 @@ Compare OpenAPI spec changes to see what's new, changed, or removed.
 
 ```
 OLD SPEC:
-  - 캐시된 이전 버전 (.openapi-sync.cache.json)
-  - 또는 지정된 파일/URL
+  - Cached previous version (.openapi-sync.cache.json)
+  - Or specified file/URL
 
 NEW SPEC:
-  - .openapi-sync.json의 source
-  - --remote 시 원격에서 fetch
+  - Source from .openapi-sync.json
+  - Fetch remote if --remote specified
 ```
 
 ### Step 2: Compare
 
-**Endpoints 비교:**
+**Endpoint comparison:**
 ```
-각 endpoint에 대해:
-  path + method 조합으로 매칭
+For each endpoint:
+  Match by path + method combination
 
-상태 분류:
-  ADDED:    new에만 존재
-  REMOVED:  old에만 존재
-  CHANGED:  둘 다 존재, 내용 다름
-  UNCHANGED: 둘 다 존재, 동일
+Status classification:
+  ADDED:    Exists only in new
+  REMOVED:  Exists only in old
+  CHANGED:  Exists in both, content differs
+  UNCHANGED: Exists in both, identical
 ```
 
-**Schema 비교:**
+**Schema comparison:**
 ```
-각 schema에 대해:
-  - 필드 추가/삭제
-  - 타입 변경
-  - required 변경
-  - enum 값 변경
+For each schema:
+  - Field additions/deletions
+  - Type changes
+  - Required field changes
+  - Enum value changes
 ```
 
 ### Step 3: Output
@@ -106,14 +106,14 @@ NEW SPEC:
 ───────────────────────────────────────────────────
 
 - GET /api/v1/legacy/export
-  ⚠️  Warning: 코드가 존재함
+  ⚠️  Warning: Code exists at
       src/entities/export/api/legacy-api.ts:15
 
 ═══════════════════════════════════════════════════
 
 🔄 Next steps:
-   /api:sync              - 변경사항 반영
-   /api:sync --only=clips - clips만 업데이트
+   /api:sync              - Apply changes
+   /api:sync --only=clips - Update clips only
 ```
 
 ## Change Detection Details
@@ -154,7 +154,7 @@ interface SchemaChange {
 
 ## Breaking Changes Detection
 
-자동으로 breaking change 감지:
+Automatically detect breaking changes:
 
 ```
 🚨 BREAKING CHANGES:
@@ -162,39 +162,39 @@ interface SchemaChange {
 1. Required field added to request
    POST /api/v1/projects
    + workspaceId (required)
-   → 기존 클라이언트 코드 수정 필요
+   → Existing client code needs modification
 
 2. Field removed from response
    GET /api/v1/users/{id}
    - legacyToken
-   → 이 필드 사용하는 코드 확인 필요
+   → Check code using this field
 
 3. Type changed
    GET /api/v1/users/{id}
    status: string → enum
-   → 타입 호환성 확인 필요
+   → Verify type compatibility
 
 4. Endpoint removed
    GET /api/v1/legacy/export
-   → 사용 코드 제거 필요
+   → Remove usage code
 ```
 
 ## Flags
 
 ```
---remote        원격 스펙과 비교
---json          JSON 형식으로 출력
---breaking-only breaking changes만 표시
---tag=name      특정 태그만 비교
+--remote        Compare with remote spec
+--json          Output in JSON format
+--breaking-only Show breaking changes only
+--tag=name      Compare specific tag only
 ```
 
 ## Cache Management
 
 ```
-diff 실행 시:
-1. 현재 스펙을 .openapi-sync.cache.json에 저장
-2. 다음 diff 시 이전 버전으로 사용
+On diff execution:
+1. Save current spec to .openapi-sync.cache.json
+2. Use as previous version for next diff
 
-캐시 위치: .openapi-sync.cache.json
-캐시 내용: { timestamp, spec, version }
+Cache location: .openapi-sync.cache.json
+Cache contents: { timestamp, spec, version }
 ```

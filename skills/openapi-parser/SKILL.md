@@ -36,8 +36,8 @@ function detectSourceType(source: string): 'url' | 'file' {
    /api-docs → Try /api-docs/json
 
 3. ERROR HANDLING:
-   404 → "스펙을 찾을 수 없습니다. URL을 확인해주세요"
-   기타 → "URL 접근 실패: {error}"
+   404 → "Spec not found. Please check the URL"
+   Other → "URL access failed: {error}"
 ```
 
 **File Loading:**
@@ -51,8 +51,8 @@ function detectSourceType(source: string): 'url' | 'file' {
    (no extension) → Try JSON first, then YAML
 
 3. ERROR HANDLING:
-   ENOENT → "파일을 찾을 수 없습니다: {path}"
-   Parse error → "파일 형식 오류: {error}"
+   ENOENT → "File not found: {path}"
+   Parse error → "File format error: {error}"
 ```
 
 **Parse and Validate:**
@@ -298,16 +298,16 @@ securityDefinitions → securitySchemes
 
 ## Hash Generation (for Caching)
 
-캐싱 시스템을 위한 hash 생성. 변경 감지에 사용.
+Generate hashes for the caching system. Used for change detection.
 
-### Spec Hash (전체 스펙)
+### Spec Hash (entire spec)
 
 ```typescript
 function generateSpecHash(spec: OpenAPISpec): string {
-  // 1. 스펙을 정규화 (키 정렬, 공백 제거)
+  // 1. Normalize spec (sort keys, remove whitespace)
   const normalized = normalizeSpec(spec)
 
-  // 2. SHA256 hash 생성
+  // 2. Generate SHA256 hash
   const hash = crypto
     .createHash('sha256')
     .update(JSON.stringify(normalized))
@@ -332,7 +332,7 @@ function normalizeSpec(obj: any): any {
 }
 ```
 
-### Schema Hash (개별 스키마)
+### Schema Hash (individual schema)
 
 ```typescript
 function generateSchemaHash(schema: Schema): string {
@@ -342,15 +342,15 @@ function generateSchemaHash(schema: Schema): string {
     .update(JSON.stringify(normalized))
     .digest('hex')
 
-  return hash.slice(0, 12)  // 짧은 hash (스키마별)
+  return hash.slice(0, 12)  // Short hash (per schema)
 }
 ```
 
-### Endpoint Hash (개별 엔드포인트)
+### Endpoint Hash (individual endpoint)
 
 ```typescript
 function generateEndpointHash(endpoint: Endpoint): string {
-  // 엔드포인트 시그니처만 hash (path, method, parameters, requestBody, responses)
+  // Hash only endpoint signature (path, method, parameters, requestBody, responses)
   const signature = {
     path: endpoint.path,
     method: endpoint.method,
@@ -376,7 +376,7 @@ async function getQuickHash(url: string): Promise<{
   hash: string
   method: 'etag' | 'last-modified' | 'content'
 }> {
-  // 1. HEAD 요청으로 ETag 확인 (가장 빠름)
+  // 1. HEAD request to check ETag (fastest)
   const headResponse = await fetch(url, { method: 'HEAD' })
 
   const etag = headResponse.headers.get('ETag')
@@ -389,7 +389,7 @@ async function getQuickHash(url: string): Promise<{
     return { hash: lastModified, method: 'last-modified' }
   }
 
-  // 2. ETag 없으면 전체 다운로드 후 hash
+  // 2. If no ETag, download full content and hash
   const content = await fetch(url).then(r => r.text())
   const hash = crypto
     .createHash('sha256')
@@ -402,7 +402,7 @@ async function getQuickHash(url: string): Promise<{
 
 ### Hash Output in Parsed Result
 
-파싱 결과에 hash 정보 포함:
+Include hash information in parsed result:
 
 ```json
 {
@@ -441,7 +441,7 @@ async function getQuickHash(url: string): Promise<{
 }
 ```
 
-### Compare Hashes (Diff 용)
+### Compare Hashes (for Diff)
 
 ```typescript
 interface HashComparison {
@@ -449,12 +449,12 @@ interface HashComparison {
   oldHash: string
   newHash: string
 
-  // 세부 변경 (specChanged가 true일 때만)
+  // Detailed changes (only when specChanged is true)
   endpoints?: {
-    added: string[]      // 새 operationId
-    removed: string[]    // 삭제된 operationId
-    modified: string[]   // 변경된 operationId
-    unchanged: string[]  // 동일한 operationId
+    added: string[]      // New operationIds
+    removed: string[]    // Deleted operationIds
+    modified: string[]   // Changed operationIds
+    unchanged: string[]  // Same operationIds
   }
 
   schemas?: {
@@ -469,7 +469,7 @@ function compareHashes(
   oldParsed: ParsedSpec,
   newParsed: ParsedSpec
 ): HashComparison {
-  // 1. 전체 스펙 hash 비교
+  // 1. Compare overall spec hash
   if (oldParsed.hash.spec === newParsed.hash.spec) {
     return {
       specChanged: false,
@@ -478,7 +478,7 @@ function compareHashes(
     }
   }
 
-  // 2. 세부 비교
+  // 2. Detailed comparison
   const endpoints = compareEndpointHashes(oldParsed, newParsed)
   const schemas = compareSchemaHashes(oldParsed, newParsed)
 

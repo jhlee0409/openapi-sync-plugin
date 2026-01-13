@@ -5,29 +5,29 @@ description: Manage OpenAPI spec cache and implementation state for efficient di
 
 # Cache Manager
 
-캐싱 시스템으로 토큰과 시간을 절약하는 스킬.
+Caching system skill for saving tokens and time.
 
-## 핵심 원칙: 캐시는 힌트, 검증은 필수
+## Core Principle: Cache is Hint, Verification is Required
 
 ```
-⚠️ 캐시는 "빠른 힌트"로만 사용
-⚠️ 코드 생성 전 항상 실제 스펙과 직접 비교
-⚠️ 정확도 100% > 속도
+⚠️ Cache is used as "fast hint" only
+⚠️ Always compare directly with actual spec before code generation
+⚠️ 100% accuracy > speed
 ```
 
-**Conservative Mode (기본):**
-- 캐시 hash 비교 → 힌트만 제공
-- 항상 스펙 fetch → 코드와 직접 비교
-- 차이 있으면 생성, 없으면 스킵
+**Conservative Mode (default):**
+- Cache hash comparison → Provides hint only
+- Always fetch spec → Compare directly with code
+- Generate if different, skip if same
 
 **Trust Cache Mode (--trust-cache):**
-- 캐시 hash 같으면 스킵
-- 빠르지만 edge case 위험
-- 명시적 요청 시에만 사용
+- Skip if cache hash matches
+- Fast but edge case risk
+- Use only when explicitly requested
 
 ## Cache Files
 
-### 1. 스펙 캐시 (.openapi-sync.cache.json)
+### 1. Spec Cache (.openapi-sync.cache.json)
 
 ```json
 {
@@ -56,7 +56,7 @@ description: Manage OpenAPI spec cache and implementation state for efficient di
 }
 ```
 
-### 2. 구현 상태 캐시 (.openapi-sync.state.json)
+### 2. Implementation State Cache (.openapi-sync.state.json)
 
 ```json
 {
@@ -93,20 +93,20 @@ description: Manage OpenAPI spec cache and implementation state for efficient di
 ### 1. Initialize Cache
 
 ```
-첫 실행 또는 캐시 없을 때:
+On first run or when cache doesn't exist:
 
-1. OpenAPI 스펙 fetch
-2. 스펙 hash 생성 (SHA256)
-3. 엔드포인트 목록 추출
-4. 스키마 hash 생성
-5. .openapi-sync.cache.json 저장
+1. Fetch OpenAPI spec
+2. Generate spec hash (SHA256)
+3. Extract endpoint list
+4. Generate schema hashes
+5. Save .openapi-sync.cache.json
 
-6. 코드베이스 스캔
-7. 구현된 엔드포인트 목록 추출
-8. .openapi-sync.state.json 저장
+6. Scan codebase
+7. Extract implemented endpoint list
+8. Save .openapi-sync.state.json
 ```
 
-### 2. Check for Changes (빠른 체크)
+### 2. Check for Changes (fast check)
 
 ```typescript
 async function hasChanges(): Promise<{
@@ -114,10 +114,10 @@ async function hasChanges(): Promise<{
   newHash: string;
   oldHash: string;
 }> {
-  // 1. 현재 스펙의 hash만 가져오기 (HEAD 또는 ETag)
+  // 1. Get current spec hash only (HEAD or ETag)
   const newHash = await getSpecHash(source);
 
-  // 2. 캐시된 hash와 비교
+  // 2. Compare with cached hash
   const cache = readCache();
 
   return {
@@ -128,17 +128,17 @@ async function hasChanges(): Promise<{
 }
 ```
 
-### 3. Compute Diff (변경 시에만)
+### 3. Compute Diff (only when changes detected)
 
 ```typescript
 interface SpecDiff {
-  added: Endpoint[];      // 새로 추가된 엔드포인트
-  removed: Endpoint[];    // 삭제된 엔드포인트
-  modified: {             // 변경된 엔드포인트
+  added: Endpoint[];      // Newly added endpoints
+  removed: Endpoint[];    // Deleted endpoints
+  modified: {             // Changed endpoints
     endpoint: Endpoint;
     changes: SchemaChange[];
   }[];
-  unchanged: Endpoint[];  // 변경 없음
+  unchanged: Endpoint[];  // No changes
 }
 
 function computeDiff(oldSpec: Cache, newSpec: Spec): SpecDiff {
@@ -150,7 +150,7 @@ function computeDiff(oldSpec: Cache, newSpec: Spec): SpecDiff {
   const modified = [];
   const unchanged = [];
 
-  // 새 스펙의 각 엔드포인트 확인
+  // Check each endpoint in new spec
   for (const [key, endpoint] of newEndpoints) {
     if (!oldEndpoints.has(key)) {
       added.push(endpoint);
@@ -165,7 +165,7 @@ function computeDiff(oldSpec: Cache, newSpec: Spec): SpecDiff {
     }
   }
 
-  // 삭제된 엔드포인트 확인
+  // Check for deleted endpoints
   for (const [key, endpoint] of oldEndpoints) {
     if (!newEndpoints.has(key)) {
       removed.push(endpoint);
@@ -179,11 +179,11 @@ function computeDiff(oldSpec: Cache, newSpec: Spec): SpecDiff {
 ### 4. Update Cache
 
 ```
-변경 처리 후:
+After processing changes:
 
-1. 새 스펙으로 cache 업데이트
-2. 구현 상태 업데이트
-3. 타임스탬프 갱신
+1. Update cache with new spec
+2. Update implementation state
+3. Refresh timestamp
 ```
 
 ## Hash Generation
@@ -192,13 +192,13 @@ function computeDiff(oldSpec: Cache, newSpec: Spec): SpecDiff {
 
 ```typescript
 function generateSpecHash(spec: OpenAPISpec): string {
-  // 전체 스펙을 정규화된 JSON으로 변환 후 hash
+  // Convert entire spec to normalized JSON and hash
   const normalized = JSON.stringify(spec, Object.keys(spec).sort());
   return crypto.createHash('sha256').update(normalized).digest('hex');
 }
 ```
 
-### Schema Hash (개별 스키마용)
+### Schema Hash (for individual schemas)
 
 ```typescript
 function generateSchemaHash(schema: Schema): string {
@@ -207,16 +207,16 @@ function generateSchemaHash(schema: Schema): string {
 }
 ```
 
-### Quick Hash (빠른 변경 체크용)
+### Quick Hash (for fast change check)
 
 ```typescript
 async function getQuickHash(url: string): Promise<string> {
-  // 방법 1: HEAD 요청으로 ETag/Last-Modified 확인
+  // Method 1: HEAD request to check ETag/Last-Modified
   const response = await fetch(url, { method: 'HEAD' });
   const etag = response.headers.get('ETag');
   if (etag) return etag;
 
-  // 방법 2: 전체 다운로드 후 hash
+  // Method 2: Download full content and hash
   const spec = await fetch(url).then(r => r.text());
   return crypto.createHash('sha256').update(spec).digest('hex');
 }
@@ -224,77 +224,77 @@ async function getQuickHash(url: string): Promise<string> {
 
 ## Efficiency Gains
 
-### Before (캐싱 없음)
+### Before (no caching)
 
 ```
-매 요청:
-1. 스펙 전체 fetch       → 5초, 10K 토큰
-2. 스펙 전체 분석        → 3초, 20K 토큰
-3. 코드베이스 전체 스캔  → 10초, 15K 토큰
-4. 전체 비교             → 2초, 10K 토큰
+Each request:
+1. Fetch entire spec       → 5s, 10K tokens
+2. Analyze entire spec     → 3s, 20K tokens
+3. Scan entire codebase    → 10s, 15K tokens
+4. Full comparison         → 2s, 10K tokens
 ─────────────────────────────────────
-Total: 20초, 55K 토큰
+Total: 20s, 55K tokens
 ```
 
-### After - Conservative Mode (기본, 정확도 100%)
+### After - Conservative Mode (default, 100% accuracy)
 
 ```
-변경 없을 때:
-1. 스펙 fetch            → 2초, 2K 토큰
-2. 캐시 힌트 확인        → 0.1초
-3. 스펙-코드 직접 비교   → 3초, 5K 토큰
-4. 변경 없음 확인        → 스킵
+When no changes:
+1. Fetch spec              → 2s, 2K tokens
+2. Check cache hint        → 0.1s
+3. Direct spec-code compare → 3s, 5K tokens
+4. No changes confirmed    → Skip
 ─────────────────────────────────────
-Total: 5초, 7K 토큰 (87% 절약)
+Total: 5s, 7K tokens (87% savings)
 
-변경 있을 때:
-1. 스펙 fetch            → 2초, 2K 토큰
-2. 스펙-코드 직접 비교   → 3초, 5K 토큰
-3. 변경분만 생성         → 3초, 5K 토큰
+When changes detected:
+1. Fetch spec              → 2s, 2K tokens
+2. Direct spec-code compare → 3s, 5K tokens
+3. Generate changes only   → 3s, 5K tokens
 ─────────────────────────────────────
-Total: 8초, 12K 토큰 (78% 절약)
+Total: 8s, 12K tokens (78% savings)
 ```
 
-### After - Trust Cache Mode (--trust-cache, 빠름)
+### After - Trust Cache Mode (--trust-cache, fast)
 
 ```
-변경 없을 때:
-1. Hash 비교만           → 1초, 0.5K 토큰
+When no changes:
+1. Hash comparison only    → 1s, 0.5K tokens
 ─────────────────────────────────────
-Total: 1초, 0.5K 토큰 (99% 절약)
+Total: 1s, 0.5K tokens (99% savings)
 
-⚠️ 주의: 캐시 손상/서버 오류 시 변경 누락 가능
+⚠️ Warning: May miss changes if cache corrupted/server error
 ```
 
-### 모드별 비교
+### Mode Comparison
 
-| 모드 | 변경 없음 | 변경 있음 | 정확도 |
-|-----|----------|----------|--------|
-| 캐싱 없음 | 20초, 55K | 20초, 55K | 100% |
-| Conservative (기본) | 5초, 7K | 8초, 12K | 100% |
-| Trust Cache | 1초, 0.5K | 6초, 7.5K | 99%* |
+| Mode | No Changes | With Changes | Accuracy |
+|------|------------|--------------|----------|
+| No caching | 20s, 55K | 20s, 55K | 100% |
+| Conservative (default) | 5s, 7K | 8s, 12K | 100% |
+| Trust Cache | 1s, 0.5K | 6s, 7.5K | 99%* |
 
-*edge case 위험 있음
+*edge case risk exists
 
 ## Cache Invalidation
 
 ```
-캐시 무효화 조건:
-1. 수동 요청: /api:sync --force
-2. 캐시 파일 없음
-3. 캐시 버전 불일치
-4. 24시간 이상 경과 (선택적)
+Cache invalidation conditions:
+1. Manual request: /api:sync --force
+2. Cache file not found
+3. Cache version mismatch
+4. More than 24 hours elapsed (optional)
 ```
 
 ## Error Handling
 
 ```
-캐시 읽기 실패:
-  → 새로 생성
+Cache read failure:
+  → Create new cache
 
-캐시 손상:
-  → 삭제 후 새로 생성
+Cache corrupted:
+  → Delete and create new
 
-스펙 fetch 실패:
-  → 캐시된 버전 사용 (경고 출력)
+Spec fetch failure:
+  → Use cached version (with warning)
 ```

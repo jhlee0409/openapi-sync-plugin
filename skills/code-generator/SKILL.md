@@ -60,11 +60,11 @@ Svelte + Ky + Svelte Query → Svelte template
 When nothing detected:
 
 ```
-Ask: "어떤 스타일로 생성할까요?"
+Ask: "What style should I generate?"
 Options:
-  - 샘플 코드 붙여넣기 (추천)
-  - 기본 템플릿 사용
-  - 프레임워크 선택
+  - Paste sample code (recommended)
+  - Use default templates
+  - Choose framework
 ```
 
 ## Sample Cloning Algorithm
@@ -414,14 +414,14 @@ When working with empty/new project:
 
 ```typescript
 // Ask user preference
-"새 프로젝트인 것 같습니다. 어떤 스타일로 생성할까요?"
+"This appears to be a new project. What style should I generate?"
 
 Options:
 1. "React + Axios + React Query (modern)"
 2. "React + Fetch + SWR"
 3. "Vue + Axios + Pinia"
-4. "직접 샘플 제공"
-5. "최소한의 타입만 생성"
+4. "Provide sample directly"
+5. "Generate types only (minimal)"
 
 // Then use framework-specific sensible defaults
 ```
