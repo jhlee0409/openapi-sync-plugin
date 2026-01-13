@@ -1,6 +1,6 @@
 {
   "name": "oas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Adaptive API code generator that learns your project patterns and syncs with OpenAPI specs",
   "author": {
     "name": "Jack Lee",
