@@ -14,16 +14,16 @@ A Claude Code plugin that syncs OpenAPI specs with your codebase.
 
 ```bash
 # Add plugin marketplace (run once)
-/plugin marketplace add jhlee0409/openapi-sync-plugin
+/plugin marketplace add jhlee0409/claude-plugins
 
 # Install plugin
-/plugin install openapi-sync@openapi-sync-plugin
+/plugin install oas@jhlee0409-plugins
 ```
 
 For development/testing:
 ```bash
 # Load plugin from local directory
-claude --plugin-dir /path/to/openapi-sync-plugin
+claude --plugin-dir /path/to/claude-plugins
 ```
 
 ## Quick Start

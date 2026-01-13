@@ -6,8 +6,8 @@
     "name": "Jack Lee",
     "email": "jhlee0409@gmail.com"
   },
-  "homepage": "https://github.com/jhlee0409/openapi-sync-plugin",
-  "repository": "https://github.com/jhlee0409/openapi-sync-plugin",
+  "homepage": "https://github.com/jhlee0409/claude-plugins",
+  "repository": "https://github.com/jhlee0409/claude-plugins",
   "license": "MIT",
   "keywords": [
     "openapi",
