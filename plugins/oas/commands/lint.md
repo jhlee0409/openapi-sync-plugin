@@ -694,13 +694,12 @@ The majority pattern in your codebase becomes the "standard" - we find inconsist
 ## Integration with Other Commands
 
 ```bash
-# Lint then sync
-/oas:lint && /oas:sync
+# Check lint before syncing
+/oas:lint
+# Then sync if no issues
+/oas:sync
 
-# Stop on critical in CI
+# Filter by severity
 /oas:lint --severity=critical
-
-# Apply lint results to sync (generate consistent code)
-/oas:sync --normalize
 ```
 

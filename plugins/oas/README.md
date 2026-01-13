@@ -74,7 +74,7 @@ Analyzes your existing API code to learn project patterns:
   ✓ Structure: FSD (Feature-Sliced Design)
   ✓ Naming: camelCase functions, PascalCase types
 
-Generate code using these patterns? [Y/n]
+이 패턴으로 코드를 생성할까요?
 ```
 
 ### 2. Consistent Code Generation
@@ -324,18 +324,16 @@ When running `/oas:sync` without flags, you can select specific changes:
 📊 Changes Detected:
 
 NEW (3):
-  [ ] POST /api/v1/clips/{id}/render (clips)
-  [ ] GET  /api/v1/clips/{id}/status (clips)
-  [ ] DELETE /api/v1/cache/{key} (cache)
+  1. POST /api/v1/clips/{id}/render (clips)
+  2. GET  /api/v1/clips/{id}/status (clips)
+  3. DELETE /api/v1/cache/{key} (cache)
 
 CHANGED (2):
-  [ ] GET /api/v1/users/{id} (users)
-  [ ] POST /api/v1/projects (projects)
+  4. GET /api/v1/users/{id} (users)
+  5. POST /api/v1/projects (projects)
 
-Select: [a]ll / [n]one / [t]ag / [enter numbers]
-> 1,2,4
-
-Generating selected endpoints...
+어떤 항목을 처리할까요?
+(전체, 특정 번호, 또는 태그로 선택 가능)
 ```
 
 ## Breaking Changes Detection

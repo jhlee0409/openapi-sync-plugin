@@ -184,7 +184,7 @@ Incorrect imports or paths:
 3. [manual] Extra code: legacy-api.ts
    Cannot auto-fix: requires manual decision
 
-Apply auto-fixes? [y/N]
+자동 수정을 적용할까요?
 ```
 
 ## Flags

@@ -74,7 +74,7 @@ claude --plugin-dir /path/to/claude-plugins
   ✓ 구조: FSD (Feature-Sliced Design)
   ✓ 네이밍: camelCase functions, PascalCase types
 
-이 패턴으로 코드를 생성할까요? [Y/n]
+이 패턴으로 코드를 생성할까요?
 ```
 
 ### 2. 일관된 코드 생성
@@ -324,18 +324,16 @@ billing          8           ❌ 미구현
 📊 변경 감지:
 
 NEW (3):
-  [ ] POST /api/v1/clips/{id}/render (clips)
-  [ ] GET  /api/v1/clips/{id}/status (clips)
-  [ ] DELETE /api/v1/cache/{key} (cache)
+  1. POST /api/v1/clips/{id}/render (clips)
+  2. GET  /api/v1/clips/{id}/status (clips)
+  3. DELETE /api/v1/cache/{key} (cache)
 
 CHANGED (2):
-  [ ] GET /api/v1/users/{id} (users)
-  [ ] POST /api/v1/projects (projects)
+  4. GET /api/v1/users/{id} (users)
+  5. POST /api/v1/projects (projects)
 
-선택: [a]ll / [n]one / [t]ag / [숫자 입력]
-> 1,2,4
-
-선택된 엔드포인트 생성 중...
+어떤 항목을 처리할까요?
+(전체, 특정 번호, 또는 태그로 선택 가능)
 ```
 
 ## Breaking Changes 감지

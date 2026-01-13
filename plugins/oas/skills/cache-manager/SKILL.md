@@ -383,7 +383,7 @@ Cache invalidation conditions:
 │  /oas:sync --offline                                            │
 │    → Use cache only, no network                                 │
 │    → Fail if no cache exists                                    │
-│    → Use when: airplane mode, CI without network                │
+│    → Use when: airplane mode, no network access                 │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```

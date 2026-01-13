@@ -144,7 +144,8 @@ REMOVED from spec (1 endpoint):
   - GET /api/v1/legacy/export
     ⚠️ Code exists at: src/entities/export/api/legacy-api.ts
 
-Proceed with generation? [y/N/select]
+Proceed with generation?
+(You can select specific items or proceed with all)
 ```
 
 ### Step 4: Generate Code
@@ -315,7 +316,7 @@ Next: Review generated code and run your type checker
 |------|---------|-------|----------|-------------|
 | Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
 | Force | `/oas:sync --force` | Slow | 100% | Cache seems stale, debugging |
-| Offline | `/oas:sync --offline` | Instant | Cache-based | Airplane mode, CI without network |
+| Offline | `/oas:sync --offline` | Instant | Cache-based | Airplane mode, no network access |
 
 *Smart mode: HEAD request to check changes, full fetch only when needed
 
@@ -454,7 +455,7 @@ Generated:
 
 ## Interactive Selection
 
-Select changes when running without flags:
+When changes are detected, you can select which ones to process:
 
 ```
 /oas:sync
@@ -462,16 +463,14 @@ Select changes when running without flags:
 📊 Changes Detected:
 
 NEW (3):
-  [ ] POST /api/v1/clips/{id}/render (clips)
-  [ ] GET  /api/v1/clips/{id}/status (clips)
-  [ ] DELETE /api/v1/cache/{key} (cache)
+  1. POST /api/v1/clips/{id}/render (clips)
+  2. GET  /api/v1/clips/{id}/status (clips)
+  3. DELETE /api/v1/cache/{key} (cache)
 
 CHANGED (2):
-  [ ] GET /api/v1/users/{id} (users)
-  [ ] POST /api/v1/projects (projects)
+  4. GET /api/v1/users/{id} (users)
+  5. POST /api/v1/projects (projects)
 
-Select: [a]ll / [n]one / [t]ag / [enter numbers]
-> 1,2,4
-
-Generating selected endpoints...
+어떤 항목을 처리할까요?
+(전체, 특정 번호, 또는 태그로 선택 가능)
 ```

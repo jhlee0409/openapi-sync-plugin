@@ -166,7 +166,8 @@ Analyzing samples...
 
 **Ask confirmation:**
 ```
-Generate code using these patterns? [Y/n/modify]
+이 패턴으로 코드를 생성할까요?
+(변경이 필요하면 말씀해주세요)
 ```
 
 ## Step 4b: Interactive Mode (if no samples)
@@ -284,7 +285,8 @@ package.json not found:
   → "Cannot find package.json. Please run from project root."
 
 Existing config file:
-  → ".openapi-sync.json already exists. Overwrite? [y/N/merge]"
+  → ".openapi-sync.json already exists."
+  → Ask user: Overwrite or merge with existing config?
 ```
 
 ## Flags
