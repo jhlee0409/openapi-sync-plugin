@@ -12,6 +12,7 @@ Strategies and best practices for optimal OAS plugin performance.
 | Small changes | `/oas:sync` | 5-10 seconds |
 | Large spec (500+) | `/oas:sync --tag=X` | 10-30 seconds |
 | First sync | `/oas:sync` | 30-60 seconds |
+| Trust cache | `/oas:sync --trust-cache` | < 0.1 second |
 | Offline | `/oas:sync --offline` | < 1 second |
 
 ---
@@ -284,11 +285,64 @@ Time: 8 seconds (vs 45 seconds for full sync)
 | Mode | Network | Speed | Accuracy | Use When |
 |------|---------|-------|----------|----------|
 | Smart (default) | HEAD only* | Fast | 100% | Always |
+| --trust-cache | None | Instant | 99%** | Quick checks |
 | --force | Full GET | Slow | 100% | Cache seems wrong |
 | --offline | None | Instant | Cache-based | No network |
 | --dry-run | HEAD only* | Fast | Preview | Before sync |
 
 *Full GET only when changes detected
+**May miss changes if server ETag/Last-Modified errors or cache corrupted
+
+### Trust Cache Mode
+
+The `--trust-cache` flag provides the fastest possible sync by skipping all cache validation:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    TRUST CACHE MODE                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   /oas:sync --trust-cache                                    │
+│       │                                                      │
+│       ▼                                                      │
+│   ┌─────────────────┐                                        │
+│   │ Cache exists?   │                                        │
+│   └────────┬────────┘                                        │
+│            │                                                 │
+│     No     │      Yes                                        │
+│     │      │        │                                        │
+│     ▼      │        ▼                                        │
+│   Error    │   ┌──────────┐                                  │
+│   E601     │   │ USE      │ ← No network request!            │
+│            │   │ CACHE    │   Instant response               │
+│            │   │ ⚡ FAST   │                                  │
+│            │   └──────────┘                                  │
+│            │                                                 │
+└────────────┴─────────────────────────────────────────────────┘
+```
+
+**When to use Trust Cache:**
+- Quick checks during active development
+- When you know the spec hasn't changed
+- In CI/CD pipelines with pre-verified cache
+- When network latency is a bottleneck
+
+**When NOT to use Trust Cache:**
+- First sync of the day (use smart mode)
+- After deploying backend changes
+- When debugging sync issues
+- In production validation scripts
+
+**Comparison: Smart vs Trust Cache**
+
+| Aspect | Smart (default) | Trust Cache |
+|--------|-----------------|-------------|
+| Cache check | HEAD request | None |
+| Network cost | 1 small request | 0 requests |
+| Time (cache hit) | 0.2-0.5s | <0.1s |
+| Time (cache miss) | 2-10s | N/A (uses cache) |
+| Accuracy | 100% | 99% |
+| Detects spec changes | Yes | No |
 
 ### Expected Times
 
@@ -307,6 +361,12 @@ Default (/oas:sync):
   ✓ Automatically optimal
   ✓ Fast when unchanged
   ✓ Accurate when changed
+
+Trust Cache (/oas:sync --trust-cache):
+  - Quick iterations during development
+  - Know spec hasn't changed recently
+  - Network latency is problematic
+  - 99% accuracy acceptable
 
 Force (/oas:sync --force):
   - Cache seems stale

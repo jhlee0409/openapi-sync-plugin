@@ -313,24 +313,61 @@ Next: Review generated code and run your type checker
 
 ## Flags
 
+### Cache & Network
+| Flag | Description |
+|------|-------------|
+| `--force` | Ignore cache, always fetch fresh |
+| `--trust-cache` | Fast mode, trust cache (99% accuracy) |
+| `--offline` | Use cached spec only, no network |
+
+### Output Control
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Preview only, no file changes |
+| `--verbose` | Show detailed progress |
+
+### Tag Filtering
+| Flag | Description |
+|------|-------------|
+| `--tag=<name>` | Process specific tag(s) only |
+| `--exclude-tag=<name>` | Exclude specific tag(s) |
+| `--list-tags` | Show available tags with status |
+
+### Endpoint Filtering
+| Flag | Description |
+|------|-------------|
+| `--endpoint=<path>` | Process specific endpoint(s) |
+| `--only-added` | Process new endpoints only |
+| `--only-changed` | Process modified endpoints only |
+
+### File Type Filtering
+| Flag | Description |
+|------|-------------|
+| `--only-types` | Generate types only |
+| `--only-api` | Generate API functions only |
+| `--only-hooks` | Generate hooks only |
+
+### Examples
+
 ```bash
-# Preview only (no file generation)
-/oas:sync --dry-run
+# Basic
+/oas:sync                    # Smart mode (default)
+/oas:sync --dry-run          # Preview changes
+/oas:sync --force            # Fresh fetch
+/oas:sync --trust-cache      # Fast mode
 
-# Types only
-/oas:sync --only-types
+# Tag filtering
+/oas:sync --tag=users        # Single tag
+/oas:sync --tag=users --tag=billing  # Multiple tags
+/oas:sync --exclude-tag=internal     # Exclude tag
 
-# Force fetch (ignore cache, always fetch)
-/oas:sync --force
+# Endpoint filtering
+/oas:sync --endpoint="/api/v1/users/{id}"
+/oas:sync --only-added       # New endpoints only
 
-# Trust cache mode (faster, 99% accuracy)
-/oas:sync --trust-cache
-
-# Verbose output (show detailed progress)
-/oas:sync --verbose
-
-# Offline mode (use cache only, no network)
-/oas:sync --offline
+# File type filtering
+/oas:sync --only-types       # Types only
+/oas:sync --only-api         # API functions only
 ```
 
 ## Sync Modes
@@ -338,10 +375,12 @@ Next: Review generated code and run your type checker
 | Mode | Command | Speed | Accuracy | When to use |
 |------|---------|-------|----------|-------------|
 | Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
+| Trust Cache | `/oas:sync --trust-cache` | Instant | 99%** | Quick iterations, know spec unchanged |
 | Force | `/oas:sync --force` | Slow | 100% | Cache seems stale, debugging |
 | Offline | `/oas:sync --offline` | Instant | Cache-based | Airplane mode, no network access |
 
 *Smart mode: HEAD request to check changes, full fetch only when needed
+**Trust Cache may miss changes if server ETag/Last-Modified errors or cache corrupted
 
 ## Tag Filtering
 

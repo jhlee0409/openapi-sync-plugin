@@ -25,11 +25,15 @@ Get up and running with the OAS plugin in 5 minutes.
 ### Most Common Flags
 
 ```
---force       Skip cache, always fetch fresh
---offline     Use cached spec only (no network)
---dry-run     Preview what would happen
---tag=name    Focus on specific domain only
---only-types  Generate types only
+--force         Skip cache, always fetch fresh
+--offline       Use cached spec only (no network)
+--dry-run       Preview what would happen
+--trust-cache   Fast mode, trust cache (99% accuracy)
+--tag=name      Focus on specific domain only
+--endpoint=path Filter by specific endpoint
+--only-types    Generate types only
+--only-added    Process new endpoints only
+--only-changed  Process modified endpoints only
 ```
 
 ---
@@ -360,11 +364,17 @@ Add to ignore list:
 # Use cache only
 /oas:sync --offline
 
+# Trust cache mode (faster, 99% accuracy)
+/oas:sync --trust-cache
+
 # Preview only
 /oas:sync --dry-run
 
 # Single tag
 /oas:sync --tag=user
+
+# Filter by endpoint
+/oas:sync --endpoint="/api/v1/users/*"
 
 # Types only
 /oas:sync --only-types
@@ -374,6 +384,12 @@ Add to ignore list:
 
 # Hooks only
 /oas:sync --only-hooks
+
+# New endpoints only
+/oas:sync --only-added
+
+# Modified endpoints only
+/oas:sync --only-changed
 ```
 
 ### /oas:diff
@@ -485,7 +501,9 @@ Add to ignore list:
 │  GENERATE                                                   │
 │  /oas:sync                 Generate/update code            │
 │  /oas:sync --tag=X         Single domain only              │
+│  /oas:sync --endpoint=X    Filter by endpoint              │
 │  /oas:sync --only-types    Types only                      │
+│  /oas:sync --only-added    New endpoints only              │
 │  /oas:sync --dry-run       Preview changes                 │
 │                                                             │
 │  COMPARE                                                    │
@@ -500,6 +518,7 @@ Add to ignore list:
 │  CACHE                                                      │
 │  --force                   Bypass cache                    │
 │  --offline                 Use cache only                  │
+│  --trust-cache             Fast mode (99% accuracy)        │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```

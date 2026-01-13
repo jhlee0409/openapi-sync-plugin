@@ -354,6 +354,23 @@ Recovery: Creates directory automatically if possible
 See: EDGE-CASES.md#52-path-issues
 ```
 
+### E307 - package.json Not Found
+
+```
+[E307] FATAL: package.json not found
+
+Cannot find package.json in current directory
+
+Cause: Command not run from project root directory
+Fix:
+  1. Navigate to project root
+  2. Run command from directory containing package.json
+  3. Ensure project is properly initialized
+Recovery: None
+
+See: commands/init.md
+```
+
 ---
 
 ## E4xx: Code Generation Errors
@@ -497,6 +514,23 @@ Recovery: Uses default value with warning
 See: commands/init.md
 ```
 
+### E505 - Config Already Exists
+
+```
+[E505] WARNING: Configuration file already exists
+
+.openapi-sync.json already exists in this project
+
+Cause: /oas:init has already been run for this project
+Fix:
+  1. Use --force to overwrite existing configuration
+  2. Manually edit .openapi-sync.json if only minor changes needed
+  3. Delete existing config and re-run /oas:init
+Recovery: Prompts user for action (overwrite/merge/cancel)
+
+See: commands/init.md
+```
+
 ---
 
 ## E6xx: Cache Errors
@@ -584,6 +618,7 @@ See: EDGE-CASES.md#51-permission-issues
 | E304 | FATAL | Path traversal | None |
 | E305 | WARNING | File exists | Prompt |
 | E306 | ERROR | Dir not found | Creates |
+| E307 | FATAL | No package.json | None |
 | E401 | FATAL | No sample file | Interactive |
 | E402 | WARNING | Pattern fail | Defaults |
 | E403 | WARNING | Invalid identifier | Sanitizes |
@@ -593,6 +628,7 @@ See: EDGE-CASES.md#51-permission-issues
 | E502 | FATAL | Invalid config | Regenerate |
 | E503 | ERROR | Missing config | Prompt |
 | E504 | ERROR | Invalid value | Default |
+| E505 | WARNING | Config exists | Prompt |
 | E601 | INFO | No cache | Fresh fetch |
 | E602 | WARNING | Cache corrupt | Rebuild |
 | E603 | INFO | Cache outdated | Refetch |

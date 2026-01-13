@@ -320,7 +320,7 @@ Generated:
 
 ## Interactive Selection
 
-When running `/oas:sync` without flags, you can select specific changes:
+When running `/oas:sync` without flags and changes are detected, Claude will show a preview and ask for confirmation before generating code:
 
 ```
 📊 Changes Detected:
@@ -334,9 +334,15 @@ CHANGED (2):
   4. GET /api/v1/users/{id} (users)
   5. POST /api/v1/projects (projects)
 
-Which items do you want to process?
-(Select all, specific numbers, or filter by tag)
+Proceed with generation?
+(You can select specific items or proceed with all)
 ```
+
+**Response Options:**
+- "Yes" or "Proceed" - Process all changes
+- "Only 1, 2" - Process specific numbered items
+- "Only clips" - Process by tag name
+- "Skip" or "No" - Cancel generation
 
 ## Breaking Changes Detection
 
@@ -364,6 +370,8 @@ Which items do you want to process?
    GET /api/v1/legacy/export
    → Remove usage code
 ```
+
+For detailed migration strategies and handling breaking changes, see [MIGRATION.md](./MIGRATION.md).
 
 ## Generated File Structures
 
@@ -580,6 +588,30 @@ Cache is automatically invalidated when:
 - **Data Fetching:** React Query, SWR, others (auto-detected)
 - **Frameworks:** React, Vue, Angular, Svelte (auto-detected)
 - **Structure:** FSD, Feature-based, Flat, others (auto-detected)
+
+## Security Flags
+
+For development environments, additional flags are available:
+
+| Flag | Description | Use Case |
+|------|-------------|----------|
+| `--insecure` | Skip SSL certificate verification | Self-signed certs in development |
+| `--allow-internal` | Allow internal/private IP addresses | Local API servers |
+
+**Examples:**
+
+```bash
+# Access spec with self-signed certificate (development only)
+/oas:init https://dev-api.local/openapi.json --insecure
+
+# Access spec on internal network
+/oas:init https://192.168.1.100/openapi.json --allow-internal
+
+# Combine flags for local development
+/oas:sync --allow-internal --insecure
+```
+
+> **Warning:** These flags bypass security protections. Never use in production or with untrusted URLs. See [SECURITY.md](./SECURITY.md) for detailed guidelines.
 
 ## Troubleshooting
 
