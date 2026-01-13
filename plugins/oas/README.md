@@ -60,8 +60,8 @@ claude --plugin-dir /path/to/claude-plugins
 Analyzes your existing API code to learn project patterns:
 
 ```bash
-/oas:init ./openapi.json                        # 로컬 파일
-/oas:init https://api.example.com/openapi.json  # 원격 URL
+/oas:init ./openapi.json                        # Local file
+/oas:init https://api.example.com/openapi.json  # Remote URL
 
 📄 OpenAPI: My API v2.0.0 (25 endpoints)
 
@@ -74,7 +74,7 @@ Analyzes your existing API code to learn project patterns:
   ✓ Structure: FSD (Feature-Sliced Design)
   ✓ Naming: camelCase functions, PascalCase types
 
-이 패턴으로 코드를 생성할까요?
+Generate code using these patterns?
 ```
 
 ### 2. Consistent Code Generation
@@ -332,8 +332,8 @@ CHANGED (2):
   4. GET /api/v1/users/{id} (users)
   5. POST /api/v1/projects (projects)
 
-어떤 항목을 처리할까요?
-(전체, 특정 번호, 또는 태그로 선택 가능)
+Which items do you want to process?
+(Select all, specific numbers, or filter by tag)
 ```
 
 ## Breaking Changes Detection

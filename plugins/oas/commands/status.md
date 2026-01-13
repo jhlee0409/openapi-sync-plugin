@@ -151,6 +151,7 @@ Run /oas:init to initialize OpenAPI sync.
 ```bash
 --check-remote    # Compare with remote spec hash
 --quiet           # Summary only
+--verbose         # Show detailed information
 --tag=name        # Filter status by specific tag(s)
 --list-tags       # List all available tags with coverage
 ```

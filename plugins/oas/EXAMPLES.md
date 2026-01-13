@@ -10,8 +10,8 @@ Complete, realistic examples for the OAS plugin.
 2. [Sample OpenAPI Spec](#sample-openapi-spec)
 3. [Pattern Detection Examples](#pattern-detection-examples)
 4. [Generated Code Examples](#generated-code-examples)
-5. [Structure-Specific Examples](#structure-specific-examples)
-6. [Hook Generation Examples](#hook-generation-examples)
+5. [Structure Examples](#structure-examples) (any structure supported)
+6. [Hook Examples](#hook-examples) (any hook library supported)
 
 ---
 
@@ -762,7 +762,9 @@ export const useRestoreProject = () => {
 
 ---
 
-## Structure-Specific Examples
+## Structure Examples
+
+> **Note:** These are common examples. The plugin learns from YOUR existing code samples, so any folder structure is supported.
 
 ### FSD (Feature-Sliced Design)
 
@@ -864,7 +866,9 @@ src/
 
 ---
 
-## Hook Generation Examples
+## Hook Examples
+
+> **Note:** These are common examples. The plugin learns from YOUR existing code samples, so any data fetching library (React Query, SWR, RTK Query, custom hooks, etc.) is supported.
 
 ### SWR Pattern
 

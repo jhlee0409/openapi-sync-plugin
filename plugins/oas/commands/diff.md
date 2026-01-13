@@ -239,6 +239,7 @@ Automatically detect breaking changes:
 --force           Force fetch remote (bypass cache)
 --offline         Use cached spec only (no network)
 --breaking-only   Show breaking changes only
+--verbose         Show detailed diff information
 --tag=name        Filter by specific tag(s)
 --exclude-tag=n   Exclude specific tag(s)
 --list-tags       Show available tags with change summary

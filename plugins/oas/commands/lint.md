@@ -681,6 +681,7 @@ Show migration guide? [y/n]
 --force           # Force fetch spec (bypass cache)
 --offline         # Use cached spec only (no network)
 --severity=level  # Filter by critical/warning/info
+--verbose         # Show detailed lint results
 ```
 
 ## Config

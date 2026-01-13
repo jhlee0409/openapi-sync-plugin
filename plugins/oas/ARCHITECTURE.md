@@ -284,7 +284,7 @@ Key example categories:
 - **OpenAPI Spec**: Sample spec for testing
 - **Pattern Detection**: How patterns are recognized from existing code
 - **Generated Code**: Complete type, API, and hook examples
-- **Structure-Specific**: FSD, Feature-based, Flat structure examples
+- **Structure Examples**: Common patterns (FSD, Feature-based, Flat) - any structure supported via sample learning
 
 ---
 

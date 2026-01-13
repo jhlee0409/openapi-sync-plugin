@@ -184,7 +184,7 @@ Incorrect imports or paths:
 3. [manual] Extra code: legacy-api.ts
    Cannot auto-fix: requires manual decision
 
-자동 수정을 적용할까요?
+Apply auto-fix?
 ```
 
 ## Flags
@@ -195,6 +195,7 @@ Incorrect imports or paths:
 --force       # Force fetch spec (bypass cache)
 --offline     # Use cached spec only (no network)
 --quiet       # Output errors only
+--verbose     # Show detailed validation results
 --tag=name    # Validate specific tag only
 ```
 

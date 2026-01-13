@@ -323,6 +323,12 @@ Next: Review generated code and run your type checker
 # Force fetch (ignore cache, always fetch)
 /oas:sync --force
 
+# Trust cache mode (faster, 99% accuracy)
+/oas:sync --trust-cache
+
+# Verbose output (show detailed progress)
+/oas:sync --verbose
+
 # Offline mode (use cache only, no network)
 /oas:sync --offline
 ```
@@ -488,8 +494,8 @@ CHANGED (2):
   4. GET /api/v1/users/{id} (users)
   5. POST /api/v1/projects (projects)
 
-어떤 항목을 처리할까요?
-(전체, 특정 번호, 또는 태그로 선택 가능)
+Which items do you want to process?
+(Select all, specific numbers, or filter by tag)
 ```
 
 ---

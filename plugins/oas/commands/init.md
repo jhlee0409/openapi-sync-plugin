@@ -42,11 +42,11 @@ When `/oas:init` is invoked, Claude MUST perform these steps in order:
 **IMPORTANT: Always start by asking the user for the OpenAPI spec location.**
 
 ```
-🚀 OpenAPI Sync 초기화
+🚀 OpenAPI Sync Initialization
 
-OpenAPI spec의 URL 또는 파일 경로를 입력해주세요:
+Please enter the OpenAPI spec URL or file path:
 
-예시:
+Examples:
   • https://api.example.com/openapi.json
   • ./openapi.json
   • ./docs/swagger.yaml
@@ -182,8 +182,8 @@ Analyzing samples...
 
 **Ask confirmation:**
 ```
-이 패턴으로 코드를 생성할까요?
-(변경이 필요하면 말씀해주세요)
+Generate code using these patterns?
+(Let me know if you'd like any changes)
 ```
 
 ## Step 4b: Interactive Mode (if no samples)

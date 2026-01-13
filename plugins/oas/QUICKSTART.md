@@ -303,22 +303,26 @@ Add to ignore list:
    /oas:sync --verbose
    ```
 
-### CI/CD Integration
+### Pre-Commit/Pre-Deploy Checks
 
-1. **Cache in build, use in test**
+**Note:** These commands run within Claude Code conversations, not as standalone CLI tools.
+
+1. **Before committing changes**
    ```bash
-   # Build step
-   /oas:sync --force
-
-   # Test step
-   /oas:validate --strict --offline
+   # Run within Claude Code to validate before commit
+   /oas:validate --strict
    ```
 
-2. **Fail on breaking changes**
+2. **Check for breaking changes**
    ```bash
-   # In CI
+   # Run within Claude Code to detect breaking changes
    /oas:diff --breaking-only
-   # Returns non-zero if breaking changes found
+   ```
+
+3. **Full sync before deployment**
+   ```bash
+   # Ensure all endpoints are up to date
+   /oas:sync --force
    ```
 
 ### Team Collaboration
