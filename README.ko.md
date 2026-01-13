@@ -13,8 +13,17 @@ OpenAPI 스펙과 코드베이스를 동기화하는 Claude Code 플러그인.
 ## 설치
 
 ```bash
-# Claude Code에서 플러그인 설치
-claude plugins install openapi-sync
+# 플러그인 마켓플레이스 추가 (최초 1회)
+/plugin marketplace add jhlee0409/openapi-sync-plugin
+
+# 플러그인 설치
+/plugin install openapi-sync@openapi-sync-plugin
+```
+
+개발/테스트용:
+```bash
+# 로컬 디렉토리에서 플러그인 로드
+claude --plugin-dir /path/to/openapi-sync-plugin
 ```
 
 ## 빠른 시작
