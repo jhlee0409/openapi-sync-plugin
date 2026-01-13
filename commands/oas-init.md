@@ -1,5 +1,4 @@
 ---
-name: oas-init
 description: Initialize OpenAPI sync - learns your project patterns automatically
 argument-hint: [openapi-spec-path-or-url]
 uses-skills: [output-format]

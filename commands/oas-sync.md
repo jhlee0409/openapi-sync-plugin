@@ -1,5 +1,4 @@
 ---
-name: oas-sync
 description: Sync codebase with OpenAPI spec - generate types and API code (100% accuracy by default)
 argument-hint: [--dry-run] [--force] [--tag=name] [--trust-cache]
 uses-skills: [output-format]

@@ -1,5 +1,4 @@
 ---
-name: oas-analyze
 description: Deep analysis of project's API code patterns
 argument-hint: [--verbose] [--domain=name]
 uses-skills: [output-format]
