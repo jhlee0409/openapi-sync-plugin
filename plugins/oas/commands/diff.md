@@ -238,7 +238,6 @@ Automatically detect breaking changes:
 --remote          Compare with remote spec (smart caching)
 --force           Force fetch remote (bypass cache)
 --offline         Use cached spec only (no network)
---json            Output in JSON format
 --breaking-only   Show breaking changes only
 --tag=name        Filter by specific tag(s)
 --exclude-tag=n   Exclude specific tag(s)

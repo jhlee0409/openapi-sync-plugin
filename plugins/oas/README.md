@@ -196,7 +196,6 @@ Compare OpenAPI spec changes.
 /oas:diff --tag=users        # Specific tag only
 /oas:diff --exclude-tag=internal  # Exclude specific tag
 /oas:diff --list-tags        # Show tags with change summary
-/oas:diff --json             # JSON output
 ```
 
 ### /oas:validate
@@ -208,7 +207,6 @@ Validate code matches spec.
 /oas:validate --strict       # Warnings treated as errors
 /oas:validate --fix          # Auto-fix what's possible
 /oas:validate --tag=users    # Specific tag only
-/oas:validate --json         # JSON output
 /oas:validate --quiet        # Errors only
 ```
 
@@ -224,8 +222,6 @@ Check spec and code for consistency.
 /oas:lint --rule=type-naming # Specific rule only
 /oas:lint --severity=critical # Filter by severity
 /oas:lint --ignore=pattern   # Ignore specific path/schema
-/oas:lint --output=file      # Save results to file
-/oas:lint --json             # JSON output
 ```
 
 ### /oas:status
@@ -237,7 +233,6 @@ Quick status check from cache.
 /oas:status --check-remote   # Check remote spec hash (~1s)
 /oas:status --tag=users      # Status for specific tag
 /oas:status --list-tags      # Show all tags with coverage
-/oas:status --json           # JSON output
 /oas:status --quiet          # Summary only
 ```
 

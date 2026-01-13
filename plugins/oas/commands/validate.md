@@ -164,7 +164,6 @@ Incorrect imports or paths:
 
 ═══════════════════════════════════════════════════
 
-Exit code: 1 (errors found)
 ```
 
 ## Auto-Fix Mode
@@ -195,7 +194,6 @@ Apply auto-fixes? [y/N]
 --fix         # Auto-fix what's possible
 --force       # Force fetch spec (bypass cache)
 --offline     # Use cached spec only (no network)
---json        # JSON format output
 --quiet       # Output errors only
 --tag=name    # Validate specific tag only
 ```

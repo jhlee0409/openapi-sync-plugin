@@ -196,7 +196,6 @@ OpenAPI 스펙 변경사항 비교.
 /oas:diff --tag=users        # 특정 태그만
 /oas:diff --exclude-tag=internal  # 특정 태그 제외
 /oas:diff --list-tags        # 태그별 변경 요약 표시
-/oas:diff --json             # JSON 출력
 ```
 
 ### /oas:validate
@@ -208,7 +207,6 @@ OpenAPI 스펙 변경사항 비교.
 /oas:validate --strict       # 경고도 에러로 처리
 /oas:validate --fix          # 자동 수정 가능한 것 수정
 /oas:validate --tag=users    # 특정 태그만
-/oas:validate --json         # JSON 출력
 /oas:validate --quiet        # 에러만 출력
 ```
 
@@ -224,8 +222,6 @@ OpenAPI 스펙 변경사항 비교.
 /oas:lint --rule=type-naming # 특정 규칙만
 /oas:lint --severity=critical # 심각도별 필터
 /oas:lint --ignore=pattern   # 특정 경로/스키마 무시
-/oas:lint --output=file      # 결과 파일로 저장
-/oas:lint --json             # JSON 출력
 ```
 
 ### /oas:status
@@ -237,7 +233,6 @@ OpenAPI 스펙 변경사항 비교.
 /oas:status --check-remote   # 원격 스펙 hash 확인 (~1초)
 /oas:status --tag=users      # 특정 태그 상태 확인
 /oas:status --list-tags      # 모든 태그 커버리지 표시
-/oas:status --json           # JSON 출력
 /oas:status --quiet          # 요약만
 ```
 
