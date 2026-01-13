@@ -61,6 +61,7 @@ Caching system skill for saving tokens and time.
 ```json
 {
   "version": "1.0.0",
+  "lastSync": "2024-01-13T12:00:00Z",
   "lastScan": "2024-01-13T12:00:00Z",
   "implemented": {
     "publisher": {
