@@ -213,16 +213,6 @@ Total coverage: 79/92 endpoints (86%)
    Combined: 14/26 (54%)
 ```
 
-## Performance
-
-```
-/api:status                → ~0.1s (cache read only)
-/api:status --check-remote → ~1s (HEAD request)
-/api:sync                  → ~5-8s (Conservative, 100% accuracy)
-/api:sync --trust-cache    → ~1s (trust cache, fast)
-/api:sync --force          → ~20s (full rescan)
-```
-
 ## Accuracy vs Speed
 
 | Command | Purpose | Accuracy |

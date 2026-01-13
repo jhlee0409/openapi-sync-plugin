@@ -223,60 +223,6 @@ async function getQuickHash(url: string): Promise<string> {
 }
 ```
 
-## Efficiency Gains
-
-### Before (no caching)
-
-```
-Each request:
-1. Fetch entire spec       → 5s, 10K tokens
-2. Analyze entire spec     → 3s, 20K tokens
-3. Scan entire codebase    → 10s, 15K tokens
-4. Full comparison         → 2s, 10K tokens
-─────────────────────────────────────
-Total: 20s, 55K tokens
-```
-
-### After - Conservative Mode (default, 100% accuracy)
-
-```
-When no changes:
-1. Fetch spec              → 2s, 2K tokens
-2. Check cache hint        → 0.1s
-3. Direct spec-code compare → 3s, 5K tokens
-4. No changes confirmed    → Skip
-─────────────────────────────────────
-Total: 5s, 7K tokens (87% savings)
-
-When changes detected:
-1. Fetch spec              → 2s, 2K tokens
-2. Direct spec-code compare → 3s, 5K tokens
-3. Generate changes only   → 3s, 5K tokens
-─────────────────────────────────────
-Total: 8s, 12K tokens (78% savings)
-```
-
-### After - Trust Cache Mode (--trust-cache, fast)
-
-```
-When no changes:
-1. Hash comparison only    → 1s, 0.5K tokens
-─────────────────────────────────────
-Total: 1s, 0.5K tokens (99% savings)
-
-⚠️ Warning: May miss changes if cache corrupted/server error
-```
-
-### Mode Comparison
-
-| Mode | No Changes | With Changes | Accuracy |
-|------|------------|--------------|----------|
-| No caching | 20s, 55K | 20s, 55K | 100% |
-| Conservative (default) | 5s, 7K | 8s, 12K | 100% |
-| Trust Cache | 1s, 0.5K | 6s, 7.5K | 99%* |
-
-*edge case risk exists
-
 ## Cache Invalidation
 
 ```
