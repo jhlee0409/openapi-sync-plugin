@@ -2,7 +2,10 @@
   "name": "openapi-sync",
   "version": "0.1.0",
   "description": "Adaptive API code generator that learns your project patterns and syncs with OpenAPI specs",
-  "author": "jack",
+  "author": {
+    "name": "Jack Lee",
+    "email": "jhlee0409@gmail.com"
+  },
   "homepage": "https://github.com/jhlee0409/openapi-sync-plugin",
   "repository": "https://github.com/jhlee0409/openapi-sync-plugin",
   "license": "MIT",
@@ -15,6 +18,6 @@
     "typescript"
   ],
   "engines": {
-    "claude-code": ">=1.0.0"
+    "claude-code": ">=1.0.33"
   }
 }
