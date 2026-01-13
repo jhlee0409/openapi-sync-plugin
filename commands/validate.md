@@ -10,13 +10,13 @@ Validate that your code matches the OpenAPI spec. Suitable for CI/CD pipelines.
 
 ```bash
 # Basic validation
-/oas-validate
+/oas:validate
 
 # Strict mode (warnings treated as errors)
-/oas-validate --strict
+/oas:validate --strict
 
 # Auto-fix suggestions
-/oas-validate --fix
+/oas:validate --fix
 ```
 
 ## Validation Checks
@@ -111,7 +111,7 @@ Incorrect imports or paths:
 
 1. Missing endpoint implementation
    POST /api/v1/clips/{id}/render
-   Fix: /oas-sync --endpoint="/api/v1/clips/{id}/render"
+   Fix: /oas:sync --endpoint="/api/v1/clips/{id}/render"
 
 2. Required field missing
    CreateProjectRequest.workspaceId
@@ -155,7 +155,7 @@ Exit code: 1 (errors found)
 ```yaml
 # GitHub Actions example
 - name: Validate API
-  run: claude /oas-validate --strict
+  run: claude /oas:validate --strict
 
 # Exit codes:
 #   0 = all passed
@@ -166,7 +166,7 @@ Exit code: 1 (errors found)
 ## Auto-Fix Mode
 
 ```bash
-/oas-validate --fix
+/oas:validate --fix
 ```
 
 ```

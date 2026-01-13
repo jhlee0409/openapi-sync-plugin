@@ -10,7 +10,7 @@ Initialize OpenAPI sync by learning your project's existing patterns. Works with
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    /oas-init                            │
+│                    /oas:init                            │
 ├─────────────────────────────────────────────────────┤
 │  1. Get OpenAPI spec location                           │
 │  2. Detect framework (package.json)                     │
@@ -231,9 +231,9 @@ Alternative:
 📝 Config saved: .openapi-sync.json
 
 🚀 Next steps:
-   /oas-analyze  - Detailed pattern analysis
-   /oas-sync     - Start code generation
-   /oas-sync --dry-run  - Preview files to generate
+   /oas:analyze  - Detailed pattern analysis
+   /oas:sync     - Start code generation
+   /oas:sync --dry-run  - Preview files to generate
 ```
 
 ## Error Handling

@@ -8,7 +8,7 @@ Perform deep analysis of the project's existing API-related code patterns.
 
 ## Prerequisites
 
-Check if `.openapi-sync.json` exists. If not, suggest running `/oas-init` first.
+Check if `.openapi-sync.json` exists. If not, suggest running `/oas:init` first.
 
 ## Analysis Scope
 

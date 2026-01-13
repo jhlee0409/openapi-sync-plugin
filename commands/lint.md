@@ -9,23 +9,23 @@ Check OpenAPI spec and codebase for consistency. Finds inconsistencies in manual
 ## Target Selection
 
 ```
-/oas-lint           → Check both spec + code (default)
-/oas-lint --spec    → Check OpenAPI spec only
-/oas-lint --code    → Check codebase only
+/oas:lint           → Check both spec + code (default)
+/oas:lint --spec    → Check OpenAPI spec only
+/oas:lint --code    → Check codebase only
 ```
 
 ## Usage
 
 ```bash
 # Full check
-/oas-lint
+/oas:lint
 
 # Specific rule only
-/oas-lint --rule=naming
-/oas-lint --rule=response-structure
+/oas:lint --rule=naming
+/oas:lint --rule=response-structure
 
 # Fix suggestions
-/oas-lint --fix
+/oas:lint --fix
 ```
 
 ## Part 1: Spec Lint Rules (--spec)
@@ -609,13 +609,13 @@ Return type annotation:
 
 ═══════════════════════════════════════════════════
 
-💡 Run /oas-lint --fix to see suggested fixes
+💡 Run /oas:lint --fix to see suggested fixes
 ```
 
 ## Fix Suggestions
 
 ```bash
-/oas-lint --fix
+/oas:lint --fix
 ```
 
 ```
@@ -669,18 +669,18 @@ Lint rules are auto-detected from your project's patterns. No manual configurati
 
 The majority pattern in your codebase becomes the "standard" - we find inconsistencies, not enforce external rules.
 
-> **Note:** Advanced lint configuration is stored internally by `/oas-init`. Manual override is not recommended.
+> **Note:** Advanced lint configuration is stored internally by `/oas:init`. Manual override is not recommended.
 
 ## Integration with Other Commands
 
 ```bash
 # Lint then sync
-/oas-lint && /oas-sync
+/oas:lint && /oas:sync
 
 # Stop on critical in CI
-/oas-lint --severity=critical
+/oas:lint --severity=critical
 
 # Apply lint results to sync (generate consistent code)
-/oas-sync --normalize
+/oas:sync --normalize
 ```
 
