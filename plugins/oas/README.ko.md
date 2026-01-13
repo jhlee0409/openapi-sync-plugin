@@ -1,4 +1,6 @@
-# openapi-sync
+# openapi-sync (oas)
+
+[English](./README.md) | **한국어**
 
 OpenAPI 스펙과 코드베이스를 동기화하는 Claude Code 플러그인.
 
@@ -7,8 +9,6 @@ OpenAPI 스펙과 코드베이스를 동기화하는 Claude Code 플러그인.
 ```
 "API 파일 하나 보여주면, 100개 더 만들어줄게"
 ```
-
-[English](./README.md)
 
 ## 설치
 

@@ -1,4 +1,6 @@
-# openapi-sync
+# openapi-sync (oas)
+
+**English** | [한국어](./README.ko.md)
 
 A Claude Code plugin that syncs OpenAPI specs with your codebase.
 
@@ -7,8 +9,6 @@ A Claude Code plugin that syncs OpenAPI specs with your codebase.
 ```
 "Show me one API file, I'll generate 100 more like it"
 ```
-
-[한국어 문서](./README.ko.md)
 
 ## Installation
 
