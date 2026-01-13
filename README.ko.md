@@ -480,8 +480,18 @@ src/api/{tag}/
 
 ```
 .openapi-sync.cache.json  → 스펙 캐시 (hash, endpoints, schemas)
-.openapi-sync.state.json  → 구현 상태 (coverage)
+.openapi-sync.state.json  → 구현 상태 (coverage, timestamps)
 ```
+
+### 시간 추적 필드
+
+| 파일 | 필드 | 설명 |
+|------|------|------|
+| cache.json | `lastFetch` | OpenAPI 스펙을 서버에서 마지막으로 가져온 시간 |
+| state.json | `lastScan` | 코드베이스를 마지막으로 스캔한 시간 |
+| state.json | `lastSync` | `/api:sync`로 코드를 마지막으로 생성한 시간 |
+
+`/api:status`로 이 타임스탬프들을 확인할 수 있습니다.
 
 ### 캐시 무효화
 
