@@ -655,6 +655,8 @@ Show migration guide? [y/n]
 ## Flags
 
 ```bash
+--spec            # Check OpenAPI spec only
+--code            # Check codebase only
 --rule=name       # Run specific rule only
 --ignore=pattern  # Ignore specific path/schema
 --fix             # Show fix suggestions
