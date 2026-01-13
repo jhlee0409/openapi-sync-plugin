@@ -2,6 +2,7 @@
 name: api:diff
 description: Compare OpenAPI spec changes between versions
 argument-hint: [old-spec] [new-spec] | [--remote]
+uses-skills: [output-format]
 ---
 
 # API Diff
@@ -26,42 +27,58 @@ Compare OpenAPI spec changes to see what's new, changed, or removed.
 
 ## Diff Process
 
-### Step 1: Load Specs
+```
+┌─────────────────┐    ┌─────────────────┐
+│    OLD SPEC     │    │    NEW SPEC     │
+│  (cache/file)   │    │ (remote/file)   │
+└────────┬────────┘    └────────┬────────┘
+         │                      │
+         └──────────┬───────────┘
+                    │
+                    ▼
+         ┌─────────────────────┐
+         │  Compare Endpoints  │
+         │   path + method     │
+         └──────────┬──────────┘
+                    │
+    ┌───────────────┼───────────────┐
+    ▼               ▼               ▼
+┌───────┐     ┌──────────┐    ┌─────────┐
+│ ADDED │     │ CHANGED  │    │ REMOVED │
+│ (+)   │     │   (~)    │    │  (-)    │
+└───┬───┘     └────┬─────┘    └────┬────┘
+    │              │               │
+    └──────────────┼───────────────┘
+                   ▼
+         ┌─────────────────────┐
+         │   Output Report     │
+         └─────────────────────┘
+```
+
+### Change Classification
 
 ```
-OLD SPEC:
-  - Cached previous version (.openapi-sync.cache.json)
-  - Or specified file/URL
-
-NEW SPEC:
-  - Source from .openapi-sync.json
-  - Fetch remote if --remote specified
+┌────────────┬────────────────────────────────────────┐
+│   Status   │              Condition                 │
+├────────────┼────────────────────────────────────────┤
+│  ✅ ADDED  │ Exists only in new spec                │
+│  ⚠️ CHANGED │ Exists in both, content differs        │
+│  ❌ REMOVED │ Exists only in old spec                │
+│  ─ UNCHANGED│ Exists in both, identical              │
+└────────────┴────────────────────────────────────────┘
 ```
 
-### Step 2: Compare
+### Schema Comparison
 
-**Endpoint comparison:**
-```
-For each endpoint:
-  Match by path + method combination
-
-Status classification:
-  ADDED:    Exists only in new
-  REMOVED:  Exists only in old
-  CHANGED:  Exists in both, content differs
-  UNCHANGED: Exists in both, identical
-```
-
-**Schema comparison:**
 ```
 For each schema:
-  - Field additions/deletions
-  - Type changes
-  - Required field changes
-  - Enum value changes
+  ├── Field additions/deletions
+  ├── Type changes
+  ├── Required field changes
+  └── Enum value changes
 ```
 
-### Step 3: Output
+## Output Format
 
 ```
 ═══════════════════════════════════════════════════
