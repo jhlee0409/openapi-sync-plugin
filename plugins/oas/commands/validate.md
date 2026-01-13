@@ -4,7 +4,7 @@ description: Validate that code matches OpenAPI spec
 
 # API Validate
 
-Validate that your code matches the OpenAPI spec. Suitable for CI/CD pipelines.
+Validate that your code matches the OpenAPI spec.
 
 ## Usage
 
@@ -34,10 +34,6 @@ Validation fetches spec for comparison:
   1. Check if spec changed (HEAD request / mtime)
   2. If unchanged → Use cached spec (fast)
   3. If changed → Fetch new spec, update cache
-
-Benefits for CI/CD:
-  - Fast validation when spec hasn't changed
-  - Consistent results with --offline flag
 ```
 
 ## Validation Checks
@@ -171,19 +167,6 @@ Incorrect imports or paths:
 Exit code: 1 (errors found)
 ```
 
-## CI/CD Integration
-
-```yaml
-# GitHub Actions example
-- name: Validate API
-  run: claude /oas:validate --strict
-
-# Exit codes:
-#   0 = all passed
-#   1 = errors found
-#   2 = warnings found (with --strict)
-```
-
 ## Auto-Fix Mode
 
 ```bash
@@ -208,7 +191,7 @@ Apply auto-fixes? [y/N]
 ## Flags
 
 ```bash
---strict      # Treat warnings as errors (for CI)
+--strict      # Treat warnings as errors
 --fix         # Auto-fix what's possible
 --force       # Force fetch spec (bypass cache)
 --offline     # Use cached spec only (no network)

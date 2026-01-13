@@ -201,11 +201,11 @@ Compare OpenAPI spec changes.
 
 ### /oas:validate
 
-Validate code matches spec (CI/CD friendly).
+Validate code matches spec.
 
 ```bash
 /oas:validate                # Basic validation
-/oas:validate --strict       # Warnings as errors (for CI)
+/oas:validate --strict       # Warnings treated as errors
 /oas:validate --fix          # Auto-fix what's possible
 /oas:validate --tag=users    # Specific tag only
 /oas:validate --json         # JSON output
@@ -536,36 +536,6 @@ Cache is automatically invalidated when:
 | `return-type-annotation` | Explicit return types | warning |
 
 **Note:** Code rules use project-based detection. The majority pattern in your codebase becomes the "standard" - we find inconsistencies, not enforce external rules.
-
-## CI/CD Integration
-
-### GitHub Actions
-
-```yaml
-name: API Validation
-
-on: [push, pull_request]
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate API
-        run: claude /oas:validate --strict
-
-      - name: Lint API
-        run: claude /oas:lint --severity=critical
-```
-
-### Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | All checks passed |
-| 1 | Errors found |
-| 2 | Warnings found (with `--strict`) |
 
 ## Philosophy
 

@@ -201,11 +201,11 @@ OpenAPI 스펙 변경사항 비교.
 
 ### /oas:validate
 
-코드-스펙 일치 검증 (CI/CD 친화적).
+코드-스펙 일치 검증.
 
 ```bash
 /oas:validate                # 기본 검증
-/oas:validate --strict       # 경고도 에러 처리 (CI용)
+/oas:validate --strict       # 경고도 에러로 처리
 /oas:validate --fix          # 자동 수정 가능한 것 수정
 /oas:validate --tag=users    # 특정 태그만
 /oas:validate --json         # JSON 출력
@@ -536,36 +536,6 @@ src/api/{tag}/
 | `return-type-annotation` | 명시적 리턴 타입 | warning |
 
 **참고:** 코드 규칙은 프로젝트 기반 감지를 사용합니다. 코드베이스의 majority 패턴이 "표준"이 됩니다 - 외부 규칙이 아닌 불일치를 찾습니다.
-
-## CI/CD 통합
-
-### GitHub Actions
-
-```yaml
-name: API Validation
-
-on: [push, pull_request]
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate API
-        run: claude /oas:validate --strict
-
-      - name: Lint API
-        run: claude /oas:lint --severity=critical
-```
-
-### Exit Codes
-
-| 코드 | 의미 |
-|------|------|
-| 0 | 모든 체크 통과 |
-| 1 | 에러 발견 |
-| 2 | 경고 발견 (`--strict` 사용 시) |
 
 ## 철학
 
