@@ -565,21 +565,6 @@ jobs:
 | 1 | Errors found |
 | 2 | Warnings found (with `--strict`) |
 
-## Performance
-
-| Operation | Time | Tokens |
-|-----------|------|--------|
-| `/api:status` | ~0.1s | 0.5K |
-| `/api:status --check-remote` | ~1s | 0.5K |
-| `/api:sync` (no changes) | ~5s | 7K |
-| `/api:sync` (with changes) | ~8s | 12K |
-| `/api:sync --trust-cache` | ~1s | 0.5K |
-| `/api:sync --force` | ~20s | 55K |
-| `/api:lint` | ~3s | 5K |
-| `/api:lint --fix` | ~10s | 10K |
-
-Without caching: ~20s, 55K tokens → **87% savings**
-
 ## Philosophy
 
 ### 1. Sample-Based Learning
