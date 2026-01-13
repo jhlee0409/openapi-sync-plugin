@@ -29,8 +29,10 @@ claude --plugin-dir /path/to/claude-plugins
 ## 빠른 시작
 
 ```bash
-# 1. 프로젝트 초기화
-/oas:init
+# 1. OpenAPI 스펙으로 초기화 (URL 또는 로컬 경로)
+/oas:init https://api.example.com/openapi.json
+# 또는
+/oas:init ./docs/openapi.yaml
 
 # 2. 스펙 기반 코드 생성
 /oas:sync
@@ -43,7 +45,7 @@ claude --plugin-dir /path/to/claude-plugins
 
 | Command | Description |
 |---------|-------------|
-| `/oas:init` | 프로젝트 초기화, 패턴 학습, 설정 파일 생성 |
+| `/oas:init <url\|path>` | OpenAPI 스펙으로 초기화, 패턴 학습 |
 | `/oas:sync` | OpenAPI 스펙 기반 코드 생성/동기화 |
 | `/oas:status` | 캐시 기반 빠른 상태 확인 |
 | `/oas:diff` | 스펙 변경사항 비교 |

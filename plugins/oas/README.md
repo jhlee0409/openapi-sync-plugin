@@ -29,8 +29,10 @@ claude --plugin-dir /path/to/claude-plugins
 ## Quick Start
 
 ```bash
-# 1. Initialize project
-/oas:init
+# 1. Initialize with your OpenAPI spec (URL or local path)
+/oas:init https://api.example.com/openapi.json
+# or
+/oas:init ./docs/openapi.yaml
 
 # 2. Generate code from spec
 /oas:sync
@@ -43,7 +45,7 @@ claude --plugin-dir /path/to/claude-plugins
 
 | Command | Description |
 |---------|-------------|
-| `/oas:init` | Initialize project, learn patterns, create config |
+| `/oas:init <url\|path>` | Initialize with OpenAPI spec, learn patterns |
 | `/oas:sync` | Generate/sync code based on OpenAPI spec |
 | `/oas:status` | Quick status check using cache |
 | `/oas:diff` | Compare spec changes |
