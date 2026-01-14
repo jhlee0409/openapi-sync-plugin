@@ -9,6 +9,11 @@
       "name": "oas",
       "source": "./plugins/oas",
       "description": "Adaptive API code generator that learns your project patterns and syncs with OpenAPI specs"
+    },
+    {
+      "name": "elenchus",
+      "source": "./plugins/elenchus",
+      "description": "Cross-verification loop - two agents debate until evidence-based consensus"
     }
   ]
 }
