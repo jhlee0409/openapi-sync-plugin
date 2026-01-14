@@ -19,6 +19,7 @@ Jack Lee의 Claude Code 플러그인 마켓플레이스
 | 플러그인 | 설명 | 설치 |
 |---------|------|------|
 | [oas](./plugins/oas) | OpenAPI 스펙 동기화 - 프로젝트 패턴을 학습하는 적응형 코드 생성기 | `/plugin install oas@jhlee0409-plugins` |
+| [elenchus](./plugins/elenchus) | 교차 검증 루프 - 두 에이전트가 증거 기반 합의까지 논쟁 | `/plugin install elenchus@jhlee0409-plugins` |
 
 ## 라이선스
 
