@@ -14,8 +14,6 @@ import {
   MediatorState,
   ActiveIntervention,
   ActiveInterventionType,
-  VerificationCoverage,
-  CoverageDetail,
   MissedCodeInfo,
   RippleEffect,
   AffectedFile
@@ -27,6 +25,24 @@ import {
   calculateFileImportance
 } from './analyzer.js';
 import { Session, Issue } from '../types/index.js';
+
+/**
+ * [FIX: MNT-01] Mediator configuration constants
+ */
+const MEDIATOR_CONFIG = {
+  CRITICAL_THRESHOLD_FACTOR: 0.5,    // 중요 파일 임계값 (최대 중요도 * factor)
+  MAX_AFFECTED_FILES_DISPLAY: 10,    // 표시할 최대 영향 파일 수
+  MAX_CRITICAL_FILES_DISPLAY: 5,     // 표시할 최대 중요 파일 수
+  COVERAGE_CHECK_MIN_ROUND: 3,       // 커버리지 체크 시작 라운드
+  LOW_COVERAGE_CHECK_MIN_ROUND: 5,   // 낮은 커버리지 체크 시작 라운드
+  LOW_COVERAGE_THRESHOLD: 0.5,       // 낮은 커버리지 임계값 (50%)
+  DRIFT_THRESHOLD: 0.5,              // 범위 이탈 임계값 (50%)
+  MIN_FILES_FOR_DRIFT: 3,            // 범위 이탈 체크 최소 파일 수
+  DEFAULT_MAX_DEPTH: 100,            // 기본 최대 의존성 깊이
+  SIDE_EFFECT_WARNING_THRESHOLD: 5,  // 사이드 이펙트 경고 임계값
+  RIPPLE_EFFECT_MAX_DEPTH: 3,        // 리플 이펙트 최대 깊이
+  FILE_IMPORTANCE_THRESHOLD: 3       // 파일 중요도 임계값
+} as const;
 
 // =============================================================================
 // Mediator State Management
@@ -60,9 +76,9 @@ export async function initializeMediator(
     ignoredWarnings: []
   };
 
-  // 중요 파일 식별 (검증 필수)
+  // [FIX: MNT-01] 중요 파일 식별 (검증 필수) - use MEDIATOR_CONFIG
   const importance = calculateFileImportance(graph);
-  const criticalThreshold = Math.max(...Array.from(importance.values())) * 0.5;
+  const criticalThreshold = Math.max(...Array.from(importance.values())) * MEDIATOR_CONFIG.CRITICAL_THRESHOLD_FACTOR;
 
   for (const [file, score] of importance) {
     if (score >= criticalThreshold) {
@@ -87,6 +103,7 @@ export function getMediatorState(sessionId: string): MediatorState | undefined {
 
 /**
  * 라운드 출력 분석 및 개입 결정
+ * [FIX: PRF-01] Cache importance calculation to avoid redundant recalculation
  */
 export function analyzeRoundAndIntervene(
   session: Session,
@@ -99,16 +116,19 @@ export function analyzeRoundAndIntervene(
 
   const interventions: ActiveIntervention[] = [];
 
+  // [FIX: PRF-01] Calculate importance once and cache for use in checks
+  const cachedImportance = calculateFileImportance(state.graph);
+
   // 1. 출력에서 언급된 파일/라인 추출
   const mentionedFiles = extractMentionedFiles(roundOutput);
   updateCoverage(state, mentionedFiles, session.currentRound);
 
   // 2. 놓친 의존성 체크
-  const missedDeps = checkMissedDependencies(state, mentionedFiles, newIssues);
+  const missedDeps = checkMissedDependencies(state, mentionedFiles, newIssues, cachedImportance);
   if (missedDeps) interventions.push(missedDeps);
 
   // 3. 커버리지 부족 체크
-  const coverageIssue = checkIncompleteCoverage(state, session.currentRound);
+  const coverageIssue = checkIncompleteCoverage(state, session.currentRound, cachedImportance);
   if (coverageIssue) interventions.push(coverageIssue);
 
   // 4. 사이드 이펙트 경고
@@ -126,7 +146,7 @@ export function analyzeRoundAndIntervene(
   }
 
   // 7. 중요 경로 무시 체크
-  const ignoredCritical = checkCriticalPathIgnored(state, mentionedFiles);
+  const ignoredCritical = checkCriticalPathIgnored(state, mentionedFiles, cachedImportance);
   if (ignoredCritical) interventions.push(ignoredCritical);
 
   // 8. 검증자 이해 오류 체크 (Critic 역할일 때)
@@ -147,13 +167,17 @@ export function analyzeRoundAndIntervene(
 
 /**
  * 놓친 의존성 체크
+ * [FIX: PRF-01] Accept cached importance map to avoid recalculation
  */
 function checkMissedDependencies(
   state: MediatorState,
   mentionedFiles: Map<string, number[]>,
-  newIssues: Issue[]
+  newIssues: Issue[],
+  cachedImportance?: Map<string, number>
 ): ActiveIntervention | null {
   const missedCode: MissedCodeInfo[] = [];
+  // [FIX: PRF-01] Use cached importance or calculate if not provided
+  const importance = cachedImportance || calculateFileImportance(state.graph);
 
   for (const [file] of mentionedFiles) {
     // 이 파일의 의존성 확인
@@ -185,9 +209,8 @@ function checkMissedDependencies(
             importance: 'HIGH'
           });
         } else {
-          // 중요 파일인 경우
-          const importance = calculateFileImportance(state.graph);
-          if ((importance.get(importedFile) || 0) > 3) {
+          // [FIX: MNT-01] 중요 파일인 경우 - use cached importance with constant threshold
+          if ((importance.get(importedFile) || 0) > MEDIATOR_CONFIG.FILE_IMPORTANCE_THRESHOLD) {
             missedCode.push({
               file: importedFile,
               functions: imp.specifiers,
@@ -219,13 +242,15 @@ function checkMissedDependencies(
 
 /**
  * 커버리지 부족 체크
+ * [FIX: PRF-01] Accept cached importance map for consistency (currently unused but available)
  */
 function checkIncompleteCoverage(
   state: MediatorState,
-  currentRound: number
+  currentRound: number,
+  _cachedImportance?: Map<string, number>
 ): ActiveIntervention | null {
-  // 라운드 3 이후부터 체크
-  if (currentRound < 3) return null;
+  // [FIX: MNT-01] 라운드 체크에 상수 사용
+  if (currentRound < MEDIATOR_CONFIG.COVERAGE_CHECK_MIN_ROUND) return null;
 
   const { totalFiles, verifiedFiles, unverifiedCritical } = state.coverage;
   const coverageRate = verifiedFiles.size / totalFiles;
@@ -233,22 +258,21 @@ function checkIncompleteCoverage(
   // 중요 파일 중 미검증
   const stillCritical = unverifiedCritical.filter(f => !verifiedFiles.has(f));
 
-  if (stillCritical.length > 0 && currentRound >= 3) {
+  if (stillCritical.length > 0 && currentRound >= MEDIATOR_CONFIG.COVERAGE_CHECK_MIN_ROUND) {
     return {
       type: 'INCOMPLETE_COVERAGE',
       severity: 'WARNING',
       reason: `중요 파일 ${stillCritical.length}개가 아직 검증되지 않음 (전체 커버리지: ${(coverageRate * 100).toFixed(1)}%)`,
       action: '다음 중요 파일들을 검증하세요',
-      affectedFiles: stillCritical.slice(0, 5),  // 최대 5개
-      suggestedChecks: stillCritical.slice(0, 5).map(f => {
-        const importance = calculateFileImportance(state.graph);
+      affectedFiles: stillCritical.slice(0, MEDIATOR_CONFIG.MAX_CRITICAL_FILES_DISPLAY),
+      suggestedChecks: stillCritical.slice(0, MEDIATOR_CONFIG.MAX_CRITICAL_FILES_DISPLAY).map(f => {
         const deps = state.graph.reverseEdges.get(f) || [];
         return `${f} (${deps.length}개 파일에서 참조)`;
       })
     };
   }
 
-  if (coverageRate < 0.5 && currentRound >= 5) {
+  if (coverageRate < MEDIATOR_CONFIG.LOW_COVERAGE_THRESHOLD && currentRound >= MEDIATOR_CONFIG.LOW_COVERAGE_CHECK_MIN_ROUND) {
     return {
       type: 'INCOMPLETE_COVERAGE',
       severity: 'INFO',
@@ -256,7 +280,7 @@ function checkIncompleteCoverage(
       action: '더 많은 파일을 검증하거나 범위를 좁히세요',
       affectedFiles: Array.from(state.graph.nodes.keys())
         .filter(f => !verifiedFiles.has(f))
-        .slice(0, 10)
+        .slice(0, MEDIATOR_CONFIG.MAX_AFFECTED_FILES_DISPLAY)
     };
   }
 
@@ -299,12 +323,13 @@ function checkSideEffects(
 
   if (allAffected.size === 0) return null;
 
+  // [FIX: MNT-01] Use constant for threshold
   return {
     type: 'SIDE_EFFECT_WARNING',
-    severity: allAffected.size > 5 ? 'WARNING' : 'INFO',
+    severity: allAffected.size > MEDIATOR_CONFIG.SIDE_EFFECT_WARNING_THRESHOLD ? 'WARNING' : 'INFO',
     reason: `${criticalIssues.length}개 이슈 수정 시 ${allAffected.size}개 파일에 영향 가능`,
     action: '수정 전 영향 범위를 확인하세요',
-    affectedFiles: Array.from(allAffected).slice(0, 10),
+    affectedFiles: Array.from(allAffected).slice(0, MEDIATOR_CONFIG.MAX_AFFECTED_FILES_DISPLAY),
     relatedIssues: criticalIssues.map(i => i.id),
     suggestedChecks: rippleDetails.map(r =>
       `${r.issue} 수정 시 확인 필요: ${r.affected.join(', ')}`
@@ -332,13 +357,14 @@ function checkScopeDrift(
 
   const driftRate = outsideTarget.length / mentionedFiles.size;
 
-  if (driftRate > 0.5 && mentionedFiles.size > 3) {
+  // [FIX: MNT-01] Use constants for thresholds
+  if (driftRate > MEDIATOR_CONFIG.DRIFT_THRESHOLD && mentionedFiles.size > MEDIATOR_CONFIG.MIN_FILES_FOR_DRIFT) {
     return {
       type: 'SCOPE_DRIFT',
       severity: 'WARNING',
       reason: `검증 범위가 타겟(${session.target}) 외부로 확장됨 (${(driftRate * 100).toFixed(0)}%)`,
       action: '타겟 범위에 집중하거나 검증 범위를 명시적으로 확장하세요',
-      affectedFiles: outsideTarget.slice(0, 5),
+      affectedFiles: outsideTarget.slice(0, MEDIATOR_CONFIG.MAX_CRITICAL_FILES_DISPLAY),
       suggestedChecks: [
         `현재 타겟: ${session.target}`,
         `외부 파일 ${outsideTarget.length}개 언급됨`,
@@ -373,12 +399,15 @@ function checkCircularDependencies(
 
 /**
  * 중요 경로 무시 체크
+ * [FIX: PRF-01] Accept cached importance map to avoid recalculation
  */
 function checkCriticalPathIgnored(
   state: MediatorState,
-  mentionedFiles: Map<string, number[]>
+  mentionedFiles: Map<string, number[]>,
+  cachedImportance?: Map<string, number>
 ): ActiveIntervention | null {
-  const importance = calculateFileImportance(state.graph);
+  // [FIX: PRF-01] Use cached importance or calculate if not provided
+  const importance = cachedImportance || calculateFileImportance(state.graph);
   const sortedByImportance = Array.from(importance.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);  // 상위 5개
@@ -517,7 +546,8 @@ export function analyzeRippleEffect(
   const state = mediatorStates.get(sessionId);
   if (!state) return null;
 
-  const affected = findAffectedFiles(changedFile, state.graph, 3);
+  // [FIX: MNT-01] Use MEDIATOR_CONFIG for max depth
+  const affected = findAffectedFiles(changedFile, state.graph, MEDIATOR_CONFIG.RIPPLE_EFFECT_MAX_DEPTH);
   if (affected.length === 0) return null;
 
   const affectedDetails: AffectedFile[] = [];
@@ -612,11 +642,14 @@ function findResolvedImport(
 
 /**
  * 의존 깊이 계산
+ * [FIX: COR-03] Added maxDepth parameter to prevent infinite loops
+ * [FIX: MNT-01] Use MEDIATOR_CONFIG for default maxDepth
  */
 function calculateDependencyDepth(
   graph: DependencyGraph,
   from: string,
-  to: string
+  to: string,
+  maxDepth: number = MEDIATOR_CONFIG.DEFAULT_MAX_DEPTH
 ): number {
   const visited = new Set<string>();
   const queue: Array<{ file: string; depth: number }> = [{ file: from, depth: 0 }];
@@ -626,6 +659,8 @@ function calculateDependencyDepth(
 
     if (file === to) return depth;
     if (visited.has(file)) continue;
+    // [FIX: COR-03] Early termination if maxDepth exceeded
+    if (depth >= maxDepth) continue;
     visited.add(file);
 
     const dependents = graph.reverseEdges.get(file) || [];

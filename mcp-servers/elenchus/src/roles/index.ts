@@ -30,14 +30,36 @@ import { Session, Issue } from '../types/index.js';
 // State Management
 // =============================================================================
 
+/**
+ * [FIX: MNT-02] Role alternation configuration
+ */
+interface RoleAlternation {
+  expectedRole: VerifierRole;
+  nextRole: VerifierRole;
+  history: Array<{ role: VerifierRole; round: number }>;
+}
+
 interface RoleState {
   sessionId: string;
   complianceHistory: RoleComplianceResult[];
   currentExpectedRole: VerifierRole;
   config: RoleEnforcementConfig;
+  // [FIX: MNT-02] Consolidated role alternation tracking
+  alternation: RoleAlternation;
 }
 
 const roleStates = new Map<string, RoleState>();
+
+/**
+ * [FIX: MNT-01] Compliance scoring constants
+ */
+const COMPLIANCE_SCORE = {
+  BASE: 100,           // 기본 점수
+  ERROR_PENALTY: 20,   // ERROR 위반 시 차감
+  WARNING_PENALTY: 5,  // WARNING 위반 시 차감
+  MIN_SCORE: 0,        // 최소 점수
+  MAX_SCORE: 100       // 최대 점수
+} as const;
 
 const DEFAULT_CONFIG: RoleEnforcementConfig = {
   strictMode: false,         // 기본: 경고만, 거부 안함
@@ -57,11 +79,17 @@ export function initializeRoleEnforcement(
   sessionId: string,
   config?: Partial<RoleEnforcementConfig>
 ): RoleState {
+  // [FIX: MNT-02] Initialize with consolidated alternation structure
   const state: RoleState = {
     sessionId,
     complianceHistory: [],
     currentExpectedRole: 'verifier',  // 항상 Verifier가 먼저
-    config: { ...DEFAULT_CONFIG, ...config }
+    config: { ...DEFAULT_CONFIG, ...config },
+    alternation: {
+      expectedRole: 'verifier',
+      nextRole: 'critic',
+      history: []
+    }
   };
 
   roleStates.set(sessionId, state);
@@ -159,24 +187,32 @@ export function validateRoleCompliance(
     suggestions
   };
 
-  // 상태 업데이트
+  // [FIX: MNT-02] 상태 업데이트 - use consolidated alternation structure
   state.complianceHistory.push(result);
-  state.currentExpectedRole = role === 'verifier' ? 'critic' : 'verifier';
+  const nextRole = role === 'verifier' ? 'critic' : 'verifier';
+  state.currentExpectedRole = nextRole;
+  state.alternation = {
+    expectedRole: nextRole,
+    nextRole: role,  // The one after next
+    history: [...state.alternation.history, { role, round: session.currentRound + 1 }]
+  };
 
   return result;
 }
 
 /**
  * 역할 교대 검증
+ * [FIX: MNT-02] Use alternation structure for validation
  */
 function checkRoleAlternation(
   state: RoleState,
   attemptedRole: VerifierRole
 ): { valid: boolean; message: string } {
-  if (attemptedRole !== state.currentExpectedRole) {
+  const expectedRole = state.alternation.expectedRole;
+  if (attemptedRole !== expectedRole) {
     return {
       valid: false,
-      message: `역할 교대 위반: ${state.currentExpectedRole} 차례인데 ${attemptedRole}가 제출됨`
+      message: `역할 교대 위반: ${expectedRole} 차례인데 ${attemptedRole}가 제출됨`
     };
   }
   return { valid: true, message: '' };
@@ -266,20 +302,22 @@ function checkRequiredElements(
 
 /**
  * 순응도 점수 계산
+ * [FIX: MNT-01] Use COMPLIANCE_SCORE constants
  */
 function calculateComplianceScore(
   violations: RoleViolation[],
   warnings: RoleWarning[],
-  totalCriteria: number
+  _totalCriteria: number
 ): number {
   const errorCount = violations.filter(v => v.severity === 'ERROR').length;
   const warningCount = violations.filter(v => v.severity === 'WARNING').length + warnings.length;
 
-  // 기본 점수 100에서 차감
-  // ERROR: -20점, WARNING: -5점
-  const score = 100 - (errorCount * 20) - (warningCount * 5);
+  // [FIX: MNT-01] Use constants instead of magic numbers
+  const score = COMPLIANCE_SCORE.BASE
+    - (errorCount * COMPLIANCE_SCORE.ERROR_PENALTY)
+    - (warningCount * COMPLIANCE_SCORE.WARNING_PENALTY);
 
-  return Math.max(0, Math.min(100, score));
+  return Math.max(COMPLIANCE_SCORE.MIN_SCORE, Math.min(COMPLIANCE_SCORE.MAX_SCORE, score));
 }
 
 /**
@@ -393,6 +431,12 @@ export function getRoleEnforcementSummary(sessionId: string): object | null {
     sessionId,
     config: state.config,
     currentExpectedRole: state.currentExpectedRole,
+    // [FIX: MNT-02] Include alternation info in summary
+    alternation: {
+      expectedRole: state.alternation.expectedRole,
+      nextRole: state.alternation.nextRole,
+      totalAlternations: state.alternation.history.length
+    },
     stats: {
       totalRounds: history.length,
       verifierRounds: verifierResults.length,

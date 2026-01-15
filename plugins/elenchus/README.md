@@ -177,6 +177,25 @@ plugins/elenchus/
 | MEDIUM | 엣지케이스 버그 | 배포 전 수정 권장 |
 | LOW | 코드 품질 | 시간 있을 때 |
 
+## Session Storage (MCP Server)
+
+MCP 서버를 함께 사용하면 세션이 `~/.claude/elenchus/sessions/`에 저장됩니다.
+
+```
+~/.claude/elenchus/sessions/
+└── 2024-01-15_src-auth_abc123/
+    └── session.json
+```
+
+**중요:** 세션은 플러그인 설치 스코프(global/project)와 관계없이 **항상 글로벌 위치**에 저장됩니다. 이는 MCP 서버의 상태 비저장 아키텍처 때문입니다.
+
+세션 정리:
+```bash
+rm -rf ~/.claude/elenchus/sessions/*
+```
+
+자세한 내용은 [MCP Server README](../../mcp-servers/elenchus/README.md#session-storage)를 참고하세요.
+
 ## Convergence Guarantee
 
 재검증 시 이슈 0을 보장하는 방법:

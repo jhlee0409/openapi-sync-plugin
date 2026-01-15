@@ -4,6 +4,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { z } from 'zod';
 import {
   Session,
   SessionStatus,
@@ -16,6 +17,61 @@ import {
   IssueStatus
 } from '../types/index.js';
 
+/**
+ * Zod schema for session JSON validation
+ * [FIX: COR-01] Validate JSON structure before deserialization
+ */
+const IssueSchema = z.object({
+  id: z.string(),
+  category: z.enum(['SECURITY', 'CORRECTNESS', 'RELIABILITY', 'MAINTAINABILITY', 'PERFORMANCE']),
+  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
+  status: z.enum(['RAISED', 'CHALLENGED', 'RESOLVED', 'UNRESOLVED']),
+  summary: z.string(),
+  description: z.string(),
+  location: z.string(),
+  evidence: z.string(),
+  suggestedFix: z.string().optional(),
+  raisedInRound: z.number(),
+  challengedInRound: z.number().optional(),
+  resolvedInRound: z.number().optional()
+});
+
+const RoundSchema = z.object({
+  number: z.number(),
+  role: z.enum(['verifier', 'critic']),
+  output: z.string(),
+  issuesRaised: z.array(z.string()),
+  issuesResolved: z.array(z.string()),
+  timestamp: z.string()
+});
+
+const CheckpointSchema = z.object({
+  roundNumber: z.number(),
+  timestamp: z.string(),
+  contextSnapshot: z.array(z.string()),
+  issuesSnapshot: z.array(IssueSchema),
+  canRollbackTo: z.boolean()
+});
+
+const SessionSchema = z.object({
+  id: z.string(),
+  target: z.string(),
+  requirements: z.string(),
+  status: z.enum(['initialized', 'verifying', 'converged', 'failed', 'completed']),
+  currentRound: z.number(),
+  maxRounds: z.number(),
+  context: z.object({
+    target: z.string(),
+    requirements: z.string(),
+    files: z.record(z.string(), z.any())  // Map serialized as object
+  }),
+  issues: z.array(IssueSchema),
+  rounds: z.array(RoundSchema),
+  checkpoints: z.array(CheckpointSchema),
+  createdAt: z.string(),
+  updatedAt: z.string()
+});
+
 // Session storage directory
 const SESSIONS_DIR = path.join(
   process.env.HOME || '~',
@@ -26,6 +82,19 @@ const SESSIONS_DIR = path.join(
 
 // In-memory session cache
 const sessions = new Map<string, Session>();
+
+/**
+ * Validate session ID to prevent path traversal attacks
+ * [FIX: SEC-01]
+ */
+function isValidSessionId(sessionId: string): boolean {
+  // Only allow alphanumeric, hyphens, and underscores
+  // Reject path traversal patterns and excessive length
+  return /^[a-zA-Z0-9_-]+$/.test(sessionId) &&
+         !sessionId.includes('..') &&
+         sessionId.length > 0 &&
+         sessionId.length <= 100;
+}
 
 /**
  * Generate unique session ID
@@ -77,6 +146,12 @@ export async function createSession(
  * Get session by ID
  */
 export async function getSession(sessionId: string): Promise<Session | null> {
+  // [FIX: SEC-01] Validate session ID to prevent path traversal
+  if (!isValidSessionId(sessionId)) {
+    console.error(`[Elenchus] Invalid session ID rejected: ${sessionId}`);
+    return null;
+  }
+
   // Check memory cache first
   if (sessions.has(sessionId)) {
     return sessions.get(sessionId)!;
@@ -86,14 +161,33 @@ export async function getSession(sessionId: string): Promise<Session | null> {
   try {
     const sessionPath = path.join(SESSIONS_DIR, sessionId, 'session.json');
     const data = await fs.readFile(sessionPath, 'utf-8');
-    const session = JSON.parse(data) as Session;
+    const rawData = JSON.parse(data);
 
-    // Restore Map from serialized form
-    session.context.files = new Map(Object.entries(session.context.files || {}));
+    // [FIX: COR-01] Validate JSON structure with Zod schema
+    const parseResult = SessionSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      console.error(`[Elenchus] Invalid session data for ${sessionId}:`, parseResult.error.format());
+      return null;
+    }
+
+    const session = parseResult.data as Session;
+
+    // [FIX: REL-02] Restore Map from serialized form with validation
+    const filesData = session.context.files;
+    if (filesData && typeof filesData === 'object' && !Array.isArray(filesData)) {
+      session.context.files = new Map(Object.entries(filesData));
+    } else {
+      console.warn(`[Elenchus] Invalid files data in session ${sessionId}, initializing empty Map`);
+      session.context.files = new Map();
+    }
 
     sessions.set(sessionId, session);
     return session;
-  } catch {
+  } catch (error) {
+    // [FIX: REL-01] Log errors except for missing files
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      console.error(`[Elenchus] Failed to load session ${sessionId}:`, error);
+    }
     return null;
   }
 }

@@ -169,6 +169,34 @@ npm run build
     └── session.json
 ```
 
+### Design Decision: Global Storage
+
+세션은 **플러그인 설치 스코프(global/project)와 관계없이** 항상 글로벌 위치에 저장됩니다.
+
+**이유:**
+- MCP 서버는 **stdio 기반, 상태 비저장** 아키텍처
+- 각 호출은 새 프로세스로 실행되며 `sessionId`만으로 이전 세션을 찾아야 함
+- 프로젝트별 분리 시 `workingDir` 없이는 세션 위치를 결정할 수 없음
+- 글로벌 저장으로 세션 ID의 **자기 완결성** 보장
+
+**대안 검토 (기각됨):**
+| 옵션 | 기각 이유 |
+|-----|----------|
+| 프로젝트별 분리 | MCP API 변경 필요, 모든 호출에 workingDir 전달 필요 |
+| 환경변수 커스텀 | 불필요한 복잡성, 환경별 일관성 없는 동작 |
+
+### Session Cleanup
+
+세션은 **검증 감사 기록**으로 자동 삭제되지 않습니다. 수동 정리:
+
+```bash
+# 모든 세션 삭제
+rm -rf ~/.claude/elenchus/sessions/*
+
+# 특정 세션 삭제
+rm -rf ~/.claude/elenchus/sessions/2024-01-15_*
+```
+
 ## Architecture
 
 ```
