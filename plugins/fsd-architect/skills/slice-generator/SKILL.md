@@ -89,13 +89,14 @@ export { {Name}Component } from './{Name}Component';
 import React from 'react';
 
 interface {Name}ComponentProps {
-  // TODO: Define props
+  className?: string;
+  children?: React.ReactNode;
 }
 
-export function {Name}Component(props: {Name}ComponentProps) {
+export function {Name}Component({ className, children }: {Name}ComponentProps) {
   return (
-    <div>
-      {/* TODO: Implement */}
+    <div className={className}>
+      {children}
     </div>
   );
 }
@@ -110,16 +111,25 @@ export { use{Name} } from './use{Name}';
 // types.ts
 export interface {Name} {
   id: string;
-  // TODO: Define entity fields
+  createdAt: string;
+  updatedAt: string;
 }
 
 // use{Name}.ts
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { {Name} } from './types';
 
-export function use{Name}() {
-  // TODO: Implement hook
-  return {};
+export function use{Name}(initialData?: {Name} | null) {
+  const [data, setData] = useState<{Name} | null>(initialData ?? null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const reset = useCallback(() => {
+    setData(null);
+    setError(null);
+  }, []);
+
+  return { data, setData, isLoading, setIsLoading, error, setError, reset };
 }
 ```
 
@@ -129,15 +139,46 @@ export function use{Name}() {
 export { {name}Api } from './{name}Api';
 
 // {name}Api.ts
-// TODO: Import your HTTP client
-// import { httpClient } from '@shared/api';
+import type { {Name} } from '../model';
+
+const BASE_URL = '/api/{name}';
 
 export const {name}Api = {
-  getAll: async () => {
-    // TODO: Implement
+  getAll: async (): Promise<{Name}[]> => {
+    const response = await fetch(BASE_URL);
+    if (!response.ok) throw new Error('Failed to fetch {name} list');
+    return response.json();
   },
-  getById: async (id: string) => {
-    // TODO: Implement
+
+  getById: async (id: string): Promise<{Name}> => {
+    const response = await fetch(`${BASE_URL}/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch {name}');
+    return response.json();
+  },
+
+  create: async (data: Omit<{Name}, 'id' | 'createdAt' | 'updatedAt'>): Promise<{Name}> => {
+    const response = await fetch(BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create {name}');
+    return response.json();
+  },
+
+  update: async (id: string, data: Partial<{Name}>): Promise<{Name}> => {
+    const response = await fetch(`${BASE_URL}/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update {name}');
+    return response.json();
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const response = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete {name}');
   },
 };
 ```

@@ -44,8 +44,17 @@ When `/fsdarch:init` is invoked, Claude MUST perform these steps in order:
 │                                                               │
 │  2.5. Detect framework (Next.js, etc.)                        │
 │     ├─ Check package.json for "next"                          │
-│     ├─ If Next.js → Use layer aliases (core, views)           │
+│     ├─ If Next.js → Detect router mode (Step 2.6)             │
 │     └─ If not → Use standard names (app, pages)               │
+│                                                               │
+│  2.6. Detect Next.js router mode (if Next.js)                 │
+│     ├─ Check for App Router: app/layout.tsx, app/page.tsx     │
+│     ├─ Check for Pages Router: pages/_app.tsx, pages/index    │
+│     ├─ If BOTH exist → HYBRID MODE                            │
+│     │    └─ Both app/ and pages/ reserved for routing         │
+│     ├─ If only App Router → Single mode (app reserved)        │
+│     ├─ If only Pages Router → Single mode (pages reserved)    │
+│     └─ Ask user for FSD layer aliases                         │
 │                                                               │
 │  3. Invoke skill: layer-detector                              │
 │     ├─ Scan for FSD layers in srcDir (with aliases)           │
@@ -106,11 +115,77 @@ Use --force to overwrite:
 2. For each candidate, verify it's a directory (not file)
 
 3. If --src flag provided:
+   → **SECURITY: Validate path first (see below)**
    → Use the specified path directly
    → Verify it exists, if not → Error E101
 
 4. If no directory found:
    → Use AskUserQuestion tool to ask user
+```
+
+**SECURITY: Path Validation (CRITICAL)**
+
+Before using any user-provided path (--src flag or custom input):
+
+```typescript
+function validateSourcePath(inputPath: string): { valid: boolean; error?: string } {
+  // 1. Path traversal prevention
+  if (inputPath.includes('..')) {
+    return { valid: false, error: 'E108: Path contains ".." (directory traversal blocked)' };
+  }
+
+  // 2. Absolute path restriction (must be relative to project root)
+  if (inputPath.startsWith('/') || /^[A-Za-z]:/.test(inputPath)) {
+    return { valid: false, error: 'E109: Absolute paths not allowed. Use relative path from project root.' };
+  }
+
+  // 3. Forbidden characters
+  if (/[<>:"|?*]/.test(inputPath)) {
+    return { valid: false, error: 'E110: Path contains forbidden characters' };
+  }
+
+  // 4. Hidden directory prevention
+  if (inputPath.startsWith('.') && inputPath !== '.') {
+    return { valid: false, error: 'E111: Hidden directories not allowed as source' };
+  }
+
+  // 5. Length limit (prevent filesystem issues)
+  if (inputPath.length > 200) {
+    return { valid: false, error: 'E112: Path too long (max 200 characters)' };
+  }
+
+  return { valid: true };
+}
+```
+
+**Validation Flow:**
+```
+1. Receive --src value or user input
+2. Run validateSourcePath()
+3. If invalid → Display error and stop
+4. If valid → Continue with directory check
+```
+
+**Error output example:**
+```
+[E108] Path Traversal Blocked
+
+The path '../../../etc' contains directory traversal sequences.
+
+Security Policy:
+  - '..' sequences are blocked
+  - Absolute paths are blocked
+  - Path must be relative to project root
+
+Valid examples:
+  ✓ src/
+  ✓ packages/web/src
+  ✓ apps/client/src
+
+Invalid examples:
+  ✗ ../outside
+  ✗ /absolute/path
+  ✗ C:\windows\path
 ```
 
 **AskUserQuestion prompt (if needed):**
@@ -172,7 +247,89 @@ function detectFramework(packageJson: any): FrameworkConfig {
 }
 ```
 
-**If framework has conflict, ask user for layer names:**
+**If framework has conflict, detect hybrid case first:**
+
+```typescript
+// Step 1.5a: Detect Next.js Router Usage
+interface RouterConfig {
+  hasAppRouter: boolean;   // /app exists for routing
+  hasPagesRouter: boolean; // /pages exists for routing
+  isHybrid: boolean;       // Both routers coexist
+}
+
+function detectNextjsRouters(projectRoot: string): RouterConfig {
+  // Check for App Router indicators
+  const appRouterIndicators = [
+    'app/layout.tsx',
+    'app/layout.js',
+    'app/page.tsx',
+    'app/page.js',
+    'src/app/layout.tsx',
+    'src/app/page.tsx'
+  ];
+
+  // Check for Pages Router indicators
+  const pagesRouterIndicators = [
+    'pages/_app.tsx',
+    'pages/_app.js',
+    'pages/index.tsx',
+    'pages/index.js',
+    'src/pages/_app.tsx',
+    'src/pages/index.tsx'
+  ];
+
+  const hasAppRouter = appRouterIndicators.some(f => exists(f));
+  const hasPagesRouter = pagesRouterIndicators.some(f => exists(f));
+
+  return {
+    hasAppRouter,
+    hasPagesRouter,
+    isHybrid: hasAppRouter && hasPagesRouter
+  };
+}
+```
+
+**Glob commands for hybrid detection:**
+```bash
+# App Router detection
+Glob: "app/layout.{ts,tsx,js,jsx}"
+Glob: "app/page.{ts,tsx,js,jsx}"
+Glob: "src/app/layout.{ts,tsx,js,jsx}"
+
+# Pages Router detection
+Glob: "pages/_app.{ts,tsx,js,jsx}"
+Glob: "pages/index.{ts,tsx,js,jsx}"
+Glob: "src/pages/_app.{ts,tsx,js,jsx}"
+```
+
+**If hybrid case detected (BOTH routers in use):**
+
+```
+AskUserQuestion:
+  question: "Next.js 하이브리드 프로젝트가 감지되었습니다. App Router(/app)와 Pages Router(/pages)가 모두 사용 중입니다. 두 디렉토리 모두 라우팅에 사용되므로 FSD 레이어를 별도의 이름으로 지정해야 합니다."
+  header: "Hybrid Mode"
+  options:
+    - label: "core / views (권장)"
+      description: "app → core, pages → views (FSD 레이어는 별도 디렉토리 사용)"
+    - label: "_fsd-app / _fsd-pages"
+      description: "app → _fsd-app, pages → _fsd-pages (언더스코어 prefix로 구분)"
+    - label: "fsd/app / fsd/pages"
+      description: "FSD 레이어를 fsd/ 하위 디렉토리로 그룹화"
+    - label: "Custom"
+      description: "직접 이름 지정"
+```
+
+**Progress output for hybrid case:**
+```
+> Detected Next.js project
+> ⚠️  HYBRID MODE: Both App Router and Pages Router detected
+>    - App Router: /app (routing)
+>    - Pages Router: /pages (routing)
+> FSD layers must use different directory names
+> User selected: app → core, pages → views
+```
+
+**If NOT hybrid (only one router), ask standard layer names:**
 
 ```
 AskUserQuestion:
@@ -387,12 +544,62 @@ const DEFAULT_PATTERNS = {
 }
 ```
 
-**Configuration template (Next.js):**
+**Configuration template (Next.js - Single Router):**
 ```json
 {
   "version": "1.0.0",
   "srcDir": "src",
   "framework": "nextjs",
+  "nextjs": {
+    "routerMode": "app-router",  // or "pages-router"
+    "isHybrid": false
+  },
+  "layerAliases": {
+    "app": "core",
+    "pages": "views"
+  },
+  "layers": {
+    "app": { "path": "core", "sliced": false, "exists": true },
+    "pages": { "path": "views", "sliced": true, "exists": true },
+    "widgets": { "path": "widgets", "sliced": true, "exists": true },
+    "features": { "path": "features", "sliced": true, "exists": true },
+    "entities": { "path": "entities", "sliced": true, "exists": true },
+    "shared": { "path": "shared", "sliced": false, "exists": true }
+  },
+  "patterns": {
+    "naming": "<detected-or-default>",
+    "indexFiles": true,
+    "segments": ["ui", "model", "api", "lib"]
+  },
+  "aliases": {
+    "@core": "src/core",
+    "@views": "src/views",
+    "@widgets": "src/widgets",
+    "@features": "src/features",
+    "@entities": "src/entities",
+    "@shared": "src/shared"
+  },
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.stories.tsx",
+    "**/node_modules/**"
+  ]
+}
+```
+
+**Configuration template (Next.js - Hybrid Router):**
+```json
+{
+  "version": "1.0.0",
+  "srcDir": "src",
+  "framework": "nextjs",
+  "nextjs": {
+    "routerMode": "hybrid",
+    "isHybrid": true,
+    "appRouterPath": "app",      // Next.js App Router location
+    "pagesRouterPath": "pages"   // Next.js Pages Router location
+  },
   "layerAliases": {
     "app": "core",
     "pages": "views"
