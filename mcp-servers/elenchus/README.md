@@ -83,24 +83,9 @@ npm install && npm run build
 }
 ```
 
-## For Power Users: + Plugin
-
-Want explicit workflow control with short commands?
-
-```
-# In Claude Code
-/install-plugin elenchus@jhlee0409-plugins
-```
-
-| Without Plugin | With Plugin |
-|----------------|-------------|
-| Natural language requests | `/elenchus:verify src/auth` |
-| Claude decides workflow | Explicit workflow control |
-| Good for simple checks | Full 26-criteria verification |
-
 ## MCP Prompts (Slash Commands)
 
-MCP server also provides prompts for explicit workflow:
+For explicit workflow control, use MCP prompts:
 
 | Command | Description |
 |---------|-------------|
@@ -283,7 +268,7 @@ Sessions are stored at `~/.claude/elenchus/sessions/`:
 
 ### Design Decision: Global Storage
 
-Sessions are **always stored globally** regardless of plugin installation scope.
+Sessions are **always stored globally** in the user's home directory.
 
 **Reason:**
 - MCP server is **stdio-based, stateless** architecture
