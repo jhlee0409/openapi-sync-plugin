@@ -39,6 +39,17 @@ import {
   getMediatorState
 } from '../mediator/index.js';
 import { ActiveIntervention } from '../mediator/types.js';
+import {
+  initializeRoleEnforcement,
+  validateRoleCompliance,
+  getExpectedRole,
+  getRolePrompt,
+  getRoleDefinition,
+  getComplianceHistory,
+  getRoleEnforcementSummary,
+  updateRoleConfig
+} from '../roles/index.js';
+import { RoleComplianceResult, VerifierRole } from '../roles/types.js';
 
 // =============================================================================
 // Tool Schemas
@@ -99,7 +110,7 @@ export const EndSessionSchema = z.object({
  */
 export async function startSession(
   args: z.infer<typeof StartSessionSchema>
-): Promise<StartSessionResponse & { mediator?: object }> {
+): Promise<StartSessionResponse & { mediator?: object; roles?: object }> {
   const session = await createSession(args.target, args.requirements, args.maxRounds);
 
   // Initialize context
@@ -114,6 +125,10 @@ export async function startSession(
     : [];
   const mediatorState = await initializeMediator(session.id, files, args.workingDir);
 
+  // Initialize Role Enforcement (역할 강제)
+  const roleState = initializeRoleEnforcement(session.id);
+  const verifierPrompt = getRolePrompt('verifier');
+
   return {
     sessionId: session.id,
     status: session.status,
@@ -127,6 +142,17 @@ export async function startSession(
       graphNodes: mediatorState.graph.nodes.size,
       graphEdges: mediatorState.graph.edges.length,
       criticalFiles: mediatorState.coverage.unverifiedCritical.length
+    },
+    // 🆕 역할 강제 정보
+    roles: {
+      initialized: true,
+      expectedRole: roleState.currentExpectedRole,
+      config: roleState.config,
+      verifierGuidelines: {
+        mustDo: getRoleDefinition('verifier').mustDo.slice(0, 3),
+        mustNotDo: getRoleDefinition('verifier').mustNotDo.slice(0, 3)
+      },
+      firstRolePrompt: verifierPrompt.systemPrompt.slice(0, 500) + '...'
     }
   };
 }
@@ -160,9 +186,20 @@ export async function getContext(
  */
 export async function submitRound(
   args: z.infer<typeof SubmitRoundSchema>
-): Promise<SubmitRoundResponse & { mediatorInterventions?: ActiveIntervention[] } | null> {
+): Promise<SubmitRoundResponse & {
+  mediatorInterventions?: ActiveIntervention[];
+  roleCompliance?: RoleComplianceResult;
+} | null> {
   const session = await getSession(args.sessionId);
   if (!session) return null;
+
+  // 🆕 역할 준수 검증 (Role Compliance Check)
+  const roleCompliance = validateRoleCompliance(
+    args.sessionId,
+    args.role as VerifierRole,
+    args.output,
+    session
+  );
 
   // Check for new file references
   const newFiles = findNewFileReferences(args.output, session.context);
@@ -233,11 +270,17 @@ export async function submitRound(
   const updatedSession = await getSession(session.id);
   const convergence = checkConvergence(updatedSession!);
 
-  // Determine next role
+  // Determine next role (from role enforcement)
+  const expectedNextRole = getExpectedRole(args.sessionId);
   let nextRole: 'verifier' | 'critic' | 'complete' = 'complete';
   if (!convergence.isConverged && session.currentRound < session.maxRounds) {
-    nextRole = args.role === 'verifier' ? 'critic' : 'verifier';
+    nextRole = expectedNextRole;
   }
+
+  // Get next role prompt if not complete
+  const nextRolePrompt = nextRole !== 'complete'
+    ? getRolePrompt(nextRole)
+    : undefined;
 
   return {
     roundNumber: round?.number || 0,
@@ -250,7 +293,17 @@ export async function submitRound(
     intervention,
     nextRole,
     // 🆕 중재자 개입 결과
-    mediatorInterventions: mediatorInterventions.length > 0 ? mediatorInterventions : undefined
+    mediatorInterventions: mediatorInterventions.length > 0 ? mediatorInterventions : undefined,
+    // 🆕 역할 준수 결과
+    roleCompliance: {
+      ...roleCompliance,
+      // 다음 역할 안내 추가
+      nextRoleGuidelines: nextRolePrompt ? {
+        role: nextRole,
+        mustDo: getRoleDefinition(nextRole as VerifierRole).mustDo.slice(0, 3),
+        checklist: nextRolePrompt.checklist
+      } : undefined
+    } as any
   };
 }
 
@@ -382,6 +435,78 @@ export async function mediatorSummary(
 }
 
 // =============================================================================
+// New Role Enforcement Tools (역할 강제 도구)
+// =============================================================================
+
+export const GetRolePromptSchema = z.object({
+  role: z.enum(['verifier', 'critic']).describe('Role to get prompt for')
+});
+
+export const RoleSummarySchema = z.object({
+  sessionId: z.string().describe('Session ID')
+});
+
+export const UpdateRoleConfigSchema = z.object({
+  sessionId: z.string().describe('Session ID'),
+  strictMode: z.boolean().optional().describe('Reject non-compliant rounds'),
+  minComplianceScore: z.number().optional().describe('Minimum compliance score (0-100)'),
+  requireAlternation: z.boolean().optional().describe('Require verifier/critic alternation')
+});
+
+/**
+ * Get role prompt and guidelines (역할 프롬프트 가져오기)
+ */
+export async function getRolePromptTool(
+  args: z.infer<typeof GetRolePromptSchema>
+): Promise<object> {
+  const prompt = getRolePrompt(args.role as VerifierRole);
+  const definition = getRoleDefinition(args.role as VerifierRole);
+
+  return {
+    role: args.role,
+    koreanName: definition.koreanName,
+    purpose: definition.purpose,
+    systemPrompt: prompt.systemPrompt,
+    mustDo: definition.mustDo,
+    mustNotDo: definition.mustNotDo,
+    focusAreas: definition.focusAreas,
+    outputTemplate: prompt.outputTemplate,
+    checklist: prompt.checklist,
+    exampleOutput: prompt.exampleOutput
+  };
+}
+
+/**
+ * Get role enforcement summary (역할 강제 요약)
+ */
+export async function roleSummary(
+  args: z.infer<typeof RoleSummarySchema>
+): Promise<object | null> {
+  return getRoleEnforcementSummary(args.sessionId);
+}
+
+/**
+ * Update role enforcement config (역할 강제 설정 변경)
+ */
+export async function updateRoleConfigTool(
+  args: z.infer<typeof UpdateRoleConfigSchema>
+): Promise<object | null> {
+  const config = updateRoleConfig(args.sessionId, {
+    strictMode: args.strictMode,
+    minComplianceScore: args.minComplianceScore,
+    requireAlternation: args.requireAlternation
+  });
+
+  if (!config) return null;
+
+  return {
+    sessionId: args.sessionId,
+    updated: true,
+    newConfig: config
+  };
+}
+
+// =============================================================================
 // Arbiter Logic
 // =============================================================================
 
@@ -487,5 +612,21 @@ export const tools = {
     description: 'Get mediator summary including dependency graph stats, verification coverage, and intervention history.',
     schema: MediatorSummarySchema,
     handler: mediatorSummary
+  },
+  // 🆕 역할 강제 도구들
+  elenchus_get_role_prompt: {
+    description: 'Get detailed role prompt and guidelines for Verifier or Critic. Includes mustDo/mustNotDo rules, output templates, and checklists.',
+    schema: GetRolePromptSchema,
+    handler: getRolePromptTool
+  },
+  elenchus_role_summary: {
+    description: 'Get role enforcement summary including compliance history, average scores, violations, and current expected role.',
+    schema: RoleSummarySchema,
+    handler: roleSummary
+  },
+  elenchus_update_role_config: {
+    description: 'Update role enforcement configuration. Can enable strict mode, change minimum compliance score, or toggle role alternation requirement.',
+    schema: UpdateRoleConfigSchema,
+    handler: updateRoleConfigTool
   }
 };
