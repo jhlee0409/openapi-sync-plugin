@@ -14,6 +14,11 @@
       "name": "elenchus",
       "source": "./plugins/elenchus",
       "description": "Cross-verification loop - two agents debate until evidence-based consensus"
+    },
+    {
+      "name": "fsd-architect",
+      "source": "./plugins/fsd-architect",
+      "description": "Feature-Sliced Design architecture assistant - analyze, validate, and scaffold FSD-compliant structures"
     }
   ]
 }
