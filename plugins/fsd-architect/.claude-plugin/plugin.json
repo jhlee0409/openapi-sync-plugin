@@ -1,5 +1,5 @@
 {
-  "name": "fsd-architect",
+  "name": "fsdarch",
   "version": "0.1.0",
   "description": "Feature-Sliced Design architecture assistant that analyzes, validates, and scaffolds FSD-compliant project structures",
   "author": {
