@@ -21,6 +21,47 @@ FSD 규격에 맞는 슬라이스 보일러플레이트를 생성합니다. 프�
 3. Check slice name doesn't already exist
 4. Validate naming format matches project convention
 
+### Step 1.5: Load Configuration
+
+**Action:** Read .fsd-architect.json and extract layer settings
+
+```
+1. Use Read tool to load .fsd-architect.json
+2. If not exists:
+   → Warn user: "Config not found. Run /fsdarch:init first"
+   → Use DEFAULT_CONFIG as fallback
+3. Extract from config:
+   - srcDir (default: 'src')
+   - layerAliases (default: {} - no aliases)
+   - patterns (for consistency)
+```
+
+**Read command:**
+```bash
+Read: .fsd-architect.json
+```
+
+**Fallback config:**
+```typescript
+const DEFAULT_CONFIG: FsdConfig = {
+  srcDir: 'src',
+  layerAliases: {},  // No aliases = use layer names as-is
+  patterns: DEFAULT_PATTERNS
+};
+```
+
+**Config structure:**
+```typescript
+interface FsdConfig {
+  srcDir: string;
+  layerAliases?: {
+    app?: string;    // e.g., 'core' for Next.js
+    pages?: string;  // e.g., 'views' for Next.js
+  };
+  patterns?: PatternConfig;
+}
+```
+
 ### Step 2: Load Project Patterns
 
 Use layer-detector skill:
@@ -71,9 +112,42 @@ Based on detected naming convention:
 
 ### Step 5: Generate Directory Structure
 
-Create base directory:
+**Action:** Create slice directory using resolved path with layerAliases
+
 ```
-{srcDir}/{layer}/{sliceName}/
+1. Load config (from Step 1.5)
+2. Verify parent layer directory exists using getLayerPath():
+   layerPath = getLayerPath(layer, config)
+   → Use Glob to check: "{layerPath}/"
+   → If not exists, create it or error
+3. Compute slice path using resolveSlicePath():
+   slicePath = resolveSlicePath(layer, sliceName, config)
+4. Create slice directory
+```
+
+**CRITICAL: Apply layerAliases**
+
+```typescript
+// Step 2: Verify layer directory exists
+const layerPath = getLayerPath(layer, config);  // Uses utility function
+// Glob: "{layerPath}/" to verify
+
+// Step 3: Compute full slice path
+const slicePath = resolveSlicePath(layer, sliceName, config);
+```
+
+**Example paths:**
+
+| Layer | getLayerPath() | resolveSlicePath() |
+|-------|----------------|-------------------|
+| features | src/features | src/features/auth |
+| app (aliased→core) | src/core | src/core/providers |
+| pages (aliased→views) | src/views | src/views/home |
+
+**Glob command to verify parent (using getLayerPath):**
+```bash
+Glob: "{getLayerPath(layer, config)}/"
+# e.g., "src/core/" for Next.js app layer with alias
 ```
 
 ### Step 6: Generate Segments
@@ -229,15 +303,94 @@ interface GenerationResult {
 }
 ```
 
+## UTILITY FUNCTIONS
+
+### resolveSlicePath()
+
+Resolves the actual filesystem path for a slice, applying layerAliases from config.
+
+```typescript
+/**
+ * Resolve slice path with layer aliases applied.
+ *
+ * @param layer - FSD layer name (app, pages, widgets, features, entities)
+ * @param sliceName - Name of the slice to create
+ * @param config - Loaded .fsd-architect.json config
+ * @returns Full path to create the slice directory
+ *
+ * @example
+ * // Standard project (no aliases)
+ * resolveSlicePath('features', 'auth', { srcDir: 'src', layerAliases: {} })
+ * // → 'src/features/auth'
+ *
+ * // Next.js project (with aliases)
+ * resolveSlicePath('app', 'providers', {
+ *   srcDir: 'src',
+ *   layerAliases: { app: 'core', pages: 'views' }
+ * })
+ * // → 'src/core/providers'
+ *
+ * // Next.js hybrid (pages layer)
+ * resolveSlicePath('pages', 'home', {
+ *   srcDir: 'src',
+ *   layerAliases: { app: 'core', pages: 'views' }
+ * })
+ * // → 'src/views/home'
+ */
+function resolveSlicePath(
+  layer: string,
+  sliceName: string,
+  config: FsdConfig
+): string {
+  // Apply layer alias if configured, otherwise use layer name as-is
+  const layerDir = config.layerAliases?.[layer] ?? layer;
+
+  // Build full path: srcDir/layerDir/sliceName
+  return `${config.srcDir}/${layerDir}/${sliceName}`;
+}
+```
+
+### getLayerPath()
+
+Get the actual directory path for a layer (for checking existence).
+
+```typescript
+/**
+ * Get the actual directory path for an FSD layer.
+ *
+ * @param layer - FSD layer name
+ * @param config - Loaded config
+ * @returns Directory path for the layer
+ */
+function getLayerPath(layer: string, config: FsdConfig): string {
+  const layerDir = config.layerAliases?.[layer] ?? layer;
+  return `${config.srcDir}/${layerDir}`;
+}
+```
+
+---
+
 ## ALGORITHM
 
 ```
 function generateSlice(layer, sliceName, options):
-  // Validate
+  // Step 1: Validate
   if layer not in [pages, widgets, features, entities]:
     throw E302('Invalid layer')
 
-  slicePath = resolveSlicePath(layer, sliceName)
+  // Step 1.5: Load config
+  config = loadConfig('.fsd-architect.json')
+  if not config:
+    config = DEFAULT_CONFIG
+    warn("Using default config. Run /fsdarch:init for full setup.")
+
+  // Step 5: Verify layer directory exists (using getLayerPath)
+  layerPath = getLayerPath(layer, config)
+  if not exists(layerPath):
+    mkdir(layerPath)  // Create layer directory if missing
+
+  // Step 5: Resolve slice path with aliases (CRITICAL FIX)
+  slicePath = resolveSlicePath(layer, sliceName, config)
   if exists(slicePath):
     throw E301('Slice exists')
 

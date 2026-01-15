@@ -13,6 +13,7 @@ FSD 프로젝트의 구조 분석, 검증, 스캐폴딩을 지원하는 Claude C
 | `/fsdarch:scaffold` | 슬라이스/세그먼트 보일러플레이트 생성 |
 | `/fsdarch:validate` | FSD 규칙 위반 검사 및 수정 가이드 |
 | `/fsdarch:explain` | FSD 개념 설명 (프로젝트 맥락) |
+| `/fsdarch:migrate` | 기존 프로젝트 FSD 마이그레이션 가이드 |
 
 ## Quick Start
 
@@ -155,6 +156,37 @@ FSD 개념을 프로젝트 맥락에서 설명합니다.
 /fsdarch:explain layers
 /fsdarch:explain feature-vs-widget
 /fsdarch:explain "entities에서 다른 entity를 참조해도 되나요?"
+```
+
+### /fsdarch:migrate
+
+기존 프로젝트를 FSD 구조로 마이그레이션하는 분석 및 가이드를 제공합니다.
+
+```bash
+/fsdarch:migrate              # 분석 및 마이그레이션 계획 출력
+/fsdarch:migrate --dry-run    # 변경 없이 분석만
+/fsdarch:migrate --phase 1    # Phase 1 실행 (구조 생성)
+/fsdarch:migrate --export     # 계획을 파일로 저장
+```
+
+Output:
+```
+📊 Current Structure Analysis:
+   • Total files: 156
+   • Components: 45
+   • Hooks: 12
+
+📦 Suggested Layer Distribution:
+   shared/    → 28 files (from utils/, types/)
+   entities/  → 15 files (from models/, services/)
+   features/  → 35 files (from hooks/, components/)
+   ...
+
+🔄 Migration Phases:
+   Phase 1: Create structure (Safe)
+   Phase 2: shared layer (28 files)
+   Phase 3: entities layer (15 files)
+   ...
 ```
 
 ## Configuration

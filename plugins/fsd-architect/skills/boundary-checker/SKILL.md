@@ -40,12 +40,12 @@ For each import:
 
 ```
 Layer Hierarchy (top to bottom):
-  app (7)
-  pages (6)
-  widgets (5)
-  features (4)
-  entities (3)
-  shared (2)
+  app (6)
+  pages (5)
+  widgets (4)
+  features (3)
+  entities (2)
+  shared (1)
 ```
 
 **Rule: Lower number cannot import from higher number**
@@ -66,7 +66,35 @@ For each import within a sliced layer:
 2. Get target slice
 3. If source ≠ target and same layer → VIOLATION
 
-Exception: `@x/` cross-reference pattern is allowed.
+**Exception: `@x/` cross-reference pattern is allowed.**
+
+The @x/ pattern enables controlled cross-slice imports within the same layer.
+See "REFERENCE: @x/ Cross-Reference Pattern" section for details.
+
+### Step 5.5: Validate @x/ References (if used)
+
+When an @x/ import is detected:
+
+```
+1. Check @x/ structure exists in source slice
+2. Verify the re-export is properly set up
+3. If structure invalid → Warning (not error)
+```
+
+**Valid @x/ usage:**
+```typescript
+// In: entities/user/@x/order.ts
+export { Order, type OrderStatus } from '@entities/order';
+
+// In: entities/user/model/index.ts
+import { Order } from '../@x/order';  // ✅ Valid
+```
+
+**Invalid @x/ usage (direct import disguised):**
+```typescript
+// In: entities/user/model/index.ts
+import { Order } from '@entities/order';  // ❌ E201: Cross-slice import
+```
 
 ### Step 6: Check Public API Usage
 
@@ -110,6 +138,7 @@ function checkBoundaries(layerMap, files):
     imports = extractImports(file)
     sourceLayer = getLayerFromPath(file.path)
     sourceSlice = getSliceFromPath(file.path)
+    sourceSlicePath = getSlicePath(file.path)  // Full path: e.g., "src/entities/user"
 
     for imp in imports:
       targetPath = resolveImport(imp, file.path)
@@ -134,6 +163,18 @@ function checkBoundaries(layerMap, files):
             message: 'Forbidden cross-slice import',
             ...
           })
+        else:
+          // Validate @x/ structure (Step 5.5)
+          xRefFile = extractXRefFile(imp)  // Extract file name from @x/ import
+          xRefResult = validateXReference(sourceSlicePath, xRefFile)
+          if not xRefResult.valid:
+            violations.push({
+              code: 'W105',
+              type: 'warning',
+              message: 'Invalid @x/ structure',
+              detail: xRefResult.warning,
+              ...
+            })
 
       // Check public API
       if isInternalPath(targetPath):
@@ -158,6 +199,182 @@ function checkBoundaries(layerMap, files):
 | E205 | Error | Circular dependency |
 | W101 | Warning | Inconsistent naming |
 | W102 | Warning | Unused export |
+| W103 | Warning | Missing segment |
+| W105 | Warning | Invalid @x/ structure |
+
+---
+
+## REFERENCE: @x/ Cross-Reference Pattern
+
+### What is @x/?
+
+The @x/ (cross-reference) pattern is an **advanced FSD pattern** that enables controlled imports between slices within the same layer. This is an exception to the normal "no cross-slice imports" rule.
+
+### When to Use @x/
+
+Use @x/ when:
+- Entities have relationships (User → Order, Product → Review)
+- Features need to reference each other's types (not logic)
+- Widgets compose other widgets
+
+### Pattern Structure
+
+```
+entities/
+├── user/
+│   ├── @x/                    # Cross-reference folder
+│   │   └── order.ts           # Re-exports from order entity
+│   ├── model/
+│   │   ├── index.ts
+│   │   └── useUserOrders.ts   # Can import from ../@x/order
+│   ├── ui/
+│   └── index.ts
+├── order/
+│   ├── model/
+│   │   └── types.ts           # Order, OrderStatus types
+│   └── index.ts               # Exports Order, OrderStatus
+```
+
+### @x/ File Content
+
+The @x/ files are **re-exports only**. They don't contain logic.
+
+```typescript
+// entities/user/@x/order.ts
+// Re-export only what user entity needs from order entity
+
+export { Order } from '@entities/order';
+export type { OrderStatus, OrderItem } from '@entities/order';
+```
+
+### How to Import via @x/
+
+Within the same slice, use relative imports to @x/:
+
+```typescript
+// entities/user/model/useUserOrders.ts
+
+// ✅ CORRECT: Import via local @x/ re-export
+import { Order, OrderStatus } from '../@x/order';
+
+// ❌ WRONG: Direct cross-slice import
+import { Order } from '@entities/order';
+```
+
+### Detection Logic
+
+```typescript
+/**
+ * Check if an import uses the @x/ cross-reference pattern.
+ * @param importPath - The import path to check
+ * @returns true if this is an @x/ reference
+ */
+function isXReference(importPath: string): boolean {
+  // Check for @x/ in relative path
+  // Patterns: '/@x/', '../@x/', './@x/'
+  if (importPath.includes('/@x/') || importPath.includes('../@x/') || importPath.includes('./@x/')) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Validate that @x/ structure is properly set up.
+ * @param sourceSlicePath - Path to the slice using @x/
+ * @param xRefFile - The @x/ file being imported
+ * @returns Validation result
+ */
+function validateXReference(
+  sourceSlicePath: string,
+  xRefFile: string
+): { valid: boolean; warning?: string } {
+  // Check @x/ folder exists in source slice
+  const xRefPath = `${sourceSlicePath}/@x`;
+  if (!exists(xRefPath)) {
+    return {
+      valid: false,
+      warning: `Missing @x/ folder in ${sourceSlicePath}`
+    };
+  }
+
+  // Check the specific @x/ file exists
+  const xRefFilePath = `${xRefPath}/${xRefFile}.ts`;
+  if (!exists(xRefFilePath)) {
+    return {
+      valid: false,
+      warning: `Missing @x/ file: ${xRefFilePath}`
+    };
+  }
+
+  // Check file contains only re-exports (no logic)
+  const content = read(xRefFilePath);
+  if (!isReExportOnly(content)) {
+    return {
+      valid: false,
+      warning: `@x/ file should only contain re-exports: ${xRefFilePath}`
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Check if file content is re-export only (no logic).
+ */
+function isReExportOnly(content: string): boolean {
+  // Should only have export statements, no function/class definitions
+  const lines = content.split('\n').filter(l => l.trim() && !l.startsWith('//'));
+
+  for (const line of lines) {
+    // Valid: export { X } from 'Y'
+    // Valid: export type { X } from 'Y'
+    // Invalid: function, const, class, etc.
+    if (!line.match(/^export\s+(type\s+)?{.*}\s+from\s+/)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+```
+
+### Benefits of @x/
+
+1. **Explicit Dependencies**: Makes cross-slice dependencies visible
+2. **Controlled Coupling**: Only expose what's needed
+3. **Easy to Track**: Find all cross-references in @x/ folders
+4. **Refactoring Friendly**: Change target slice, update @x/ re-exports
+
+### Example: User-Order Relationship
+
+```typescript
+// entities/order/model/types.ts
+export interface Order {
+  id: string;
+  userId: string;
+  items: OrderItem[];
+  status: OrderStatus;
+}
+
+export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
+
+// entities/order/index.ts
+export { Order, OrderStatus } from './model/types';
+
+// entities/user/@x/order.ts
+export { Order } from '@entities/order';
+export type { OrderStatus } from '@entities/order';
+
+// entities/user/model/useUserOrders.ts
+import { Order, OrderStatus } from '../@x/order';  // ✅
+
+export function useUserOrders(userId: string) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  // ...
+}
+```
+
+---
 
 ## ERROR HANDLING
 

@@ -69,6 +69,14 @@ When `/fsdarch:init` is invoked, Claude MUST perform these steps in order:
 │                                                               │
 │  Step 4. Generate .fsd-architect.json                         │
 │                                                               │
+│  Step 4.5. Configure tsconfig.json paths (Optional)           │
+│     ├─ Ask user if they want path aliases                     │
+│     ├─ If YES → Generate/merge paths in tsconfig.json         │
+│     └─ Apply layerAliases to path generation                  │
+│                                                               │
+│  Step 4.6. Suggest bundler config (Vite only)                 │
+│     └─ Display vite.config.ts alias suggestions               │
+│                                                               │
 │  Step 5. Check .gitignore for cache files                     │
 │                                                               │
 │  Step 6. Display summary and next steps                       │
@@ -649,6 +657,150 @@ const DEFAULT_PATTERNS = {
 Write: .fsd-architect.json
 Content: <generated JSON above>
 ```
+
+### Step 4.5: Configure TypeScript/JavaScript Paths (Optional)
+
+**Action:** Add or update tsconfig.json/jsconfig.json with FSD path aliases
+
+```
+1. Ask user if they want to configure path aliases
+2. If YES:
+   a. Check if tsconfig.json exists
+   b. If exists: Read and merge paths
+   c. If not exists: Check for jsconfig.json or create tsconfig.json
+3. Generate path aliases based on layerAliases config
+4. Write updated config file
+```
+
+**AskUserQuestion (optional step):**
+```
+question: "Would you like to configure path aliases for FSD layers? This enables imports like '@features/auth'"
+header: "Path Aliases"
+options:
+  - label: "Yes, update tsconfig.json (Recommended)"
+    description: "Adds @app, @features, @shared, etc. import aliases"
+  - label: "No, I'll configure manually"
+    description: "Skip path alias configuration"
+```
+
+**If user selects YES:**
+
+**For Standard React/Vue projects:**
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@pages/*": ["src/pages/*"],
+      "@widgets/*": ["src/widgets/*"],
+      "@features/*": ["src/features/*"],
+      "@entities/*": ["src/entities/*"],
+      "@shared/*": ["src/shared/*"]
+    }
+  }
+}
+```
+
+**For Next.js with layerAliases (app→core, pages→views):**
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@views/*": ["src/views/*"],
+      "@widgets/*": ["src/widgets/*"],
+      "@features/*": ["src/features/*"],
+      "@entities/*": ["src/entities/*"],
+      "@shared/*": ["src/shared/*"]
+    }
+  }
+}
+```
+
+**Path generation logic:**
+```typescript
+function generatePathAliases(config: FsdConfig): Record<string, string[]> {
+  const paths: Record<string, string[]> = {};
+
+  // Derive layers from config (not hardcoded)
+  // Only generate aliases for layers that exist in the project
+  const layers = Object.keys(config.layers);
+
+  for (const layer of layers) {
+    // Skip layers that don't exist
+    if (!config.layers[layer]?.exists) continue;
+
+    // Apply layer alias if exists
+    const aliasedLayer = config.layerAliases?.[layer] ?? layer;
+    const aliasKey = `@${aliasedLayer}/*`;
+    const aliasValue = [`${config.srcDir}/${aliasedLayer}/*`];
+
+    paths[aliasKey] = aliasValue;
+  }
+
+  return paths;
+}
+```
+
+**Merge strategy (if tsconfig.json exists):**
+```typescript
+function mergeTsConfig(existing: any, newPaths: Record<string, string[]>): any {
+  return {
+    ...existing,
+    compilerOptions: {
+      ...existing.compilerOptions,
+      baseUrl: existing.compilerOptions?.baseUrl ?? '.',
+      paths: {
+        ...existing.compilerOptions?.paths,
+        ...newPaths  // FSD paths override existing
+      }
+    }
+  };
+}
+```
+
+**Progress output:**
+```
+> Configuring path aliases...
+> Updated tsconfig.json with FSD layer aliases:
+>   @features/* → src/features/*
+>   @entities/* → src/entities/*
+>   @shared/*   → src/shared/*
+>   ...
+```
+
+### Step 4.6: Configure Bundler Aliases (Optional - Vite only)
+
+**Condition:** Vite project detected AND user wants path aliases
+
+**Action:** Suggest vite.config.ts update (manual)
+
+```
+For Vite projects, path aliases require additional configuration.
+
+Output suggestion:
+> ⚠️  Vite requires additional alias configuration.
+>
+> Add to vite.config.ts:
+> \`\`\`typescript
+> import path from 'path';
+>
+> export default defineConfig({
+>   resolve: {
+>     alias: {
+>       '@features': path.resolve(__dirname, './src/features'),
+>       '@entities': path.resolve(__dirname, './src/entities'),
+>       '@shared': path.resolve(__dirname, './src/shared'),
+>       // ... other layers
+>     }
+>   }
+> });
+> \`\`\`
+```
+
+**Note:** Next.js automatically uses tsconfig.json paths, no additional config needed.
 
 ### Step 5: Security Check (.gitignore)
 

@@ -67,7 +67,7 @@ Solutions:
 
 ### E104: Config Not Found
 
-**Location:** `commands/analyze.md`
+**Location:** `commands/analyze.md`, `commands/migrate.md`
 **Cause:** `.fsd-architect.json` missing when required
 
 ```
@@ -289,7 +289,7 @@ Learn more: https://feature-sliced.design/docs/reference/public-api
 Entity 'user' imports from feature 'auth'.
 Location: src/entities/user/model/index.ts:5
 
-Rule: entities (layer 3) cannot import from features (layer 4).
+Rule: entities (layer 2) cannot import from features (layer 3).
       Lower layers must not depend on higher layers.
 
 Layer hierarchy (low → high):
@@ -660,6 +660,32 @@ Recommendation: Consider splitting into smaller slices:
   - entities/user-avatar (media)
 ```
 
+### W105: Invalid @x/ Structure
+
+**Location:** `skills/boundary-checker/SKILL.md`
+**Cause:** @x/ cross-reference folder or file is improperly configured
+
+```
+[W105] Invalid @x/ Structure
+
+The @x/ cross-reference in 'entities/user' has issues:
+  - Missing @x/ folder
+  - @x/ file contains logic (should be re-exports only)
+  - @x/ file exports from wrong layer
+
+Valid @x/ structure:
+  entities/user/@x/order.ts:
+    export { Order } from '@entities/order';
+    export type { OrderStatus } from '@entities/order';
+
+Invalid @x/ structure:
+  ✗ Logic in @x/ file (functions, classes)
+  ✗ Direct imports bypassing @x/
+  ✗ Missing re-export file
+
+Recommendation: Fix @x/ structure or use proper import patterns.
+```
+
 ---
 
 ## Quick Reference
@@ -695,3 +721,4 @@ Recommendation: Consider splitting into smaller slices:
 | W102 | Warning | Style | Remove or verify usage |
 | W103 | Warning | Style | Add missing segment |
 | W104 | Warning | Style | Split slice |
+| W105 | Warning | Validation | Fix @x/ structure |
