@@ -7,7 +7,7 @@ export function generateConsolidatePrompt(args: Record<string, string>): string 
 
   return `[ELENCHUS CONSOLIDATE MODE ACTIVATED]
 
-${sessionId ? `Session ID: ${sessionId}` : '(Using latest session)'}
+${sessionId ? `Session ID: ${sessionId}` : '(Session ID required - get from previous verify session)'}
 
 ## Elenchus Consolidate Protocol
 
@@ -122,5 +122,5 @@ const result = await db.query(query, [userId]);
 
 BEGIN CONSOLIDATION NOW.
 
-${sessionId ? `Call elenchus_get_issues({ sessionId: "${sessionId}" }) to start.` : 'Call elenchus_get_issues to get issues from the latest session.'}`;
+${sessionId ? `Call elenchus_get_issues({ sessionId: "${sessionId}" }) to start.` : 'First get the sessionId from your previous verify session, then call elenchus_get_issues({ sessionId: "[your-session-id]" }).'}`;
 }
