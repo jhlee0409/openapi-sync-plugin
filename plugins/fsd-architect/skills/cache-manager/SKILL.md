@@ -48,6 +48,25 @@ Read: .fsd-architect.cache.json
 Read: .fsd-architect.json  # For hash comparison
 ```
 
+**Hash Function Implementation:**
+
+```typescript
+/**
+ * Simple string hash function for config comparison.
+ * Produces a consistent hash for cache invalidation detection.
+ */
+function simpleHash(content: string): string {
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  // Convert to base-36 for compact representation
+  return Math.abs(hash).toString(36);
+}
+```
+
 **Validation checks:**
 ```typescript
 // Version check
@@ -55,7 +74,7 @@ if (cache.version !== '1.0.0') {
   return { valid: false, reason: 'version-mismatch' };  // E503
 }
 
-// Config hash check (simple string hash)
+// Config hash check using simpleHash()
 const currentConfig = await read('.fsd-architect.json');
 const currentHash = simpleHash(currentConfig);
 if (cache.configHash !== currentHash) {

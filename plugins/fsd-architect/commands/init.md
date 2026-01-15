@@ -115,11 +115,21 @@ Use --force to overwrite:
 2. For each candidate, verify it's a directory (not file)
 
 3. If --src flag provided:
-   → **SECURITY: Validate path first (see below)**
-   → Use the specified path directly
-   → Verify it exists, if not → Error E101
+   → **SECURITY: Call validateSourcePath(srcPath) first**
+   → If validation.valid === false:
+      → Display validation.error message
+      → Stop execution immediately
+   → If validation.valid === true:
+      → Use the specified path directly
+      → Verify directory exists using Glob
+      → If not exists → Error E101
 
-4. If no directory found:
+4. If user provides custom path via AskUserQuestion:
+   → **SECURITY: Call validateSourcePath(userInput) first**
+   → If invalid → Show error and ask again
+   → If valid → Continue
+
+5. If no directory found:
    → Use AskUserQuestion tool to ask user
 ```
 
