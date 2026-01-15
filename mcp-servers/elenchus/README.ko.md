@@ -192,6 +192,85 @@ MCP 서버는 명시적 워크플로우를 위한 프롬프트도 제공합니�
 }
 ```
 
+### elenchus_ripple_effect
+
+코드 변경 영향 분석.
+
+```typescript
+{
+  sessionId: string,
+  changedFile: string,     // 변경될 파일
+  changedFunction?: string // 특정 함수 (선택)
+}
+```
+
+### elenchus_mediator_summary
+
+중재자 분석 요약 조회.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+반환: 의존성 그래프 통계, 검증 커버리지, 개입 이력.
+
+### elenchus_get_role_prompt
+
+역할별 프롬프트 및 가이드라인 조회.
+
+```typescript
+{
+  role: 'verifier' | 'critic'
+}
+```
+
+반환: mustDo/mustNotDo 규칙, 출력 템플릿, 체크리스트.
+
+### elenchus_role_summary
+
+세션의 역할 강제 요약 조회.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+반환: 준수 이력, 평균 점수, 위반 사항, 다음 예상 역할.
+
+### elenchus_update_role_config
+
+역할 강제 설정 업데이트.
+
+```typescript
+{
+  sessionId: string,
+  strictMode?: boolean,        // 비준수 라운드 거부
+  minComplianceScore?: number, // 최소 점수 (0-100)
+  requireAlternation?: boolean // Verifier/Critic 교대 필수
+}
+```
+
+## MCP 리소스
+
+MCP 리소스 URI로 세션 데이터 접근:
+
+| URI | 설명 |
+|-----|------|
+| `elenchus://sessions/` | 모든 활성 세션 목록 |
+| `elenchus://sessions/{sessionId}` | 특정 세션 상세 정보 |
+
+**Claude에서 사용:**
+```
+# 활성 세션 목록
+Read elenchus://sessions/
+
+# 세션 상세 정보
+Read elenchus://sessions/2024-01-15_src-auth_abc123
+```
+
 ## 세션 저장소
 
 세션은 `~/.claude/elenchus/sessions/`에 저장됩니다:
@@ -265,6 +344,27 @@ Layer 1 (발견): 라운드 중 발견
 - `LOOP_BREAK`: 동일 이슈 반복 논쟁
 - `SOFT_CORRECT`: 범위 과잉 확장
 
+### 의존성 분석 (Mediator)
+
+서버가 의존성 그래프를 구축하고 분석합니다:
+
+**기능:**
+- Import/export 관계 추적
+- 순환 의존성 탐지
+- 파일 중요도 점수 (참조 수 기반)
+- 코드 변경 ripple effect 분석
+
+**`elenchus_ripple_effect`로 분석:**
+```typescript
+// 예시: auth.ts를 변경하면 어떤 파일이 영향받나?
+elenchus_ripple_effect({
+  sessionId: "...",
+  changedFile: "src/auth/auth.ts",
+  changedFunction: "validateToken"  // 선택
+})
+// 반환: 영향받는 파일 목록과 의존성 경로
+```
+
 ### 수렴 감지
 
 ```typescript
@@ -273,6 +373,31 @@ isConverged =
   roundsWithoutNewIssues >= 2 &&
   currentRound >= 2
 ```
+
+### 역할 강제
+
+서버가 엄격한 Verifier↔Critic 교대를 강제합니다:
+
+```
+Round 1: Verifier (항상 시작)
+Round 2: Critic
+Round 3: Verifier
+...
+```
+
+**준수 검증:**
+- 역할 교대 강제
+- 필수 요소 검사 (이슈 형식, 증거)
+- 준수 점수 계산 (기본 100, 오류당 -20, 경고당 -5)
+
+**역할별 규칙:**
+
+| 역할 | 필수 | 금지 |
+|------|------|------|
+| Verifier | 모든 주장에 증거, file:line 위치 | 카테고리 건너뛰기, 모호한 "괜찮음" |
+| Critic | 모든 이슈 검증, 커버리지 확인 | 증거 없이 수용, 새 이슈 추가 |
+
+상세 가이드라인은 `elenchus_get_role_prompt`로 조회하세요.
 
 ## 개발
 

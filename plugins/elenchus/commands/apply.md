@@ -18,13 +18,17 @@ $ARGUMENTS
 
 ### Arguments
 
+플러그인은 자연어 인수를 파싱합니다:
+
 ```
---session=[sessionId]     # 세션 ID (필수)
---scope=must_fix          # MUST FIX만 적용 (기본)
---scope=should_fix        # MUST + SHOULD FIX
---scope=all               # 전체 적용
---dry-run                 # 시뮬레이션만
+/elenchus:apply                    # 대화형 적용 (세션 ID 자동 감지)
+/elenchus:apply --scope=must_fix   # MUST FIX만 적용 (기본)
+/elenchus:apply --scope=should_fix # MUST + SHOULD FIX
+/elenchus:apply --scope=all        # 전체 적용
+/elenchus:apply --dry-run          # 시뮬레이션만
 ```
+
+**참고:** 세션 ID는 가장 최근 verify 세션에서 자동으로 가져옵니다. 명시적으로 지정하려면 대화에서 sessionId를 언급하세요.
 
 ### Workflow
 

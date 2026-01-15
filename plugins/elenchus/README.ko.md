@@ -228,13 +228,15 @@ rm -rf ~/.claude/elenchus/sessions/*
 
 ## 커맨드 비교
 
-| 플러그인 커맨드 | MCP 커맨드 | 비고 |
-|----------------|------------|------|
-| `/elenchus:verify` | `/mcp__elenchus__verify` | 동일 기능 |
-| `/elenchus:consolidate` | `/mcp__elenchus__consolidate` | 동일 기능 |
-| `/elenchus:apply` | `/mcp__elenchus__apply` | 동일 기능 |
-| `/elenchus:complete` | `/mcp__elenchus__complete` | 동일 기능 |
-| `/elenchus:cross-verify` | `/mcp__elenchus__cross-verify` | 동일 기능 |
+| 플러그인 커맨드 | MCP 프롬프트 | 비고 |
+|----------------|--------------|------|
+| `/elenchus:verify` | `/mcp__elenchus__elenchus-verify` | 동일 기능 |
+| `/elenchus:consolidate` | `/mcp__elenchus__elenchus-consolidate` | 동일 기능 |
+| `/elenchus:apply` | `/mcp__elenchus__elenchus-apply` | 동일 기능 |
+| `/elenchus:complete` | `/mcp__elenchus__elenchus-complete` | 동일 기능 |
+| `/elenchus:cross-verify` | `/mcp__elenchus__elenchus-cross-verify` | 동일 기능 |
+
+> **참고**: MCP 프롬프트 이름은 `/mcp__<서버>__<프롬프트명>` 형식입니다. 플러그인은 더 짧은 별칭을 제공합니다.
 
 ## 라이선스
 

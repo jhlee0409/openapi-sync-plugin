@@ -192,6 +192,85 @@ End session and record final verdict.
 }
 ```
 
+### elenchus_ripple_effect
+
+Analyze impact of code changes.
+
+```typescript
+{
+  sessionId: string,
+  changedFile: string,     // File that will be changed
+  changedFunction?: string // Specific function (optional)
+}
+```
+
+### elenchus_mediator_summary
+
+Get mediator analysis summary.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+Returns: dependency graph stats, verification coverage, intervention history.
+
+### elenchus_get_role_prompt
+
+Get role-specific prompt and guidelines.
+
+```typescript
+{
+  role: 'verifier' | 'critic'
+}
+```
+
+Returns: mustDo/mustNotDo rules, output templates, checklists.
+
+### elenchus_role_summary
+
+Get role enforcement summary for session.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+Returns: compliance history, average scores, violations, expected next role.
+
+### elenchus_update_role_config
+
+Update role enforcement configuration.
+
+```typescript
+{
+  sessionId: string,
+  strictMode?: boolean,        // Reject non-compliant rounds
+  minComplianceScore?: number, // Minimum score (0-100)
+  requireAlternation?: boolean // Require verifier/critic alternation
+}
+```
+
+## MCP Resources
+
+Access session data via MCP resource URIs:
+
+| URI | Description |
+|-----|-------------|
+| `elenchus://sessions/` | List all active sessions |
+| `elenchus://sessions/{sessionId}` | Get specific session details |
+
+**Usage in Claude:**
+```
+# List active sessions
+Read elenchus://sessions/
+
+# Get session details
+Read elenchus://sessions/2024-01-15_src-auth_abc123
+```
+
 ## Session Storage
 
 Sessions are stored at `~/.claude/elenchus/sessions/`:
@@ -265,6 +344,27 @@ Server auto-detects and intervenes:
 - `LOOP_BREAK`: Same issue repeatedly argued
 - `SOFT_CORRECT`: Scope over-expansion
 
+### Dependency Analysis (Mediator)
+
+Server builds and analyzes dependency graph:
+
+**Features:**
+- Import/export relationship tracking
+- Circular dependency detection
+- File importance scoring (based on dependents count)
+- Ripple effect analysis for code changes
+
+**Use `elenchus_ripple_effect` to analyze:**
+```typescript
+// Example: What files are affected if I change auth.ts?
+elenchus_ripple_effect({
+  sessionId: "...",
+  changedFile: "src/auth/auth.ts",
+  changedFunction: "validateToken"  // optional
+})
+// Returns: List of affected files with dependency paths
+```
+
 ### Convergence Detection
 
 ```typescript
@@ -273,6 +373,31 @@ isConverged =
   roundsWithoutNewIssues >= 2 &&
   currentRound >= 2
 ```
+
+### Role Enforcement
+
+Server enforces strict Verifier↔Critic alternation:
+
+```
+Round 1: Verifier (always starts)
+Round 2: Critic
+Round 3: Verifier
+...
+```
+
+**Compliance validation:**
+- Role alternation enforcement
+- Required elements check (issue format, evidence)
+- Compliance score calculation (100 base, -20 per error, -5 per warning)
+
+**Role-specific rules:**
+
+| Role | Must Do | Must Not Do |
+|------|---------|-------------|
+| Verifier | Evidence for all claims, file:line locations | Skip categories, vague "looks good" |
+| Critic | Validate all issues, check coverage | Accept without evidence, add new issues |
+
+Use `elenchus_get_role_prompt` to get detailed guidelines.
 
 ## Development
 

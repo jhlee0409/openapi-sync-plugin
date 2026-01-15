@@ -13,7 +13,12 @@ $ARGUMENTS
 ### Prerequisites
 
 - `/elenchus:verify` 실행 완료
-- 세션 ID 필요 (verify 결과에서 확인)
+- 세션 ID 필요
+
+**세션 ID 확인 방법:**
+1. `/elenchus:verify` 완료 시 출력에서 `sessionId` 확인
+2. MCP 리소스 조회: `elenchus://sessions/` 로 활성 세션 목록 확인
+3. 세션 파일 확인: `~/.claude/elenchus/sessions/` 디렉토리
 
 ### Workflow
 

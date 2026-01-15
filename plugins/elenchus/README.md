@@ -228,13 +228,15 @@ How re-verification guarantees zero issues:
 
 ## Command Comparison
 
-| Plugin Command | MCP Command | Notes |
-|----------------|-------------|-------|
-| `/elenchus:verify` | `/mcp__elenchus__verify` | Same functionality |
-| `/elenchus:consolidate` | `/mcp__elenchus__consolidate` | Same functionality |
-| `/elenchus:apply` | `/mcp__elenchus__apply` | Same functionality |
-| `/elenchus:complete` | `/mcp__elenchus__complete` | Same functionality |
-| `/elenchus:cross-verify` | `/mcp__elenchus__cross-verify` | Same functionality |
+| Plugin Command | MCP Prompt | Notes |
+|----------------|------------|-------|
+| `/elenchus:verify` | `/mcp__elenchus__elenchus-verify` | Same functionality |
+| `/elenchus:consolidate` | `/mcp__elenchus__elenchus-consolidate` | Same functionality |
+| `/elenchus:apply` | `/mcp__elenchus__elenchus-apply` | Same functionality |
+| `/elenchus:complete` | `/mcp__elenchus__elenchus-complete` | Same functionality |
+| `/elenchus:cross-verify` | `/mcp__elenchus__elenchus-cross-verify` | Same functionality |
+
+> **Note**: MCP prompt names use format `/mcp__<server>__<prompt-name>`. The plugin provides shorter aliases.
 
 ## License
 
