@@ -21,7 +21,20 @@ For each file in the project:
 1. Read file content
 2. Extract import statements using regex:
    ```regex
-   import\s+.*\s+from\s+['"]([^'"]+)['"]
+   import\s+.*?\s+from\s+['"]([^'"]+)['"]
+   ```
+   **SECURITY NOTE:** Use non-greedy `.*?` instead of greedy `.*` to prevent ReDoS
+   (Regular Expression Denial of Service) attacks from maliciously crafted import statements.
+
+   **Alternative safer patterns:**
+   ```regex
+   # More specific pattern (recommended for production)
+   import\s+(?:\{[^}]*\}|[^'"]+)\s+from\s+['"]([^'"]+)['"]
+
+   # Or use multiple specific patterns:
+   import\s+\{[^}]*\}\s+from\s+['"]([^'"]+)['"]   # Named imports
+   import\s+\w+\s+from\s+['"]([^'"]+)['"]         # Default imports
+   import\s+\*\s+as\s+\w+\s+from\s+['"]([^'"]+)['"]  # Namespace imports
    ```
 3. Categorize imports:
    - Absolute (alias): `@entities/user`

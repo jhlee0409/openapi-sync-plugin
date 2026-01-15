@@ -30,7 +30,12 @@ description: Generate FSD-compliant slice or segment boilerplate
 
 1. 레이어 유효성 검사 (sliced layer인지 확인)
 2. 슬라이스 이름 검사 (기존 존재 여부)
-3. 세그먼트 유효성 검사
+3. **세그먼트 유효성 검사 (SECURITY CRITICAL)**:
+   - `--segments` 플래그의 각 세그먼트에 대해 slice-generator의 `validateSegmentName()` 호출
+   - Path traversal 공격 방지: `..`, `/`, `\` 금지
+   - Hidden directory 방지: `.`으로 시작 금지
+   - 정규식 패턴 `^[a-zA-Z][a-zA-Z0-9-_]*$` 준수 필수
+   - 검증 실패 시 E305 에러 반환
 
 ### Step 2: Load Project Patterns
 
@@ -215,6 +220,22 @@ Available sliced layers: pages, widgets, features, entities
 
 Slice name 'my slice' contains invalid characters.
 Use kebab-case, camelCase, or PascalCase without spaces.
+```
+
+### E305: Segment Path Traversal Blocked
+
+```
+[E305] Segment Path Traversal Attempt Blocked
+
+Segment name '../../etc' contains forbidden characters.
+
+Security Policy:
+  - '..' sequences are blocked (directory traversal)
+  - '/' and '\' are blocked (path separators)
+  - Names starting with '.' are blocked (hidden files)
+
+Valid segment names: ui, model, api, lib, config
+Invalid segment names: ../malicious, ui/nested, .hidden
 ```
 
 ## Examples

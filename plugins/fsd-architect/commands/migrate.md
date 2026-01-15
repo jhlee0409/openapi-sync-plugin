@@ -429,7 +429,9 @@ function getMigrationTargetPath(
   layerAliases: Record<string, string>
 ): string {
   const layerDir = getLayerDir(layer, layerAliases);
-  return `${srcDir}/${layerDir}/${segment}`;
+  // Use path.join() for cross-platform compatibility
+  // Or use POSIX-style paths (forward slash) which work on all platforms in Node.js
+  return [srcDir, layerDir, segment].join('/');  // POSIX-compatible
 }
 ```
 

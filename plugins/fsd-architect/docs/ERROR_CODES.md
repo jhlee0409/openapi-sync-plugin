@@ -432,6 +432,34 @@ Invalid slice names:
   ✗ .hidden
 ```
 
+### E305: Segment Path Traversal Attempt
+
+**Location:** `skills/slice-generator/SKILL.md`, `commands/scaffold.md`
+**Cause:** Segment name (from `--segments` flag) contains path traversal sequences (SECURITY)
+
+```
+[E305] Segment Path Traversal Attempt Blocked
+
+Segment name contains forbidden characters.
+
+Security Policy (same as slice names):
+  - '..' sequences are blocked (directory traversal)
+  - '/' and '\' are blocked (path separators)
+  - Names starting with '.' are blocked (hidden files)
+
+Valid segment names:
+  ✓ ui
+  ✓ model
+  ✓ api
+  ✓ lib
+  ✓ config
+
+Invalid segment names:
+  ✗ ../../../etc
+  ✗ ui/malicious
+  ✗ .hidden-segment
+```
+
 ---
 
 ## E4xx: Configuration Errors
@@ -708,6 +736,7 @@ Recommendation: Fix @x/ structure or use proper import patterns.
 | E302 | Error | Generation | Use sliced layer |
 | E303 | Error | Generation | Fix naming format |
 | E304 | Error | Generation | Remove path characters |
+| E305 | Error | Generation | Remove path characters from segment |
 | E401 | Error | Config | Fix JSON syntax |
 | E402 | Error | Config | Add required field |
 | E403 | Error | Config | Use relative paths |

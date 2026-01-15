@@ -18,8 +18,41 @@ FSD 규격에 맞는 슬라이스 보일러플레이트를 생성합니다. 프�
    - MUST NOT start with `.` (hidden file creation)
    - MUST match pattern: `^[a-zA-Z][a-zA-Z0-9-_]*$`
    - If validation fails, throw E304 with sanitization guidance
-3. Check slice name doesn't already exist
-4. Validate naming format matches project convention
+3. **Sanitize segment names (SECURITY CRITICAL - same rules as slice):**
+   - For each segment in `--segments` flag:
+     - MUST NOT contain `..` (path traversal attack)
+     - MUST NOT contain `/` or `\` (path separator injection)
+     - MUST NOT start with `.` (hidden file creation)
+     - MUST match pattern: `^[a-zA-Z][a-zA-Z0-9-_]*$`
+     - If validation fails, throw E305 with sanitization guidance
+   - **Validation function:**
+     ```typescript
+     function validateSegmentName(segment: string): { valid: boolean; error?: string } {
+       if (segment.includes('..')) {
+         return { valid: false, error: 'E305: Segment contains ".." (path traversal blocked)' };
+       }
+       if (segment.includes('/') || segment.includes('\\')) {
+         return { valid: false, error: 'E305: Segment contains path separators' };
+       }
+       if (segment.startsWith('.')) {
+         return { valid: false, error: 'E305: Hidden segment not allowed' };
+       }
+       if (!/^[a-zA-Z][a-zA-Z0-9-_]*$/.test(segment)) {
+         return { valid: false, error: 'E305: Invalid segment name format' };
+       }
+       return { valid: true };
+     }
+
+     // Validate all segments before creation
+     for (const segment of options.segments) {
+       const result = validateSegmentName(segment);
+       if (!result.valid) {
+         throw new Error(result.error);
+       }
+     }
+     ```
+4. Check slice name doesn't already exist
+5. Validate naming format matches project convention
 
 ### Step 1.5: Load Configuration
 
@@ -503,4 +536,34 @@ Invalid slice names:
   ✗ ../malicious
   ✗ foo/bar
   ✗ .hidden
+```
+
+### Segment Path Traversal Attempt (E305)
+
+If segment name (from `--segments` flag) contains path traversal sequences:
+- Return error immediately (SECURITY)
+- Same security policy as slice names
+- Provide clear error message:
+
+```
+[E305] Segment Path Traversal Attempt Blocked
+
+Segment name '../../etc' contains forbidden characters.
+
+Security Policy (same as slice names):
+  - '..' sequences are blocked (directory traversal)
+  - '/' and '\' are blocked (path separators)
+  - Names starting with '.' are blocked (hidden files)
+
+Valid segment names:
+  ✓ ui
+  ✓ model
+  ✓ api
+  ✓ lib
+  ✓ config
+
+Invalid segment names:
+  ✗ ../../../etc
+  ✗ ui/malicious
+  ✗ .hidden-segment
 ```

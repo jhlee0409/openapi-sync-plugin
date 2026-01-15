@@ -149,14 +149,26 @@ Solution: Initialize first:
 ```
 
 **Glob commands to execute:**
+
+**IMPORTANT: Memory Safety - Use pagination for large projects**
+
+For projects with many files, use `head_limit` and `offset` to batch file processing:
+
 ```bash
-# For each layer defined in config
-Glob: "{srcDir}/app/**/*.{ts,tsx,js,jsx}"
-Glob: "{srcDir}/pages/**/*.{ts,tsx,js,jsx}"
-Glob: "{srcDir}/widgets/**/*.{ts,tsx,js,jsx}"
-Glob: "{srcDir}/features/**/*.{ts,tsx,js,jsx}"
-Glob: "{srcDir}/entities/**/*.{ts,tsx,js,jsx}"
-Glob: "{srcDir}/shared/**/*.{ts,tsx,js,jsx}"
+# RECOMMENDED: Batch processing with head_limit (max 1000 files per batch)
+# This prevents memory exhaustion on large codebases (10,000+ files)
+
+# For each layer defined in config (with pagination)
+Glob: "{srcDir}/app/**/*.{ts,tsx,js,jsx}" head_limit=1000 offset=0
+Glob: "{srcDir}/pages/**/*.{ts,tsx,js,jsx}" head_limit=1000 offset=0
+Glob: "{srcDir}/widgets/**/*.{ts,tsx,js,jsx}" head_limit=1000 offset=0
+Glob: "{srcDir}/features/**/*.{ts,tsx,js,jsx}" head_limit=1000 offset=0
+Glob: "{srcDir}/entities/**/*.{ts,tsx,js,jsx}" head_limit=1000 offset=0
+Glob: "{srcDir}/shared/**/*.{ts,tsx,js,jsx}" head_limit=1000 offset=0
+
+# If more than 1000 files in a layer, continue with offset:
+# Glob: "{srcDir}/features/**/*.{ts,tsx,js,jsx}" head_limit=1000 offset=1000
+# ... repeat until all files processed
 
 # For sliced layers - get slice list
 Glob: "{srcDir}/features/*/"
@@ -164,6 +176,26 @@ Glob: "{srcDir}/entities/*/"
 
 # Check public API for each slice
 Glob: "{srcDir}/features/*/index.{ts,tsx,js,jsx}"
+```
+
+**Batch Processing Algorithm:**
+```typescript
+const BATCH_SIZE = 1000;
+
+async function batchGlob(pattern: string): Promise<string[]> {
+  const allFiles: string[] = [];
+  let offset = 0;
+
+  while (true) {
+    const batch = await glob(pattern, { head_limit: BATCH_SIZE, offset });
+    if (batch.length === 0) break;
+    allFiles.push(...batch);
+    if (batch.length < BATCH_SIZE) break;  // Last batch
+    offset += BATCH_SIZE;
+  }
+
+  return allFiles;
+}
 ```
 
 **TypeScript interfaces:**
