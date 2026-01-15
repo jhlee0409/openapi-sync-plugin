@@ -1,0 +1,23 @@
+{
+  "name": "fsd-architect",
+  "version": "0.1.0",
+  "description": "Feature-Sliced Design architecture assistant that analyzes, validates, and scaffolds FSD-compliant project structures",
+  "author": {
+    "name": "Jack Lee",
+    "email": "jhlee0409@gmail.com"
+  },
+  "homepage": "https://github.com/jhlee0409/claude-plugins",
+  "repository": "https://github.com/jhlee0409/claude-plugins",
+  "license": "MIT",
+  "keywords": [
+    "fsd",
+    "feature-sliced-design",
+    "architecture",
+    "frontend",
+    "react",
+    "vue",
+    "typescript",
+    "linting",
+    "scaffolding"
+  ]
+}
