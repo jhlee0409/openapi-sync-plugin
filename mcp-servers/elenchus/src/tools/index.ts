@@ -31,6 +31,14 @@ import {
   findNewFileReferences,
   getContextSummary
 } from '../state/context.js';
+import {
+  initializeMediator,
+  analyzeRoundAndIntervene,
+  analyzeRippleEffect,
+  getMediatorSummary,
+  getMediatorState
+} from '../mediator/index.js';
+import { ActiveIntervention } from '../mediator/types.js';
 
 // =============================================================================
 // Tool Schemas
@@ -91,7 +99,7 @@ export const EndSessionSchema = z.object({
  */
 export async function startSession(
   args: z.infer<typeof StartSessionSchema>
-): Promise<StartSessionResponse> {
+): Promise<StartSessionResponse & { mediator?: object }> {
   const session = await createSession(args.target, args.requirements, args.maxRounds);
 
   // Initialize context
@@ -100,6 +108,12 @@ export async function startSession(
 
   const updatedSession = await getSession(session.id);
 
+  // Initialize Mediator (중재자)
+  const files = updatedSession
+    ? Array.from(updatedSession.context.files.keys())
+    : [];
+  const mediatorState = await initializeMediator(session.id, files, args.workingDir);
+
   return {
     sessionId: session.id,
     status: session.status,
@@ -107,6 +121,12 @@ export async function startSession(
       target: args.target,
       filesCollected: updatedSession?.context.files.size || 0,
       requirements: args.requirements
+    },
+    mediator: {
+      initialized: true,
+      graphNodes: mediatorState.graph.nodes.size,
+      graphEdges: mediatorState.graph.edges.length,
+      criticalFiles: mediatorState.coverage.unverifiedCritical.length
     }
   };
 }
@@ -140,7 +160,7 @@ export async function getContext(
  */
 export async function submitRound(
   args: z.infer<typeof SubmitRoundSchema>
-): Promise<SubmitRoundResponse | null> {
+): Promise<SubmitRoundResponse & { mediatorInterventions?: ActiveIntervention[] } | null> {
   const session = await getSession(args.sessionId);
   if (!session) return null;
 
@@ -155,6 +175,7 @@ export async function submitRound(
 
   // Process new issues
   const raisedIds: string[] = [];
+  const newIssues: Issue[] = [];
   if (args.issuesRaised) {
     for (const issueData of args.issuesRaised) {
       const issue: Issue = {
@@ -165,6 +186,7 @@ export async function submitRound(
       };
       await upsertIssue(session.id, issue);
       raisedIds.push(issue.id);
+      newIssues.push(issue);
     }
   }
 
@@ -191,8 +213,16 @@ export async function submitRound(
     newFilesDiscovered: newFiles
   });
 
-  // Check for arbiter intervention
+  // Check for basic arbiter intervention (기존 로직)
   const intervention = checkForIntervention(session, args.output, newFiles);
+
+  // 🆕 중재자 개입 분석 (Mediator Active Intervention)
+  const mediatorInterventions = analyzeRoundAndIntervene(
+    session,
+    args.output,
+    args.role,
+    newIssues
+  );
 
   // Auto checkpoint every 2 rounds
   if (session.currentRound % 2 === 0) {
@@ -218,7 +248,9 @@ export async function submitRound(
     newFilesDiscovered: newFiles,
     convergence,
     intervention,
-    nextRole
+    nextRole,
+    // 🆕 중재자 개입 결과
+    mediatorInterventions: mediatorInterventions.length > 0 ? mediatorInterventions : undefined
   };
 }
 
@@ -303,6 +335,53 @@ export async function getSessions(): Promise<string[]> {
 }
 
 // =============================================================================
+// New Mediator Tools
+// =============================================================================
+
+export const RippleEffectSchema = z.object({
+  sessionId: z.string().describe('Session ID'),
+  changedFile: z.string().describe('File that will be changed'),
+  changedFunction: z.string().optional().describe('Specific function that will be changed')
+});
+
+export const MediatorSummarySchema = z.object({
+  sessionId: z.string().describe('Session ID')
+});
+
+/**
+ * Analyze ripple effect of a change (리플 이펙트 분석)
+ */
+export async function rippleEffect(
+  args: z.infer<typeof RippleEffectSchema>
+): Promise<object | null> {
+  const result = analyzeRippleEffect(args.sessionId, args.changedFile, args.changedFunction);
+  if (!result) return null;
+
+  return {
+    changedFile: result.changedFile,
+    changedFunction: result.changedFunction,
+    totalAffected: result.totalAffected,
+    maxDepth: result.depth,
+    affectedFiles: result.affectedFiles.map(f => ({
+      path: f.path,
+      depth: f.depth,
+      impactType: f.impactType,
+      affectedFunctions: f.affectedFunctions,
+      reason: f.reason
+    }))
+  };
+}
+
+/**
+ * Get mediator summary (중재자 상태 요약)
+ */
+export async function mediatorSummary(
+  args: z.infer<typeof MediatorSummarySchema>
+): Promise<object | null> {
+  return getMediatorSummary(args.sessionId);
+}
+
+// =============================================================================
 // Arbiter Logic
 // =============================================================================
 
@@ -364,7 +443,7 @@ function isCircularArgument(session: Session): boolean {
 
 export const tools = {
   elenchus_start_session: {
-    description: 'Start a new Elenchus verification session. Collects initial context and prepares for verification rounds.',
+    description: 'Start a new Elenchus verification session. Collects initial context, builds dependency graph, and initializes mediator.',
     schema: StartSessionSchema,
     handler: startSession
   },
@@ -374,7 +453,7 @@ export const tools = {
     handler: getContext
   },
   elenchus_submit_round: {
-    description: 'Submit the output of a verification round. Analyzes for new issues, context expansion, and convergence.',
+    description: 'Submit the output of a verification round. Analyzes for new issues, context expansion, convergence, and mediator interventions.',
     schema: SubmitRoundSchema,
     handler: submitRound
   },
@@ -397,5 +476,16 @@ export const tools = {
     description: 'End the verification session with a final verdict.',
     schema: EndSessionSchema,
     handler: endSession
+  },
+  // 🆕 중재자 도구들
+  elenchus_ripple_effect: {
+    description: 'Analyze ripple effect of a code change. Shows which files and functions will be affected by modifying a specific file.',
+    schema: RippleEffectSchema,
+    handler: rippleEffect
+  },
+  elenchus_mediator_summary: {
+    description: 'Get mediator summary including dependency graph stats, verification coverage, and intervention history.',
+    schema: MediatorSummarySchema,
+    handler: mediatorSummary
   }
 };
