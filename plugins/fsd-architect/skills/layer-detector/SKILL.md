@@ -248,6 +248,40 @@ interface SliceInfo {
 }
 ```
 
+## UTILITY FUNCTIONS
+
+### countFiles()
+
+Count TypeScript/JavaScript files in a directory.
+
+```typescript
+/**
+ * Count source files in a given path using Glob.
+ * @param dirPath - Directory path to count files in
+ * @returns Number of source files found
+ */
+function countFiles(dirPath: string): number {
+  // Use Glob to find all source files
+  const globPattern = `${dirPath}/**/*.{ts,tsx,js,jsx}`;
+  const files = glob(globPattern);
+  return files.length;
+}
+```
+
+**Glob command:**
+```bash
+Glob: "{dirPath}/**/*.{ts,tsx,js,jsx}"
+# Count the length of returned array
+```
+
+**Example:**
+```typescript
+countFiles('src/features/auth')  // Returns: 12
+countFiles('src/entities/user')  // Returns: 8
+```
+
+---
+
 ## ALGORITHM
 
 ```

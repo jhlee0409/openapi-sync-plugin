@@ -128,6 +128,105 @@ Or ask a custom question:
   /fsdarch:explain "your question here"
 ```
 
+### E108: Path Traversal Blocked
+
+**Location:** `commands/init.md`
+**Cause:** Source path contains ".." sequences (directory traversal attempt)
+
+```
+[E108] Path Traversal Blocked
+
+The path '../../../etc' contains directory traversal sequences.
+
+Security Policy:
+  - '..' sequences are blocked
+  - Absolute paths are blocked
+  - Path must be relative to project root
+
+Valid examples:
+  ✓ src/
+  ✓ packages/web/src
+  ✓ apps/client/src
+
+Invalid examples:
+  ✗ ../outside
+  ✗ /absolute/path
+  ✗ C:\windows\path
+```
+
+### E109: Absolute Path Not Allowed
+
+**Location:** `commands/init.md`
+**Cause:** Absolute path provided instead of relative path
+
+```
+[E109] Absolute Path Not Allowed
+
+The path '/Users/project/src' is an absolute path.
+
+Solution:
+  Use a relative path from the project root.
+
+Examples:
+  ✓ src/
+  ✓ packages/web/src
+  ✗ /Users/project/src
+  ✗ C:\projects\src
+```
+
+### E110: Forbidden Path Characters
+
+**Location:** `commands/init.md`
+**Cause:** Path contains forbidden characters (<>:"|?*)
+
+```
+[E110] Forbidden Path Characters
+
+The path 'src<test>' contains forbidden characters.
+
+Forbidden characters: < > : " | ? *
+
+Solution:
+  Use only alphanumeric characters, hyphens, underscores, and slashes.
+```
+
+### E111: Hidden Directory Not Allowed
+
+**Location:** `commands/init.md`
+**Cause:** Path starts with "." (hidden directory)
+
+```
+[E111] Hidden Directory Not Allowed
+
+The path '.hidden/src' starts with a dot.
+
+Security Policy:
+  Hidden directories are not allowed as source directories.
+
+Solution:
+  Use a non-hidden directory path.
+
+Exception:
+  Single '.' (current directory) is allowed.
+```
+
+### E112: Path Too Long
+
+**Location:** `commands/init.md`
+**Cause:** Path exceeds 200 character limit
+
+```
+[E112] Path Too Long
+
+The path exceeds the maximum length of 200 characters.
+
+Current length: 250 characters
+Maximum length: 200 characters
+
+Solution:
+  Use a shorter path or reorganize your directory structure.
+```
+
 ---
 
 ## E2xx: Validation Errors

@@ -33,21 +33,21 @@ When `/fsdarch:init` is invoked, Claude MUST perform these steps in order:
 ┌───────────────────────────────────────────────────────────────┐
 │                       /fsdarch:init                           │
 ├───────────────────────────────────────────────────────────────┤
-│  1. Check if .fsd-architect.json exists                       │
+│  Step 0. Check if .fsd-architect.json exists                  │
 │     ├─ Exists + no --force → Error E103                       │
 │     └─ Not exists OR --force → Continue                       │
 │                                                               │
-│  2. Detect source directory                                   │
+│  Step 1. Detect source directory                              │
 │     ├─ Check src/, app/, lib/ in order                        │
 │     ├─ If found → Use it                                      │
 │     └─ If not found → Ask user (AskUserQuestion)              │
 │                                                               │
-│  2.5. Detect framework (Next.js, etc.)                        │
+│  Step 1.5. Detect framework (Next.js, etc.)                   │
 │     ├─ Check package.json for "next"                          │
-│     ├─ If Next.js → Detect router mode (Step 2.6)             │
+│     ├─ If Next.js → Detect router mode (Step 1.6)             │
 │     └─ If not → Use standard names (app, pages)               │
 │                                                               │
-│  2.6. Detect Next.js router mode (if Next.js)                 │
+│  Step 1.6. Detect Next.js router mode (if Next.js)            │
 │     ├─ Check for App Router: app/layout.tsx, app/page.tsx     │
 │     ├─ Check for Pages Router: pages/_app.tsx, pages/index    │
 │     ├─ If BOTH exist → HYBRID MODE                            │
@@ -56,22 +56,22 @@ When `/fsdarch:init` is invoked, Claude MUST perform these steps in order:
 │     ├─ If only Pages Router → Single mode (pages reserved)    │
 │     └─ Ask user for FSD layer aliases                         │
 │                                                               │
-│  3. Invoke skill: layer-detector                              │
+│  Step 2. Invoke skill: layer-detector                         │
 │     ├─ Scan for FSD layers in srcDir (with aliases)           │
-│     ├─ If layers found → Continue to step 4                   │
+│     ├─ If layers found → Continue to Step 3                   │
 │     └─ If no layers → Ask "Create new FSD structure?"         │
 │                                                               │
-│  4. Analyze existing patterns (if code exists)                │
+│  Step 3. Analyze existing patterns (if code exists)           │
 │     ├─ Naming convention (kebab-case/camelCase/PascalCase)    │
 │     ├─ Segment usage (ui/, model/, api/, lib/)                │
 │     ├─ Index file patterns                                    │
 │     └─ Import aliases from tsconfig.json                      │
 │                                                               │
-│  5. Generate .fsd-architect.json                              │
+│  Step 4. Generate .fsd-architect.json                         │
 │                                                               │
-│  6. Check .gitignore for cache files                          │
+│  Step 5. Check .gitignore for cache files                     │
 │                                                               │
-│  7. Display summary and next steps                            │
+│  Step 6. Display summary and next steps                       │
 └───────────────────────────────────────────────────────────────┘
 ```
 
