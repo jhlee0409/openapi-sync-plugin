@@ -7,52 +7,178 @@ description: Detect and analyze FSD layer structure in a project
 
 FSD 레이어 구조를 감지하고 분석합니다.
 
+## WHEN TO USE
+
+This skill is invoked by:
+- `/fsdarch:init` - Initial project setup
+- `/fsdarch:analyze` - Project analysis
+
 ## EXECUTION INSTRUCTIONS
 
 ### Step 1: Find Source Directory
 
-1. Read `.fsd-architect.json` if exists
-2. Get `srcDir` from config, default to `src/`
-3. Verify directory exists using Glob
+**Action:** Determine the source directory path
+
+```
+1. Check if srcDir is passed as parameter
+   → If yes, use it directly
+
+2. If no parameter, read .fsd-architect.json
+   → Use Read tool to get srcDir field
+   → Default to "src/" if not specified
+
+3. Verify directory exists:
+   → Use Glob: "{srcDir}/"
+   → If no match, return error E101
+```
+
+**Glob command:**
+```bash
+Glob: "src/"
+# Or if config specifies different path:
+Glob: "{config.srcDir}/"
+```
 
 ### Step 2: Detect Layers
 
-1. Search for FSD layer directories:
-   ```
-   {srcDir}/{app,pages,widgets,features,entities,shared}
-   ```
+**Action:** Scan for FSD layer directories
 
-2. For each found layer, record:
-   - Path
-   - Whether it's sliced (contains subdirectories)
-   - Number of files
+**Standard FSD layers (in hierarchy order):**
+```
+1. shared   (lowest - utilities, ui kit, api clients)
+2. entities (domain models and business entities)
+3. features (user interactions and business logic)
+4. widgets  (composite UI blocks)
+5. pages    (route-level compositions)
+6. app      (highest - app initialization, providers)
+```
+
+**Glob commands to execute (in parallel):**
+```bash
+Glob: "{srcDir}/app/"
+Glob: "{srcDir}/pages/"
+Glob: "{srcDir}/widgets/"
+Glob: "{srcDir}/features/"
+Glob: "{srcDir}/entities/"
+Glob: "{srcDir}/shared/"
+```
+
+**For each found layer, record:**
+```typescript
+{
+  name: "features",
+  path: "src/features",
+  exists: true,
+  sliced: true,  // pages, widgets, features, entities are sliced
+  fileCount: 0   // will be populated in step 3
+}
+```
+
+**Non-sliced layers:** `app`, `shared`
+**Sliced layers:** `pages`, `widgets`, `features`, `entities`
 
 ### Step 3: Detect Slices (for sliced layers)
 
-For layers marked as sliced (pages, widgets, features, entities):
+**Action:** List and analyze slices in each sliced layer
 
-1. List immediate subdirectories (these are slices)
-2. For each slice, detect segments:
-   - `ui/` - UI components
-   - `model/` - Business logic, state
-   - `api/` - API functions
-   - `lib/` - Utilities
-   - `config/` - Configuration
-3. Check for public API (`index.ts` or `index.js`)
+```
+For each sliced layer (pages, widgets, features, entities):
+  1. List immediate subdirectories (these are slices)
+  2. For each slice, detect segments
+  3. Check for public API (index.ts/index.js)
+  4. Count files
+```
+
+**Glob commands for slice detection:**
+```bash
+# List slices in features layer
+Glob: "{srcDir}/features/*/"  # Returns: auth/, cart/, checkout/, ...
+
+# List slices in entities layer
+Glob: "{srcDir}/entities/*/"  # Returns: user/, product/, order/, ...
+
+# List slices in pages layer
+Glob: "{srcDir}/pages/*/"     # Returns: home/, profile/, settings/, ...
+
+# List slices in widgets layer
+Glob: "{srcDir}/widgets/*/"   # Returns: header/, sidebar/, footer/, ...
+```
+
+**For each slice, detect segments:**
+```bash
+# Standard segments to check
+Glob: "{srcDir}/features/{sliceName}/ui/"      # UI components
+Glob: "{srcDir}/features/{sliceName}/model/"   # Business logic, state
+Glob: "{srcDir}/features/{sliceName}/api/"     # API functions
+Glob: "{srcDir}/features/{sliceName}/lib/"     # Utilities
+Glob: "{srcDir}/features/{sliceName}/config/"  # Configuration
+```
+
+**Check for public API:**
+```bash
+Glob: "{srcDir}/features/{sliceName}/index.ts"
+Glob: "{srcDir}/features/{sliceName}/index.tsx"
+Glob: "{srcDir}/features/{sliceName}/index.js"
+```
+
+**Count files in slice:**
+```bash
+Glob: "{srcDir}/features/{sliceName}/**/*.{ts,tsx,js,jsx}"
+# Count the results
+```
 
 ### Step 4: Analyze Patterns
 
-1. **Naming Convention**
-   - Analyze slice directory names
-   - Detect: kebab-case, camelCase, PascalCase
+**Action:** Detect naming conventions and common patterns
 
-2. **Segment Usage**
-   - Which segments are commonly used
-   - Custom segments not in standard list
+**1. Naming Convention Detection:**
+```typescript
+function detectNamingConvention(sliceNames: string[]): 'kebab-case' | 'camelCase' | 'PascalCase' {
+  const patterns = {
+    'kebab-case': /^[a-z]+(-[a-z]+)*$/,      // user-profile, shopping-cart
+    'camelCase': /^[a-z]+([A-Z][a-z]+)*$/,    // userProfile, shoppingCart
+    'PascalCase': /^([A-Z][a-z]+)+$/          // UserProfile, ShoppingCart
+  };
 
-3. **Index Files**
-   - Barrel export pattern
-   - Named exports vs default exports
+  const counts = { 'kebab-case': 0, 'camelCase': 0, 'PascalCase': 0 };
+
+  for (const name of sliceNames) {
+    for (const [convention, regex] of Object.entries(patterns)) {
+      if (regex.test(name)) {
+        counts[convention as keyof typeof counts]++;
+      }
+    }
+  }
+
+  // Return the most common pattern
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as any;
+}
+```
+
+**2. Segment Usage Analysis:**
+```
+Standard segments: ui, model, api, lib, config
+Custom segments: anything else found in slices
+
+For each slice:
+  → List subdirectories
+  → Categorize as standard or custom
+  → Track frequency of each segment
+```
+
+**3. Index File Pattern:**
+```typescript
+// Read a sample index.ts to detect export style
+// Look for:
+// - Barrel exports: export * from './ui'
+// - Named exports: export { Component } from './ui'
+// - Default exports: export default Component
+
+// Check export style
+Grep: "export \\* from" in index.ts files  // Barrel
+Grep: "export \\{" in index.ts files       // Named
+Grep: "export default" in index.ts files   // Default
+```
 
 ### Step 5: Return Layer Map
 

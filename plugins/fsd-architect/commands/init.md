@@ -11,94 +11,354 @@ description: Initialize FSD architecture analysis and configuration
 - 프로젝트 루트 디렉토리에서 실행
 - `src/` 또는 유사한 소스 디렉토리 존재
 
+---
+
+## EXECUTION INSTRUCTIONS
+
+When `/fsdarch:init` is invoked, Claude MUST perform these steps in order:
+
+1. **Check existing config** - Verify `.fsd-architect.json` doesn't exist (unless --force)
+2. **Detect source directory** - Find src/, app/, lib/, or ask user
+3. **Use skill: layer-detector** - Scan for FSD layer directories
+4. **Analyze patterns** - Detect naming, segments, import aliases
+5. **Generate config** - Write `.fsd-architect.json`
+6. **Security check** - Verify .gitignore includes cache files
+7. **Report summary** - Show detected structure and next steps
+
+---
+
+## Flow Overview
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│                       /fsdarch:init                           │
+├───────────────────────────────────────────────────────────────┤
+│  1. Check if .fsd-architect.json exists                       │
+│     ├─ Exists + no --force → Error E103                       │
+│     └─ Not exists OR --force → Continue                       │
+│                                                               │
+│  2. Detect source directory                                   │
+│     ├─ Check src/, app/, lib/ in order                        │
+│     ├─ If found → Use it                                      │
+│     └─ If not found → Ask user (AskUserQuestion)              │
+│                                                               │
+│  3. Invoke skill: layer-detector                              │
+│     ├─ Scan for FSD layers in srcDir                          │
+│     ├─ If layers found → Continue to step 4                   │
+│     └─ If no layers → Ask "Create new FSD structure?"         │
+│                                                               │
+│  4. Analyze existing patterns (if code exists)                │
+│     ├─ Naming convention (kebab-case/camelCase/PascalCase)    │
+│     ├─ Segment usage (ui/, model/, api/, lib/)                │
+│     ├─ Index file patterns                                    │
+│     └─ Import aliases from tsconfig.json                      │
+│                                                               │
+│  5. Generate .fsd-architect.json                              │
+│                                                               │
+│  6. Check .gitignore for cache files                          │
+│                                                               │
+│  7. Display summary and next steps                            │
+└───────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Execution Flow
+
+### Step 0: Check Existing Configuration
+
+**Action:** Check if `.fsd-architect.json` already exists
+
+```
+1. Use Glob to check for .fsd-architect.json in project root
+2. If found AND --force flag NOT provided:
+   → Display error E103 and stop
+3. If found AND --force flag provided:
+   → Continue (will overwrite)
+4. If not found:
+   → Continue
+```
+
+**Output if exists:**
+```
+[E103] Configuration already exists
+
+.fsd-architect.json already exists.
+Use --force to overwrite:
+  /fsdarch:init --force
+```
 
 ### Step 1: Detect Source Directory
 
-1. 다음 순서로 소스 디렉토리를 탐색:
-   - `src/`
-   - `app/`
-   - `lib/`
-   - 현재 디렉토리
+**Action:** Find the source directory containing FSD structure
 
-2. 디렉토리를 찾지 못하면 사용자에게 질문:
-   ```
-   소스 디렉토리를 찾을 수 없습니다.
-   FSD 구조가 있는 디렉토리 경로를 입력해주세요:
-   ```
+```
+1. Use Glob to check directories in this order:
+   - src/
+   - app/
+   - lib/
+
+2. For each candidate, verify it's a directory (not file)
+
+3. If --src flag provided:
+   → Use the specified path directly
+   → Verify it exists, if not → Error E101
+
+4. If no directory found:
+   → Use AskUserQuestion tool to ask user
+```
+
+**AskUserQuestion prompt (if needed):**
+```
+question: "소스 디렉토리를 찾을 수 없습니다. FSD 구조가 있는 디렉토리 경로를 입력해주세요."
+header: "Source Dir"
+options:
+  - label: "src/"
+    description: "Standard source directory"
+  - label: "app/"
+    description: "Next.js style app directory"
+  - label: "Custom path"
+    description: "Specify a custom path"
+```
 
 ### Step 2: Detect FSD Layers
 
-Use skill: layer-detector
+**Action:** Invoke skill: layer-detector
 
-1. 다음 패턴으로 FSD 레이어 디렉토리 탐색:
-   ```
-   {srcDir}/{app,pages,widgets,features,entities,shared}
-   ```
+```
+1. Use Glob to search for FSD layer directories:
+   Pattern: {srcDir}/{app,pages,widgets,features,entities,shared}/
 
-2. 발견된 레이어 목록 생성
+2. For each found layer:
+   → Record path
+   → Check if sliced (has subdirectories)
+   → Count files
 
-3. 레이어가 없으면:
-   - 새 FSD 프로젝트인지 확인
-   - 기본 구조 생성 여부 질문
+3. Build LayerMap structure (see layer-detector skill for details)
+```
+
+**Glob commands to execute:**
+```bash
+# Check for each layer
+Glob: "{srcDir}/app/**/*"
+Glob: "{srcDir}/pages/**/*"
+Glob: "{srcDir}/widgets/**/*"
+Glob: "{srcDir}/features/**/*"
+Glob: "{srcDir}/entities/**/*"
+Glob: "{srcDir}/shared/**/*"
+```
+
+**If NO layers found:**
+```
+1. Display warning:
+   "No FSD layers detected in '{srcDir}/'."
+
+2. Use AskUserQuestion:
+   question: "Create a new FSD structure?"
+   header: "New Project"
+   options:
+     - label: "Yes, create basic structure"
+       description: "Creates app/, pages/, features/, entities/, shared/"
+     - label: "No, specify different directory"
+       description: "I'll provide the correct source directory"
+
+3. If user chooses "Yes":
+   → Create directories:
+     - {srcDir}/app/
+     - {srcDir}/pages/
+     - {srcDir}/widgets/
+     - {srcDir}/features/
+     - {srcDir}/entities/
+     - {srcDir}/shared/
+   → Add .gitkeep to each empty directory
+```
+
+**Progress output:**
+```
+> Scanning {srcDir}/...
+> Found 6 FSD layers
+```
 
 ### Step 3: Analyze Existing Patterns
 
-REQUIRED: 기존 코드가 있는 경우에만 실행
+**Action:** Detect coding patterns from existing slices
 
-1. **Naming Convention 감지**
-   - 슬라이스 디렉토리명 분석 (kebab-case, camelCase, PascalCase)
-   - 파일명 패턴 분석
+**SKIP this step if:** No slices found (new/empty project) → Use defaults
 
-2. **Segment 사용 패턴**
-   - 사용 중인 세그먼트 목록: `ui/`, `model/`, `api/`, `lib/`, `config/`
-   - 커스텀 세그먼트 감지
+```
+1. Naming Convention Detection:
+   → List all slice directory names (from sliced layers)
+   → Analyze naming pattern:
+     - kebab-case: "user-profile", "shopping-cart"
+     - camelCase: "userProfile", "shoppingCart"
+     - PascalCase: "UserProfile", "ShoppingCart"
+   → Use majority pattern
 
-3. **Index File 패턴**
-   - Barrel exports 사용 여부 (`index.ts`)
-   - Public API 스타일
+2. Segment Usage Detection:
+   → For each slice, list immediate subdirectories
+   → Common segments: ui/, model/, api/, lib/, config/
+   → Record which segments are used most frequently
+   → Note any custom segments
 
-4. **Import Alias 감지**
-   - `tsconfig.json` 또는 `vite.config.ts`에서 paths 읽기
-   - 감지된 별칭: `@shared`, `@entities`, `@features` 등
+3. Index File Pattern:
+   → Check for index.ts or index.js in each slice
+   → Calculate percentage of slices with public API
+   → Read a few index files to detect export style
+
+4. Import Alias Detection:
+   → Read tsconfig.json (if exists)
+   → Extract "paths" configuration
+   → Or read vite.config.ts / jsconfig.json
+```
+
+**Tools to use:**
+```bash
+# Naming convention - list slice directories
+Glob: "{srcDir}/features/*"
+Glob: "{srcDir}/entities/*"
+
+# Segment detection - list subdirs of a slice
+Glob: "{srcDir}/features/*/ui"
+Glob: "{srcDir}/features/*/model"
+Glob: "{srcDir}/features/*/api"
+
+# Index files
+Glob: "{srcDir}/features/*/index.ts"
+Glob: "{srcDir}/entities/*/index.ts"
+
+# Alias detection
+Read: tsconfig.json (look for "compilerOptions.paths")
+```
+
+**Default patterns (if no existing code):**
+```typescript
+const DEFAULT_PATTERNS = {
+  naming: 'kebab-case',
+  segments: ['ui', 'model', 'api', 'lib'],
+  indexFiles: true
+};
+```
+
+**Progress output:**
+```
+> Analyzing patterns from existing slices...
+> Detected: kebab-case naming, 4 segment types
+```
 
 ### Step 4: Generate Configuration
 
-1. `.fsd-architect.json` 파일 생성:
+**Action:** Create `.fsd-architect.json` with detected settings
 
+```
+1. Build configuration object from detected values
+2. Use Write tool to create .fsd-architect.json
+3. Check .gitignore for cache file entry
+```
+
+**Configuration template:**
 ```json
 {
+  "version": "1.0.0",
   "srcDir": "src",
   "layers": {
-    "app": { "path": "app", "sliced": false },
-    "pages": { "path": "pages", "sliced": true },
-    "widgets": { "path": "widgets", "sliced": true },
-    "features": { "path": "features", "sliced": true },
-    "entities": { "path": "entities", "sliced": true },
-    "shared": { "path": "shared", "sliced": false }
+    "app": { "path": "app", "sliced": false, "exists": true },
+    "pages": { "path": "pages", "sliced": true, "exists": true },
+    "widgets": { "path": "widgets", "sliced": true, "exists": true },
+    "features": { "path": "features", "sliced": true, "exists": true },
+    "entities": { "path": "entities", "sliced": true, "exists": true },
+    "shared": { "path": "shared", "sliced": false, "exists": true }
   },
   "patterns": {
-    "naming": "<detected>",
+    "naming": "<detected-or-default>",
     "indexFiles": true,
     "segments": ["ui", "model", "api", "lib"]
   },
   "aliases": {
     "@app": "src/app",
+    "@pages": "src/pages",
+    "@widgets": "src/widgets",
+    "@features": "src/features",
+    "@entities": "src/entities",
     "@shared": "src/shared"
   },
-  "ignore": ["**/*.test.ts", "**/*.spec.ts"]
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.stories.tsx",
+    "**/node_modules/**"
+  ]
 }
 ```
 
-2. `.gitignore`에 캐시 파일 추가 확인:
-   ```
-   .fsd-architect.cache.json
-   ```
+**Write tool command:**
+```
+Write: .fsd-architect.json
+Content: <generated JSON above>
+```
 
-### Step 5: Display Summary
+### Step 5: Security Check (.gitignore)
 
-다음 형식으로 결과 출력:
+**Action:** Ensure cache files are in .gitignore
 
+```
+1. Read .gitignore (if exists)
+2. Check if ".fsd-architect.cache.json" is listed
+3. If NOT listed:
+   → Ask user to add it
+   → Or append automatically with confirmation
+```
+
+**Entries to add:**
+```
+# FSD Architect cache (regenerated on each run)
+.fsd-architect.cache.json
+```
+
+**AskUserQuestion (if not in .gitignore):**
+```
+question: "Cache file not in .gitignore. Add it?"
+header: "Security"
+options:
+  - label: "Yes, add to .gitignore"
+    description: "Recommended - cache may contain file paths"
+  - label: "No, skip"
+    description: "I'll handle it manually"
+```
+
+### Step 6: Display Summary
+
+**Action:** Output the initialization summary
+
+**Template:**
+```
+═══════════════════════════════════════════════════════════════
+                    FSD ARCHITECT INITIALIZED
+═══════════════════════════════════════════════════════════════
+
+📁 Source Directory: {srcDir}/
+
+📊 Detected Layers:
+   {for each layer}
+   ✓ {layerName}/     ({status}, {sliceCount} slices)
+   {or}
+   ✗ {layerName}/     (not found)
+
+🔍 Detected Patterns:
+   • Naming: {naming}
+   • Index files: {indexFiles ? 'Yes (barrel exports)' : 'No'}
+   • Segments: {segments.join(', ')}
+
+📝 Created: .fsd-architect.json
+
+💡 Next Steps:
+   1. Run /fsdarch:analyze for detailed structure analysis
+   2. Run /fsdarch:scaffold <layer> <name> to create new slices
+   3. Run /fsdarch:validate to check for FSD violations
+
+═══════════════════════════════════════════════════════════════
+```
+
+**Example output:**
 ```
 ═══════════════════════════════════════════════════════════════
                     FSD ARCHITECT INITIALIZED

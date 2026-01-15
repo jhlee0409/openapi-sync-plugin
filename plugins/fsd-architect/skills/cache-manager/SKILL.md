@@ -7,18 +7,66 @@ description: Manage analysis cache for incremental FSD validation
 
 분석 결과를 캐시하여 증분 검증을 지원합니다.
 
+## WHEN TO USE
+
+This skill is invoked by:
+- `/fsdarch:analyze` - To enable incremental analysis
+- `/fsdarch:validate` - To speed up validation
+
 ## EXECUTION INSTRUCTIONS
 
 ### Step 1: Check Cache Existence
 
-1. Look for `.fsd-architect.cache.json` in project root
-2. If not exists, return `{ valid: false, reason: 'no-cache' }`
+**Action:** Check if cache file exists
+
+```
+1. Use Glob to check for .fsd-architect.cache.json
+2. If not found → return { valid: false, reason: 'no-cache' }
+3. If found → proceed to Step 2
+```
+
+**Glob command:**
+```bash
+Glob: ".fsd-architect.cache.json"
+```
 
 ### Step 2: Validate Cache
 
-1. Read cache file
-2. Check cache version matches current plugin version
-3. Check config hash matches current `.fsd-architect.json`
+**Action:** Read and validate cache integrity
+
+```
+1. Read .fsd-architect.cache.json using Read tool
+2. Parse JSON (handle parse errors → E501)
+3. Check version field matches current plugin version
+4. Compute hash of .fsd-architect.json
+5. Compare with cached configHash
+```
+
+**Read commands:**
+```bash
+Read: .fsd-architect.cache.json
+Read: .fsd-architect.json  # For hash comparison
+```
+
+**Validation checks:**
+```typescript
+// Version check
+if (cache.version !== '1.0.0') {
+  return { valid: false, reason: 'version-mismatch' };  // E503
+}
+
+// Config hash check (simple string hash)
+const currentConfig = await read('.fsd-architect.json');
+const currentHash = simpleHash(currentConfig);
+if (cache.configHash !== currentHash) {
+  return { valid: false, reason: 'config-changed' };
+}
+
+// Age check (24 hours = 86400000 ms)
+if (Date.now() - cache.timestamp > 86400000) {
+  return { valid: false, reason: 'expired' };
+}
+```
 
 ```typescript
 interface CacheFile {
