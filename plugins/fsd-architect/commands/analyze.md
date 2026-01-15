@@ -2,13 +2,13 @@
 description: Analyze FSD project structure and generate health report
 ---
 
-# /fsd:analyze
+# /fsdarch:analyze
 
 현재 FSD 프로젝트 구조를 분석하고 상세 리포트를 생성합니다.
 
 ## Prerequisites
 
-- `.fsd-architect.json` 설정 파일 존재 (없으면 `/fsd:init` 먼저 실행)
+- `.fsd-architect.json` 설정 파일 존재 (없으면 `/fsdarch:init` 먼저 실행)
 
 ## Execution Flow
 
@@ -17,7 +17,7 @@ description: Analyze FSD project structure and generate health report
 1. `.fsd-architect.json` 읽기
 2. 없으면 사용자에게 안내:
    ```
-   Configuration not found. Run /fsd:init first.
+   Configuration not found. Run /fsdarch:init first.
    ```
 
 ### Step 2: Scan Layer Structure
@@ -120,11 +120,11 @@ Use skill: boundary-checker
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--json` | JSON 형식으로 출력 | `/fsd:analyze --json` |
-| `--layer <name>` | 특정 레이어만 분석 | `/fsd:analyze --layer features` |
-| `--slice <name>` | 특정 슬라이스만 분석 | `/fsd:analyze --slice auth` |
-| `--force` | 캐시 무시하고 전체 스캔 | `/fsd:analyze --force` |
-| `--verbose` | 상세 정보 출력 | `/fsd:analyze --verbose` |
+| `--json` | JSON 형식으로 출력 | `/fsdarch:analyze --json` |
+| `--layer <name>` | 특정 레이어만 분석 | `/fsdarch:analyze --layer features` |
+| `--slice <name>` | 특정 슬라이스만 분석 | `/fsdarch:analyze --slice auth` |
+| `--force` | 캐시 무시하고 전체 스캔 | `/fsdarch:analyze --force` |
+| `--verbose` | 상세 정보 출력 | `/fsdarch:analyze --verbose` |
 
 ## Output Formats
 
@@ -172,7 +172,7 @@ Use skill: cache-manager
 ```
 [E104] Configuration not found
 
-Run /fsd:init to initialize FSD Architect configuration.
+Run /fsdarch:init to initialize FSD Architect configuration.
 ```
 
 ### E105: Invalid Layer Structure
@@ -190,7 +190,7 @@ Layer 'features' contains non-slice directories:
 ### Example 1: Full Analysis
 
 ```
-/fsd:analyze
+/fsdarch:analyze
 
 > Loading configuration...
 > Scanning 6 layers, 20 slices...
@@ -201,7 +201,7 @@ Layer 'features' contains non-slice directories:
 ### Example 2: Single Layer
 
 ```
-/fsd:analyze --layer features
+/fsdarch:analyze --layer features
 
 > Analyzing features layer...
 > Found 8 slices: auth, cart, checkout, favorites, orders, profile, search, wishlist
@@ -211,7 +211,7 @@ Layer 'features' contains non-slice directories:
 ### Example 3: JSON Output
 
 ```
-/fsd:analyze --json > fsd-report.json
+/fsdarch:analyze --json > fsd-report.json
 
 > Report saved to fsd-report.json
 ```

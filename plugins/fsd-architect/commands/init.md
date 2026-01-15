@@ -2,7 +2,7 @@
 description: Initialize FSD architecture analysis and configuration
 ---
 
-# /fsd:init
+# /fsdarch:init
 
 프로젝트의 FSD 구조를 분석하고 설정 파일을 생성합니다.
 
@@ -122,9 +122,9 @@ REQUIRED: 기존 코드가 있는 경우에만 실행
 📝 Created: .fsd-architect.json
 
 💡 Next Steps:
-   1. Run /fsd:analyze for detailed structure analysis
-   2. Run /fsd:scaffold <layer> <name> to create new slices
-   3. Run /fsd:validate to check for FSD violations
+   1. Run /fsdarch:analyze for detailed structure analysis
+   2. Run /fsdarch:scaffold <layer> <name> to create new slices
+   3. Run /fsdarch:validate to check for FSD violations
 
 ═══════════════════════════════════════════════════════════════
 ```
@@ -133,9 +133,9 @@ REQUIRED: 기존 코드가 있는 경우에만 실행
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--force` | 기존 설정 덮어쓰기 | `/fsd:init --force` |
-| `--src <path>` | 소스 디렉토리 지정 | `/fsd:init --src app/` |
-| `--minimal` | 최소 설정만 생성 | `/fsd:init --minimal` |
+| `--force` | 기존 설정 덮어쓰기 | `/fsdarch:init --force` |
+| `--src <path>` | 소스 디렉토리 지정 | `/fsdarch:init --src app/` |
+| `--minimal` | 최소 설정만 생성 | `/fsdarch:init --minimal` |
 
 ## Error Handling
 
@@ -150,7 +150,7 @@ No valid source directory detected. Searched:
   - lib/
 
 Please specify the source directory:
-  /fsd:init --src <path>
+  /fsdarch:init --src <path>
 ```
 
 ### E102: Not an FSD Project
@@ -173,7 +173,7 @@ Would you like to:
 
 .fsd-architect.json already exists.
 Use --force to overwrite:
-  /fsd:init --force
+  /fsdarch:init --force
 ```
 
 ## Examples
@@ -181,7 +181,7 @@ Use --force to overwrite:
 ### Example 1: Standard React Project
 
 ```
-/fsd:init
+/fsdarch:init
 
 > Scanning src/...
 > Found 6 FSD layers
@@ -192,7 +192,7 @@ Use --force to overwrite:
 ### Example 2: Custom Source Directory
 
 ```
-/fsd:init --src packages/web/src
+/fsdarch:init --src packages/web/src
 
 > Scanning packages/web/src/...
 > Found 5 FSD layers (missing: app)
@@ -202,7 +202,7 @@ Use --force to overwrite:
 ### Example 3: New Project
 
 ```
-/fsd:init
+/fsdarch:init
 
 > No FSD structure detected
 > Create new FSD structure? [y/N]: y

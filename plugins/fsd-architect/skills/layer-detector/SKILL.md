@@ -117,7 +117,7 @@ function detectLayers(srcDir):
 
 If `srcDir` does not exist:
 - Return error code E101
-- Suggest running `/fsd:init --src <path>`
+- Suggest running `/fsdarch:init --src <path>`
 
 ### Partial FSD Structure
 

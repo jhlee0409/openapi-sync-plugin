@@ -265,13 +265,13 @@ module.exports = {
 
 | Stage | Tool | Purpose |
 |-------|------|---------|
-| **Setup** | fsd-architect `/fsd:init` | 초기 구조 설정 |
+| **Setup** | fsd-architect `/fsdarch:init` | 초기 구조 설정 |
 | **Development** | eslint-plugin-fsd-lint | 실시간 import 검증 |
-| **Code Review** | fsd-architect `/fsd:analyze` | 구조 분석 리포트 |
+| **Code Review** | fsd-architect `/fsdarch:analyze` | 구조 분석 리포트 |
 | **Pre-commit** | Steiger | 구조 규칙 검증 |
 | **CI/CD** | Steiger | 자동화된 검증 |
-| **Scaffolding** | fsd-architect `/fsd:scaffold` | 슬라이스 생성 |
-| **Learning** | fsd-architect `/fsd:explain` | 개념 설명 |
+| **Scaffolding** | fsd-architect `/fsdarch:scaffold` | 슬라이스 생성 |
+| **Learning** | fsd-architect `/fsdarch:explain` | 개념 설명 |
 
 ### Non-Overlapping Responsibilities
 

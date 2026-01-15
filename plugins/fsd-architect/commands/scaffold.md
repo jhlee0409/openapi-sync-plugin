@@ -2,14 +2,14 @@
 description: Generate FSD-compliant slice or segment boilerplate
 ---
 
-# /fsd:scaffold
+# /fsdarch:scaffold
 
 새 슬라이스 또는 세그먼트 보일러플레이트를 생성합니다. 프로젝트 패턴을 학습하여 일관된 스타일로 코드를 생성합니다.
 
 ## Syntax
 
 ```
-/fsd:scaffold <layer> <slice-name> [segment]
+/fsdarch:scaffold <layer> <slice-name> [segment]
 ```
 
 ## Prerequisites
@@ -222,7 +222,7 @@ Use kebab-case, camelCase, or PascalCase without spaces.
 ### Example 1: Create Feature Slice
 
 ```
-/fsd:scaffold features auth
+/fsdarch:scaffold features auth
 
 > Analyzing existing feature patterns...
 > Detected: kebab-case, TypeScript, React Query
@@ -233,7 +233,7 @@ Use kebab-case, camelCase, or PascalCase without spaces.
 ### Example 2: Create Entity with Specific Segments
 
 ```
-/fsd:scaffold entities user --segments model,api
+/fsdarch:scaffold entities user --segments model,api
 
 > Creating minimal entity slice...
 > Created: src/entities/user/
@@ -245,7 +245,7 @@ Use kebab-case, camelCase, or PascalCase without spaces.
 ### Example 3: Dry Run
 
 ```
-/fsd:scaffold widgets header --dry-run
+/fsdarch:scaffold widgets header --dry-run
 
 > DRY RUN - No files will be created
 
@@ -263,7 +263,7 @@ Would create:
 ### Example 4: Add Segment to Existing Slice
 
 ```
-/fsd:scaffold features auth api
+/fsdarch:scaffold features auth api
 
 > Adding segment to existing slice...
 > Created: src/features/auth/api/

@@ -2,14 +2,14 @@
 description: Explain FSD concepts with project-specific examples
 ---
 
-# /fsd:explain
+# /fsdarch:explain
 
 FSD 개념을 프로젝트 맥락에서 설명합니다. 학습 곡선을 낮추고 팀 내 이해도를 통일합니다.
 
 ## Syntax
 
 ```
-/fsd:explain <topic>
+/fsdarch:explain <topic>
 ```
 
 ## Available Topics
@@ -56,7 +56,7 @@ FSD 개념을 프로젝트 맥락에서 설명합니다. 학습 곡선을 낮추
 ### Example 1: Feature vs Widget
 
 ```
-/fsd:explain feature-vs-widget
+/fsdarch:explain feature-vs-widget
 ```
 
 ```
@@ -134,7 +134,7 @@ Widgets (현재 3개):
 ### Example 2: Public API
 
 ```
-/fsd:explain public-api
+/fsdarch:explain public-api
 ```
 
 ```
@@ -220,7 +220,7 @@ Public API 준수율: 95%
 📚 더 알아보기
 
 • https://feature-sliced.design/docs/reference/public-api
-• /fsd:validate 로 위반 사항 확인
+• /fsdarch:validate 로 위반 사항 확인
 
 ═══════════════════════════════════════════════════════════════
 ```
@@ -228,7 +228,7 @@ Public API 준수율: 95%
 ### Example 3: Custom Question
 
 ```
-/fsd:explain "entities에서 다른 entity를 참조해도 되나요?"
+/fsdarch:explain "entities에서 다른 entity를 참조해도 되나요?"
 ```
 
 ```
@@ -314,10 +314,10 @@ import { Product, getProductById } from '@entities/product';
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--brief` | 간단한 설명만 | `/fsd:explain layers --brief` |
-| `--no-examples` | 프로젝트 예시 생략 | `/fsd:explain public-api --no-examples` |
-| `--ko` | 한국어 출력 (기본) | `/fsd:explain layers --ko` |
-| `--en` | 영어 출력 | `/fsd:explain layers --en` |
+| `--brief` | 간단한 설명만 | `/fsdarch:explain layers --brief` |
+| `--no-examples` | 프로젝트 예시 생략 | `/fsdarch:explain public-api --no-examples` |
+| `--ko` | 한국어 출력 (기본) | `/fsdarch:explain layers --ko` |
+| `--en` | 영어 출력 | `/fsdarch:explain layers --en` |
 
 ## Error Handling
 
@@ -334,5 +334,5 @@ Available topics:
   shared, slices
 
 Or ask a custom question:
-  /fsd:explain "your question here"
+  /fsdarch:explain "your question here"
 ```

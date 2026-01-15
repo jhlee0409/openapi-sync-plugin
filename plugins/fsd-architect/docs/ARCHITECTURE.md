@@ -73,7 +73,7 @@ shared     → (external only)
 │                     EXECUTION MODEL                              │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│   User invokes: /fsd:analyze                                     │
+│   User invokes: /fsdarch:analyze                                     │
 │         │                                                        │
 │         ▼                                                        │
 │   ┌──────────────────┐                                           │
@@ -105,11 +105,11 @@ shared     → (external only)
 
 | Command | Description | Confidence |
 |---------|-------------|------------|
-| `/fsd:init` | 프로젝트 FSD 구조 분석 및 설정 초기화 | HIGH |
-| `/fsd:analyze` | 현재 FSD 구조 상세 분석 및 리포트 | HIGH |
-| `/fsd:scaffold` | 새 슬라이스/세그먼트 보일러플레이트 생성 | HIGH |
-| `/fsd:validate` | FSD 규칙 위반 검사 및 수정 가이드 | MEDIUM |
-| `/fsd:explain` | FSD 개념 및 결정 이유 설명 | HIGH |
+| `/fsdarch:init` | 프로젝트 FSD 구조 분석 및 설정 초기화 | HIGH |
+| `/fsdarch:analyze` | 현재 FSD 구조 상세 분석 및 리포트 | HIGH |
+| `/fsdarch:scaffold` | 새 슬라이스/세그먼트 보일러플레이트 생성 | HIGH |
+| `/fsdarch:validate` | FSD 규칙 위반 검사 및 수정 가이드 | MEDIUM |
+| `/fsdarch:explain` | FSD 개념 및 결정 이유 설명 | HIGH |
 
 ### Command Flow
 
@@ -118,19 +118,19 @@ shared     → (external only)
 │                     TYPICAL WORKFLOW                             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│   1. /fsd:init                                                   │
+│   1. /fsdarch:init                                                   │
 │      └─→ 프로젝트 스캔 → 기존 패턴 학습 → .fsd-architect.json 생성│
 │                                                                  │
-│   2. /fsd:analyze                                                │
+│   2. /fsdarch:analyze                                                │
 │      └─→ 구조 분석 → 의존성 그래프 → 헬스 리포트 출력            │
 │                                                                  │
-│   3. /fsd:scaffold user                                          │
+│   3. /fsdarch:scaffold user                                          │
 │      └─→ 패턴 적용 → entities/user/ 구조 생성                    │
 │                                                                  │
-│   4. /fsd:validate                                               │
+│   4. /fsdarch:validate                                               │
 │      └─→ Import 규칙 검사 → 위반 사항 + 수정 가이드 출력         │
 │                                                                  │
-│   5. /fsd:explain "feature vs widget"                            │
+│   5. /fsdarch:explain "feature vs widget"                            │
 │      └─→ FSD 개념 설명 → 프로젝트 맥락에서 예시 제시             │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -288,7 +288,7 @@ Claude executes all operations using Claude Code's built-in tools:
 │                  STEIGER INTEGRATION                             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│   /fsd:validate                                                  │
+│   /fsdarch:validate                                                  │
 │         │                                                        │
 │         ├─→ Run: npx steiger src/                                │
 │         │                                                        │
@@ -321,9 +321,9 @@ ESLint는 Import 규칙을 강제하고, 이 플러그인은 구조 분석과 �
 
 | Capability | This Plugin | Steiger | ESLint-FSD |
 |------------|-------------|---------|------------|
-| Interactive Setup | ✅ `/fsd:init` | ❌ | ❌ |
+| Interactive Setup | ✅ `/fsdarch:init` | ❌ | ❌ |
 | Pattern Learning | ✅ 프로젝트 컨벤션 학습 | ❌ | ❌ |
-| Code Generation | ✅ `/fsd:scaffold` | ❌ | ❌ |
+| Code Generation | ✅ `/fsdarch:scaffold` | ❌ | ❌ |
 | Contextual Explanations | ✅ "왜" 설명 | ❌ 규칙만 | ❌ 규칙만 |
 | Refactoring Guidance | ✅ 수정 방법 제시 | ❌ | ⚠️ auto-fix 일부 |
 | Structure Visualization | ✅ 레이어 맵 | ❌ | ❌ |
@@ -394,7 +394,7 @@ hidden dependencies that make refactoring difficult.
 │   Cache Invalidation:                                            │
 │   - Config file changed (.fsd-architect.json)                    │
 │   - Source directory structure changed                           │
-│   - Manual: /fsd:analyze --force                                 │
+│   - Manual: /fsdarch:analyze --force                                 │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -403,10 +403,10 @@ hidden dependencies that make refactoring difficult.
 
 | Operation | Target | Notes |
 |-----------|--------|-------|
-| `/fsd:init` | < 30s | First-time full scan |
-| `/fsd:analyze` (cached) | < 5s | Incremental analysis |
-| `/fsd:scaffold` | < 3s | Template generation |
-| `/fsd:validate` | < 10s | Depends on project size |
+| `/fsdarch:init` | < 30s | First-time full scan |
+| `/fsdarch:analyze` (cached) | < 5s | Incremental analysis |
+| `/fsdarch:scaffold` | < 3s | Template generation |
+| `/fsdarch:validate` | < 10s | Depends on project size |
 
 ## Implementation Phases
 
@@ -416,8 +416,8 @@ hidden dependencies that make refactoring difficult.
 
 - [x] Directory structure created
 - [x] Plugin metadata defined
-- [ ] `/fsd:init` command
-- [ ] `/fsd:analyze` command
+- [ ] `/fsdarch:init` command
+- [ ] `/fsdarch:analyze` command
 - [ ] `layer-detector` skill
 - [ ] `cache-manager` skill
 - [ ] Configuration file schema
@@ -428,7 +428,7 @@ hidden dependencies that make refactoring difficult.
 
 **Target:** v0.2.0
 
-- [ ] `/fsd:scaffold` command
+- [ ] `/fsdarch:scaffold` command
 - [ ] `slice-generator` skill
 - [ ] Template system
 - [ ] Pattern matching for style consistency
@@ -439,7 +439,7 @@ hidden dependencies that make refactoring difficult.
 
 **Target:** v0.3.0
 
-- [ ] `/fsd:validate` command
+- [ ] `/fsdarch:validate` command
 - [ ] `boundary-checker` skill
 - [ ] Steiger integration
 - [ ] Enhanced error explanations
@@ -450,7 +450,7 @@ hidden dependencies that make refactoring difficult.
 
 **Target:** v1.0.0
 
-- [ ] `/fsd:explain` command
+- [ ] `/fsdarch:explain` command
 - [ ] Interactive tutorials
 - [ ] Migration guides
 - [ ] Comprehensive documentation

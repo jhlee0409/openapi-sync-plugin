@@ -8,26 +8,26 @@ FSD 프로젝트의 구조 분석, 검증, 스캐폴딩을 지원하는 Claude C
 
 | Command | Description |
 |---------|-------------|
-| `/fsd:init` | FSD 구조 분석 및 설정 초기화 |
-| `/fsd:analyze` | 프로젝트 구조 분석 및 헬스 리포트 |
-| `/fsd:scaffold` | 슬라이스/세그먼트 보일러플레이트 생성 |
-| `/fsd:validate` | FSD 규칙 위반 검사 및 수정 가이드 |
-| `/fsd:explain` | FSD 개념 설명 (프로젝트 맥락) |
+| `/fsdarch:init` | FSD 구조 분석 및 설정 초기화 |
+| `/fsdarch:analyze` | 프로젝트 구조 분석 및 헬스 리포트 |
+| `/fsdarch:scaffold` | 슬라이스/세그먼트 보일러플레이트 생성 |
+| `/fsdarch:validate` | FSD 규칙 위반 검사 및 수정 가이드 |
+| `/fsdarch:explain` | FSD 개념 설명 (프로젝트 맥락) |
 
 ## Quick Start
 
 ```bash
 # 1. 프로젝트 초기화
-/fsd:init
+/fsdarch:init
 
 # 2. 구조 분석
-/fsd:analyze
+/fsdarch:analyze
 
 # 3. 새 슬라이스 생성
-/fsd:scaffold features auth
+/fsdarch:scaffold features auth
 
 # 4. 규칙 검증
-/fsd:validate
+/fsdarch:validate
 ```
 
 ## Why FSD Architect?
@@ -36,11 +36,11 @@ FSD 프로젝트의 구조 분석, 검증, 스캐폴딩을 지원하는 Claude C
 
 | 문제 | 해결책 |
 |------|--------|
-| 레이어/도메인 구분 기준이 모호함 | `/fsd:explain` - 맥락에 맞는 설명 |
-| FSD 규칙을 매번 기억해야 함 | `/fsd:validate` - 자동 검증 + 가이드 |
-| 러닝 커브가 높음 | `/fsd:explain` - 인터랙티브 학습 |
-| 수동 보일러플레이트 작업 | `/fsd:scaffold` - 패턴 학습 기반 생성 |
-| 규모가 커질수록 관리 어려움 | `/fsd:analyze` - 헬스 리포트 |
+| 레이어/도메인 구분 기준이 모호함 | `/fsdarch:explain` - 맥락에 맞는 설명 |
+| FSD 규칙을 매번 기억해야 함 | `/fsdarch:validate` - 자동 검증 + 가이드 |
+| 러닝 커브가 높음 | `/fsdarch:explain` - 인터랙티브 학습 |
+| 수동 보일러플레이트 작업 | `/fsdarch:scaffold` - 패턴 학습 기반 생성 |
+| 규모가 커질수록 관리 어려움 | `/fsdarch:analyze` - 헬스 리포트 |
 
 ### 기존 도구와의 차별화
 
@@ -68,24 +68,24 @@ FSD 프로젝트의 구조 분석, 검증, 스캐폴딩을 지원하는 Claude C
 
 ## Commands
 
-### /fsd:init
+### /fsdarch:init
 
 프로젝트의 FSD 구조를 분석하고 `.fsd-architect.json` 설정 파일을 생성합니다.
 
 ```bash
-/fsd:init
-/fsd:init --src packages/web/src
-/fsd:init --force  # 기존 설정 덮어쓰기
+/fsdarch:init
+/fsdarch:init --src packages/web/src
+/fsdarch:init --force  # 기존 설정 덮어쓰기
 ```
 
-### /fsd:analyze
+### /fsdarch:analyze
 
 현재 프로젝트 구조를 분석하고 헬스 리포트를 생성합니다.
 
 ```bash
-/fsd:analyze
-/fsd:analyze --layer features  # 특정 레이어만
-/fsd:analyze --json            # JSON 출력
+/fsdarch:analyze
+/fsdarch:analyze --layer features  # 특정 레이어만
+/fsdarch:analyze --json            # JSON 출력
 ```
 
 Output example:
@@ -101,14 +101,14 @@ Output example:
 └─────────────┴─────────┴───────────┘
 ```
 
-### /fsd:scaffold
+### /fsdarch:scaffold
 
 새 슬라이스 또는 세그먼트를 생성합니다. 프로젝트 패턴을 학습하여 일관된 스타일로 생성합니다.
 
 ```bash
-/fsd:scaffold features auth
-/fsd:scaffold entities user --segments model,api
-/fsd:scaffold widgets header --dry-run
+/fsdarch:scaffold features auth
+/fsdarch:scaffold entities user --segments model,api
+/fsdarch:scaffold widgets header --dry-run
 ```
 
 Output:
@@ -125,14 +125,14 @@ src/features/auth/
     └── authApi.ts
 ```
 
-### /fsd:validate
+### /fsdarch:validate
 
 FSD 규칙 위반을 검사하고 수정 가이드를 제공합니다.
 
 ```bash
-/fsd:validate
-/fsd:validate --fix    # 자동 수정 가능한 문제 수정
-/fsd:validate --strict # 경고도 에러로 처리
+/fsdarch:validate
+/fsdarch:validate --fix    # 자동 수정 가능한 문제 수정
+/fsdarch:validate --strict # 경고도 에러로 처리
 ```
 
 Output:
@@ -147,14 +147,14 @@ Output:
 ✅ Fix: Move shared logic to entities or compose in widgets.
 ```
 
-### /fsd:explain
+### /fsdarch:explain
 
 FSD 개념을 프로젝트 맥락에서 설명합니다.
 
 ```bash
-/fsd:explain layers
-/fsd:explain feature-vs-widget
-/fsd:explain "entities에서 다른 entity를 참조해도 되나요?"
+/fsdarch:explain layers
+/fsdarch:explain feature-vs-widget
+/fsdarch:explain "entities에서 다른 entity를 참조해도 되나요?"
 ```
 
 ## Configuration
@@ -192,7 +192,7 @@ FSD 개념을 프로젝트 맥락에서 설명합니다.
 npm install -D @feature-sliced/steiger
 ```
 
-`/fsd:validate`가 자동으로 Steiger 결과를 통합하고 컨텍스트를 추가합니다.
+`/fsdarch:validate`가 자동으로 Steiger 결과를 통합하고 컨텍스트를 추가합니다.
 
 ### With ESLint
 

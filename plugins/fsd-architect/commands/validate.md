@@ -2,7 +2,7 @@
 description: Validate FSD rules and provide fix guidance
 ---
 
-# /fsd:validate
+# /fsdarch:validate
 
 FSD 아키텍처 규칙 위반을 검사하고 수정 가이드를 제공합니다. Steiger와 통합하여 심층 분석을 수행합니다.
 
@@ -168,7 +168,7 @@ Use skill: boundary-checker
    • Warnings: 1 (recommended)
 
 💡 Quick fixes available:
-   Run /fsd:validate --fix to auto-fix W101 (naming)
+   Run /fsdarch:validate --fix to auto-fix W101 (naming)
 
 ═══════════════════════════════════════════════════════════════
 ```
@@ -177,11 +177,11 @@ Use skill: boundary-checker
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--fix` | 자동 수정 가능한 문제 수정 | `/fsd:validate --fix` |
-| `--strict` | 경고도 에러로 처리 | `/fsd:validate --strict` |
-| `--json` | JSON 형식 출력 | `/fsd:validate --json` |
-| `--layer <name>` | 특정 레이어만 검증 | `/fsd:validate --layer features` |
-| `--no-steiger` | Steiger 실행 건너뛰기 | `/fsd:validate --no-steiger` |
+| `--fix` | 자동 수정 가능한 문제 수정 | `/fsdarch:validate --fix` |
+| `--strict` | 경고도 에러로 처리 | `/fsdarch:validate --strict` |
+| `--json` | JSON 형식 출력 | `/fsdarch:validate --json` |
+| `--layer <name>` | 특정 레이어만 검증 | `/fsdarch:validate --layer features` |
+| `--no-steiger` | Steiger 실행 건너뛰기 | `/fsdarch:validate --no-steiger` |
 
 ## Validation Rules
 
@@ -244,7 +244,7 @@ Possible solutions:
 ### Example 1: Full Validation
 
 ```
-/fsd:validate
+/fsdarch:validate
 
 > Running Steiger...
 > Running custom validations...
@@ -254,7 +254,7 @@ Possible solutions:
 ### Example 2: With Auto-Fix
 
 ```
-/fsd:validate --fix
+/fsdarch:validate --fix
 
 > Fixing W101: Renaming ProductReviews → product-reviews
 > Updating 3 import statements...
@@ -265,7 +265,7 @@ Possible solutions:
 ### Example 3: CI Mode
 
 ```
-/fsd:validate --strict --json > validation-report.json
+/fsdarch:validate --strict --json > validation-report.json
 
 > Exit code: 1 (violations found)
 > Report saved to validation-report.json

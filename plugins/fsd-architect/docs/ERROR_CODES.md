@@ -31,7 +31,7 @@ No valid source directory detected. Searched:
   - lib/
 
 Solution: Specify the source directory explicitly:
-  /fsd:init --src <path>
+  /fsdarch:init --src <path>
 ```
 
 ### E102: Not an FSD Project
@@ -46,8 +46,8 @@ The project does not appear to use Feature-Sliced Design.
 No standard FSD layers found in 'src/'.
 
 Solutions:
-  1. Create a new FSD structure: /fsd:init (will prompt)
-  2. Specify different source directory: /fsd:init --src <path>
+  1. Create a new FSD structure: /fsdarch:init (will prompt)
+  2. Specify different source directory: /fsdarch:init --src <path>
 ```
 
 ### E103: Config Already Exists
@@ -61,8 +61,8 @@ Solutions:
 .fsd-architect.json already exists.
 
 Solutions:
-  1. Use existing config: /fsd:analyze
-  2. Overwrite config: /fsd:init --force
+  1. Use existing config: /fsdarch:analyze
+  2. Overwrite config: /fsdarch:init --force
 ```
 
 ### E104: Config Not Found
@@ -76,7 +76,7 @@ Solutions:
 .fsd-architect.json is required for this command.
 
 Solution: Initialize first:
-  /fsd:init
+  /fsdarch:init
 ```
 
 ### E105: Invalid Layer Structure
@@ -106,7 +106,7 @@ Error running Steiger: [error message]
 
 Solutions:
   1. Install Steiger: npm install -D @feature-sliced/steiger
-  2. Skip Steiger: /fsd:validate --no-steiger
+  2. Skip Steiger: /fsdarch:validate --no-steiger
 ```
 
 ### E107: Unknown Topic
@@ -125,7 +125,7 @@ Available topics:
   shared, slices
 
 Or ask a custom question:
-  /fsd:explain "your question here"
+  /fsdarch:explain "your question here"
 ```
 
 ---
@@ -260,8 +260,8 @@ Location: src/features/auth/
 
 Solutions:
   1. Choose a different name
-  2. Add segments to existing slice: /fsd:scaffold features auth api
-  3. Overwrite (DESTRUCTIVE): /fsd:scaffold features auth --force
+  2. Add segments to existing slice: /fsdarch:scaffold features auth api
+  3. Overwrite (DESTRUCTIVE): /fsdarch:scaffold features auth --force
 ```
 
 ### E302: Invalid Layer
@@ -349,7 +349,7 @@ Cannot parse .fsd-architect.json: Unexpected token at line 5
 Solutions:
   1. Fix JSON syntax errors
   2. Validate JSON: cat .fsd-architect.json | jq .
-  3. Regenerate config: /fsd:init --force
+  3. Regenerate config: /fsdarch:init --force
 ```
 
 ### E402: Missing Required Field
@@ -469,7 +469,7 @@ Possible causes:
 Solutions:
   1. Check disk space: df -h
   2. Check permissions: ls -la .fsd-architect.cache.json
-  3. Continue without cache: /fsd:analyze --no-cache
+  3. Continue without cache: /fsdarch:analyze --no-cache
 ```
 
 ### E503: Cache Version Mismatch
@@ -515,7 +515,7 @@ Mixed naming conventions in features layer:
 
 Recommendation: Standardize on one convention.
 
-Auto-fix available: /fsd:validate --fix
+Auto-fix available: /fsdarch:validate --fix
 ```
 
 ### W102: Unused Export
@@ -567,10 +567,10 @@ Recommendation: Consider splitting into smaller slices:
 
 | Code | Severity | Category | Quick Fix |
 |------|----------|----------|-----------|
-| E101 | Error | Detection | `/fsd:init --src <path>` |
-| E102 | Error | Detection | `/fsd:init` to create structure |
-| E103 | Error | Detection | `/fsd:init --force` |
-| E104 | Error | Detection | `/fsd:init` first |
+| E101 | Error | Detection | `/fsdarch:init --src <path>` |
+| E102 | Error | Detection | `/fsdarch:init` to create structure |
+| E103 | Error | Detection | `/fsdarch:init --force` |
+| E104 | Error | Detection | `/fsdarch:init` first |
 | E105 | Error | Detection | Move files to correct layers |
 | E106 | Error | Detection | Install Steiger or `--no-steiger` |
 | E107 | Error | Detection | Check available topics |
@@ -592,7 +592,7 @@ Recommendation: Consider splitting into smaller slices:
 | E502 | Error | Cache | Check permissions |
 | E503 | Info | Cache | Auto-invalidated |
 | E504 | Error | Cache | Delete cache file |
-| W101 | Warning | Style | `/fsd:validate --fix` |
+| W101 | Warning | Style | `/fsdarch:validate --fix` |
 | W102 | Warning | Style | Remove or verify usage |
 | W103 | Warning | Style | Add missing segment |
 | W104 | Warning | Style | Split slice |
