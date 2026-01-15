@@ -188,10 +188,35 @@ plugins/elenchus/
 
 ## Installation
 
+### 1. Plugin Only (Basic)
+
 Claude Code plugins에 추가:
 ```
 elenchus@jhlee0409-plugins
 ```
+
+### 2. With MCP Server (Recommended)
+
+MCP 서버를 함께 사용하면 상태 관리, 컨텍스트 공유, 세션 영속성이 가능합니다.
+
+```bash
+# MCP 서버 빌드
+cd mcp-servers/elenchus
+npm install
+npm run build
+
+# ~/.claude.json에 추가
+{
+  "mcpServers": {
+    "elenchus": {
+      "command": "node",
+      "args": ["/path/to/claude-plugins/mcp-servers/elenchus/dist/index.js"]
+    }
+  }
+}
+```
+
+자세한 내용은 [MCP Server README](../../mcp-servers/elenchus/README.md)를 참고하세요.
 
 ## License
 

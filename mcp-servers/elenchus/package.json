@@ -1,0 +1,32 @@
+{
+  "name": "@elenchus/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Elenchus verification system - state management, context sharing, and orchestration",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "elenchus-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "inspector": "npx @modelcontextprotocol/inspector dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "verification",
+    "elenchus",
+    "claude"
+  ],
+  "author": "Jack Lee <jhlee0409@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

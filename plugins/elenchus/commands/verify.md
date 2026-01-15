@@ -1,38 +1,198 @@
 ---
-description: Adversarial cross-verification with standardized criteria. Internal agents only.
+description: Adversarial cross-verification with MCP-backed state management
 ---
 
 [ELENCHUS VERIFY MODE ACTIVATED]
 
 $ARGUMENTS
 
-## Elenchus Verify Protocol
+## Elenchus Verify Protocol (MCP-Backed)
 
-You are now running the **Elenchus Verify** command - an adversarial verification loop using only internal Elenchus agents and standardized verification criteria.
+이 검증은 **Elenchus MCP 서버**를 통해 상태를 관리합니다.
 
-### Key Differences from Legacy cross-verify
+### MCP Server Required
 
-| 항목 | 기존 cross-verify | 새 verify |
-|------|-------------------|-----------|
-| 에이전트 | 외부 (momus 등) | 내부 (elenchus-*) |
-| 기준 | 자유 | 표준화 (26개 항목) |
-| 출력 | 자유 형식 | 구조화된 형식 |
-| 후속 단계 | 없음 | consolidate → apply |
+이 커맨드를 사용하려면 Elenchus MCP 서버가 설정되어 있어야 합니다.
 
-### Verification Agents (Internal Only)
+**설정 확인:**
+```bash
+# ~/.claude.json에 다음이 있어야 함:
+{
+  "mcpServers": {
+    "elenchus": {
+      "command": "node",
+      "args": ["/path/to/mcp-servers/elenchus/dist/index.js"]
+    }
+  }
+}
+```
 
-**IMPORTANT**: 이 검증에서는 Elenchus 내부 에이전트만 사용합니다:
+### Verification Workflow
 
-| 라운드 | 에이전트 | 역할 |
-|--------|---------|------|
-| 홀수 | elenchus-verifier | 코드 검토 및 이슈 도출 |
-| 짝수 | elenchus-critic | 검증 결과 비평 |
+```
+Step 1: 세션 시작
+  → elenchus_start_session 호출
+  → 컨텍스트 자동 수집
 
-외부 에이전트 (momus, oracle 등) 사용 금지.
+Step 2: 검증 루프
+  → Round N (Verifier): elenchus_submit_round
+  → Round N+1 (Critic): elenchus_submit_round
+  → 수렴까지 반복
 
-### Standardized Criteria
+Step 3: 세션 종료
+  → elenchus_end_session 호출
+  → 최종 판정 기록
+```
 
-모든 검증은 **verification-criteria.md**의 26개 항목을 따릅니다:
+### Step 1: Start Session
+
+먼저 MCP 툴로 세션을 시작하세요:
+
+```
+elenchus_start_session({
+  target: "[검증 대상 경로]",
+  requirements: "[사용자 요구사항]",
+  workingDir: "[현재 작업 디렉토리]"
+})
+```
+
+**응답 예시:**
+```json
+{
+  "sessionId": "2024-01-15_src-auth_abc123",
+  "status": "initialized",
+  "context": {
+    "target": "src/auth/",
+    "filesCollected": 12,
+    "requirements": "보안 취약점 검증"
+  }
+}
+```
+
+### Step 2: Verification Loop
+
+#### Round 1: Verifier
+
+1. 컨텍스트 가져오기:
+```
+elenchus_get_context({ sessionId: "[sessionId]" })
+```
+
+2. 표준 검증 기준에 따라 코드 검토 (26개 항목)
+
+3. 결과 제출:
+```
+elenchus_submit_round({
+  sessionId: "[sessionId]",
+  role: "verifier",
+  output: "[검증 보고서 전체]",
+  issuesRaised: [
+    {
+      id: "SEC-01",
+      category: "SECURITY",
+      severity: "CRITICAL",
+      summary: "SQL Injection 취약점",
+      location: "src/db/queries.ts:45",
+      description: "사용자 입력이 쿼리에 직접 삽입",
+      evidence: "line 45: const query = `SELECT * FROM users WHERE id = ${userId}`"
+    }
+  ]
+})
+```
+
+#### Round 2+: Critic/Verifier 교대
+
+서버가 `nextRole`을 알려줍니다:
+- `verifier`: 다음 라운드는 Verifier
+- `critic`: 다음 라운드는 Critic
+- `complete`: 수렴 완료
+
+### Convergence Detection
+
+서버가 자동으로 수렴을 감지합니다:
+
+```json
+{
+  "convergence": {
+    "isConverged": false,
+    "reason": "2 critical issues unresolved",
+    "categoryCoverage": {
+      "SECURITY": { "checked": 6, "total": 8 },
+      "CORRECTNESS": { "checked": 4, "total": 6 }
+    },
+    "unresolvedIssues": 5,
+    "criticalUnresolved": 2,
+    "roundsWithoutNewIssues": 0
+  }
+}
+```
+
+### Arbiter Intervention
+
+서버가 문제를 감지하면 개입합니다:
+
+```json
+{
+  "intervention": {
+    "type": "CONTEXT_EXPAND",
+    "reason": "4 new files discovered - significant scope expansion",
+    "action": "Review if all files are necessary for verification",
+    "newContextFiles": ["src/utils/auth.ts", "src/middleware/session.ts"]
+  }
+}
+```
+
+**개입 유형:**
+- `CONTEXT_EXPAND`: 컨텍스트 확장 필요
+- `SOFT_CORRECT`: 경미한 교정 필요
+- `LOOP_BREAK`: 순환 논쟁 감지
+- `HARD_ROLLBACK`: 체크포인트로 롤백 권장
+
+### Step 3: End Session
+
+수렴 시:
+```
+elenchus_end_session({
+  sessionId: "[sessionId]",
+  verdict: "CONDITIONAL"  // PASS | FAIL | CONDITIONAL
+})
+```
+
+### Checkpoint & Rollback
+
+중요한 시점에 체크포인트:
+```
+elenchus_checkpoint({ sessionId: "[sessionId]" })
+```
+
+문제 발생 시 롤백:
+```
+elenchus_rollback({ sessionId: "[sessionId]", toRound: 2 })
+```
+
+### Output Format
+
+각 라운드 후 다음 형식으로 보고:
+
+```markdown
+=== ELENCHUS ROUND N: [VERIFIER/CRITIC] ===
+
+## 라운드 결과
+[에이전트 출력]
+
+## 서버 응답
+- 이슈 제기: N개
+- 이슈 해결: N개
+- 컨텍스트 확장: [예/아니오]
+- 수렴 상태: [진행 중/수렴]
+
+## 다음 단계
+→ [다음 역할] 또는 [완료]
+```
+
+### Standard Verification Criteria
+
+모든 검증은 26개 표준 항목을 따릅니다:
 
 ```
 SECURITY (8항목): SEC-01 ~ SEC-08
@@ -42,175 +202,13 @@ MAINTAINABILITY (4항목): MNT-01 ~ MNT-04
 PERFORMANCE (4항목): PRF-01 ~ PRF-04
 ```
 
-### Execution Algorithm
-
-```
-Round 1: ELENCHUS-VERIFIER
-  Input: 검증 대상 + 표준 기준
-  Task: 26개 항목 전체 검토, 이슈 도출
-  Output: 구조화된 검증 보고서
-
-Round 2: ELENCHUS-CRITIC
-  Input: Round 1 보고서 + 표준 기준
-  Task: 완결성/증거성/정확성 검증
-  Output: 비평 보고서
-
-Round 3+: 수렴까지 반복
-
-STOP CONDITIONS:
-  • 진짜 수렴: 26개 항목 95%+ 검토, 모든 이슈 증거 있음
-  • 강제 종료: 10 라운드 도달
-```
-
-### Agent Spawning (Internal Agents Only)
-
-For VERIFIER rounds:
-```
-Task tool with:
-- subagent_type: "elenchus-verifier"
-- model: "sonnet"
-- prompt:
-  1. 검증 대상 참조
-  2. 표준 기준 26개 항목 첨부
-  3. [Round 1] "전체 항목 검토"
-  3. [Round 3+] "이전 비평 반영 + 재검토"
-```
-
-For CRITIC rounds:
-```
-Task tool with:
-- subagent_type: "elenchus-critic"
-- model: "sonnet"
-- prompt:
-  1. 검증 대상 참조
-  2. 이전 Verifier 출력
-  3. "완결성/증거성/정확성 검증"
-```
-
-### Convergence Criteria (Strict)
-
-수렴하려면 **모든 조건** 충족 필요:
-
-1. **완결성**: 26개 항목 중 25개+ 검토 (95%)
-2. **증거성**: 모든 CRITICAL/HIGH에 코드 증거
-3. **정확성**: Critic 직접 확인과 80% 일치
-4. **합의**: 심각도 이의 없음
-
-### Issue Tracking Table (Mandatory)
-
-매 라운드 업데이트:
-
-```markdown
-| ID | 이슈 | 제기자 | 라운드 | 상태 | 증거 | 심각도 |
-|----|------|-------|-------|------|------|--------|
-| SEC-01 | SQL Injection | V1 | R1 | 해소 (R3) | db.ts:45 | CRITICAL |
-| COR-02 | 경계 조건 | C1 | R2 | 진행 중 | - | HIGH |
-```
-
-### Output Format
-
-```markdown
-=== ELENCHUS VERIFY ROUND N: [VERIFIER/CRITIC] ===
-
-## 라운드 결과
-[에이전트 출력]
-
-## 이슈 테이블 (업데이트)
-[테이블]
-
-## 카테고리 커버리지
-- SECURITY: N/8 완료
-- CORRECTNESS: N/6 완료
-- RELIABILITY: N/4 완료
-- MAINTAINABILITY: N/4 완료
-- PERFORMANCE: N/4 완료
-- **총**: N/26 (N%)
-
-## 수렴 상태
-[CONTINUING / CONVERGING / CONVERGED / FORCED_STOP]
-
-수렴 불가 사유: [있다면]
-```
-
-### Final Output
-
-```markdown
-=== ELENCHUS VERIFY COMPLETE ===
-
-## 요약
-- **라운드**: N
-- **수렴 상태**: [GENUINE_CONSENSUS / FORCED_STOP]
-- **최종 판정**: [PASS / FAIL / CONDITIONAL]
-
-## 카테고리별 결과
-
-### SECURITY (N개 이슈)
-[이슈 목록]
-
-### CORRECTNESS (N개 이슈)
-[이슈 목록]
-
-### RELIABILITY (N개 이슈)
-[이슈 목록]
-
-### MAINTAINABILITY (N개 이슈)
-[이슈 목록]
-
-### PERFORMANCE (N개 이슈)
-[이슈 목록]
-
-## 최종 이슈 테이블
-
-| ID | 요약 | 심각도 | 위치 | 상태 |
-|----|------|--------|------|------|
-| SEC-01 | ... | CRITICAL | file:45 | CONFIRMED |
-
-## 통계
-| 심각도 | 개수 |
-|--------|------|
-| CRITICAL | N |
-| HIGH | N |
-| MEDIUM | N |
-| LOW | N |
-| **총** | N |
-
-## 다음 단계
-- CRITICAL/HIGH 이슈 N개 → `/elenchus:consolidate` 권장
-- 모든 이슈 해결 후 → `/elenchus:verify` 재실행
-
-## 검증 컨텍스트 (다음 단계용)
-
-```json
-{
-  "target": "[대상]",
-  "issues": [
-    {"id": "SEC-01", "severity": "CRITICAL", "location": "file:45", ...}
-  ],
-  "coverage": {"security": 8, "correctness": 6, ...},
-  "verdict": "CONDITIONAL"
-}
-```
-```
-
-### Execution Checklist
-
-1. [ ] $ARGUMENTS에서 검증 대상 파악
-2. [ ] 대상이 모호하면 사용자에게 명확화 요청
-3. [ ] Round 1: elenchus-verifier 실행 (26개 항목)
-4. [ ] 이슈 테이블 초기화
-5. [ ] Round 2: elenchus-critic 실행
-6. [ ] 매 라운드 이슈 테이블 업데이트
-7. [ ] 수렴 기준 체크 (95% 커버리지 등)
-8. [ ] 수렴 시: 최종 보고서 생성
-9. [ ] 후속 단계 안내 (consolidate/apply)
-
 ### Core Principles
 
 ```
-외부 에이전트 사용 금지.
-26개 항목 전체 검토.
-증거 없으면 확인 안 된 것.
-수렴은 피로가 아닌 합의.
+상태는 서버가 관리한다.
+컨텍스트는 서버가 공유한다.
+수렴은 서버가 판단한다.
+개입은 서버가 결정한다.
 ```
 
-BEGIN ELENCHUS VERIFY NOW.
+BEGIN ELENCHUS VERIFY WITH MCP NOW.
