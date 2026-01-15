@@ -1,43 +1,43 @@
 # Elenchus MCP Server
 
-**English** | [한국어](./README.ko.md)
+[English](./README.md) | **한국어**
 
-Adversarial code verification with Verifier↔Critic loop.
+Verifier↔Critic 루프를 통한 적대적 코드 검증.
 
-> **Elenchus** (ἔλεγχος): Socrates' method of refutation through questioning.
+> **Elenchus** (ἔλεγχος): 질문을 통한 논박의 소크라테스 방법론.
 
-## Quick Start
+## 빠른 시작
 
 ```bash
-# 1. Install
+# 1. 설치
 npm install -g @jhlee0409/elenchus-mcp
 
-# 2. Add to ~/.claude.json
+# 2. ~/.claude.json에 추가
 {
   "mcpServers": {
     "elenchus": { "command": "elenchus-mcp" }
   }
 }
 
-# 3. Use in Claude Code (natural language)
-"Please verify src/auth for security issues"
-"Check this code for bugs"
+# 3. Claude Code에서 사용 (자연어)
+"src/auth 보안 이슈 검증해줘"
+"이 코드 버그 확인해줘"
 ```
 
-## How It Works
+## 작동 방식
 
-**Natural language → Claude uses Elenchus tools automatically**
+**자연어 → Claude가 Elenchus 도구를 자동으로 사용**
 
 ```
-User: "Verify src/auth for security issues"
-Claude: (calls elenchus_start_session, elenchus_submit_round, etc.)
+사용자: "src/auth 보안 이슈 검증해줘"
+Claude: (elenchus_start_session, elenchus_submit_round 등 호출)
 ```
 
-No slash commands needed for basic usage.
+기본 사용 시 슬래시 커맨드 불필요.
 
-## Installation
+## 설치
 
-### Option 1: npm (Recommended)
+### 옵션 1: npm (권장)
 
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
@@ -51,7 +51,7 @@ npm install -g @jhlee0409/elenchus-mcp
 }
 ```
 
-### Option 2: npx (No global install)
+### 옵션 2: npx (글로벌 설치 없이)
 
 ```json
 {
@@ -64,7 +64,7 @@ npm install -g @jhlee0409/elenchus-mcp
 }
 ```
 
-### Option 3: From source
+### 옵션 3: 소스에서 빌드
 
 ```bash
 git clone https://github.com/jhlee0409/claude-plugins.git
@@ -83,51 +83,51 @@ npm install && npm run build
 }
 ```
 
-## For Power Users: + Plugin
+## 파워 유저: + 플러그인
 
-Want explicit workflow control with short commands?
+명시적인 워크플로우 제어와 짧은 커맨드를 원한다면:
 
 ```
-# In Claude Code
+# Claude Code에서
 /install-plugin elenchus@jhlee0409-plugins
 ```
 
-| Without Plugin | With Plugin |
-|----------------|-------------|
-| Natural language requests | `/elenchus:verify src/auth` |
-| Claude decides workflow | Explicit workflow control |
-| Good for simple checks | Full 26-criteria verification |
+| 플러그인 없이 | 플러그인 포함 |
+|--------------|--------------|
+| 자연어 요청 | `/elenchus:verify src/auth` |
+| Claude가 워크플로우 결정 | 명시적 워크플로우 제어 |
+| 간단한 검증에 적합 | 26개 기준 전체 검증 |
 
-## MCP Prompts (Slash Commands)
+## MCP 프롬프트 (슬래시 커맨드)
 
-MCP server also provides prompts for explicit workflow:
+MCP 서버는 명시적 워크플로우를 위한 프롬프트도 제공합니다:
 
-| Command | Description |
-|---------|-------------|
-| `/mcp__elenchus__verify` | Run Verifier↔Critic loop |
-| `/mcp__elenchus__consolidate` | Create prioritized fix plan |
-| `/mcp__elenchus__apply` | Apply fixes with verification |
-| `/mcp__elenchus__complete` | Full pipeline until zero issues |
-| `/mcp__elenchus__cross-verify` | Adversarial cross-verification |
+| 커맨드 | 설명 |
+|--------|------|
+| `/mcp__elenchus__verify` | Verifier↔Critic 루프 실행 |
+| `/mcp__elenchus__consolidate` | 우선순위화된 수정 계획 생성 |
+| `/mcp__elenchus__apply` | 검증과 함께 수정 적용 |
+| `/mcp__elenchus__complete` | 이슈 0까지 전체 파이프라인 |
+| `/mcp__elenchus__cross-verify` | 적대적 교차 검증 |
 
-## Tools
+## 도구
 
 ### elenchus_start_session
 
-Start a new verification session.
+새 검증 세션 시작.
 
 ```typescript
 {
-  target: string,        // Target path to verify
-  requirements: string,  // User requirements
-  workingDir: string,    // Working directory
-  maxRounds?: number     // Max rounds (default: 10)
+  target: string,        // 검증 대상 경로
+  requirements: string,  // 사용자 요구사항
+  workingDir: string,    // 작업 디렉토리
+  maxRounds?: number     // 최대 라운드 (기본: 10)
 }
 ```
 
 ### elenchus_get_context
 
-Get current verification context.
+현재 검증 컨텍스트 조회.
 
 ```typescript
 {
@@ -137,21 +137,21 @@ Get current verification context.
 
 ### elenchus_submit_round
 
-Submit verification round results.
+검증 라운드 결과 제출.
 
 ```typescript
 {
   sessionId: string,
   role: 'verifier' | 'critic',
-  output: string,           // Full agent output
-  issuesRaised?: Issue[],   // New issues raised
-  issuesResolved?: string[] // Resolved issue IDs
+  output: string,           // 전체 에이전트 출력
+  issuesRaised?: Issue[],   // 발견된 새 이슈
+  issuesResolved?: string[] // 해결된 이슈 ID
 }
 ```
 
 ### elenchus_get_issues
 
-Query session issues.
+세션 이슈 조회.
 
 ```typescript
 {
@@ -162,7 +162,7 @@ Query session issues.
 
 ### elenchus_checkpoint
 
-Create a checkpoint.
+체크포인트 생성.
 
 ```typescript
 {
@@ -172,7 +172,7 @@ Create a checkpoint.
 
 ### elenchus_rollback
 
-Rollback to previous checkpoint.
+이전 체크포인트로 롤백.
 
 ```typescript
 {
@@ -183,7 +183,7 @@ Rollback to previous checkpoint.
 
 ### elenchus_end_session
 
-End session and record final verdict.
+세션 종료 및 최종 판정 기록.
 
 ```typescript
 {
@@ -192,9 +192,9 @@ End session and record final verdict.
 }
 ```
 
-## Session Storage
+## 세션 저장소
 
-Sessions are stored at `~/.claude/elenchus/sessions/`:
+세션은 `~/.claude/elenchus/sessions/`에 저장됩니다:
 
 ```
 ~/.claude/elenchus/sessions/
@@ -202,28 +202,28 @@ Sessions are stored at `~/.claude/elenchus/sessions/`:
     └── session.json
 ```
 
-### Design Decision: Global Storage
+### 설계 결정: 글로벌 저장소
 
-Sessions are **always stored globally** regardless of plugin installation scope.
+세션은 플러그인 설치 범위와 관계없이 **항상 글로벌에 저장**됩니다.
 
-**Reason:**
-- MCP server is **stdio-based, stateless** architecture
-- Each call runs as new process, must find previous session by `sessionId` only
-- Global storage ensures **session ID self-sufficiency**
+**이유:**
+- MCP 서버는 **stdio 기반, 상태 비저장** 아키텍처
+- 각 호출은 새 프로세스로 실행되며, `sessionId`만으로 이전 세션을 찾아야 함
+- 글로벌 저장소로 **세션 ID 자족성** 보장
 
-### Session Cleanup
+### 세션 정리
 
-Sessions are preserved as **verification audit records**. Manual cleanup:
+세션은 **검증 감사 기록**으로 보존됩니다. 수동 정리:
 
 ```bash
-# Delete all sessions
+# 모든 세션 삭제
 rm -rf ~/.claude/elenchus/sessions/*
 
-# Delete specific sessions
+# 특정 세션 삭제
 rm -rf ~/.claude/elenchus/sessions/2024-01-15_*
 ```
 
-## Architecture
+## 아키텍처
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -244,28 +244,28 @@ rm -rf ~/.claude/elenchus/sessions/2024-01-15_*
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Key Features
+## 주요 기능
 
-### Layered Context
+### 계층화된 컨텍스트
 
 ```
-Layer 0 (Base): Collected at session start
-  - Target files
-  - Direct dependencies
+Layer 0 (기본): 세션 시작 시 수집
+  - 대상 파일
+  - 직접 의존성
 
-Layer 1 (Discovered): Found during rounds
-  - New files mentioned by agents
-  - Auto-collected and added
+Layer 1 (발견): 라운드 중 발견
+  - 에이전트가 언급한 새 파일
+  - 자동 수집 및 추가
 ```
 
-### Automatic Arbiter Intervention
+### 자동 중재자 개입
 
-Server auto-detects and intervenes:
-- `CONTEXT_EXPAND`: 3+ new files discovered
-- `LOOP_BREAK`: Same issue repeatedly argued
-- `SOFT_CORRECT`: Scope over-expansion
+서버가 자동으로 감지하고 개입:
+- `CONTEXT_EXPAND`: 3개 이상의 새 파일 발견
+- `LOOP_BREAK`: 동일 이슈 반복 논쟁
+- `SOFT_CORRECT`: 범위 과잉 확장
 
-### Convergence Detection
+### 수렴 감지
 
 ```typescript
 isConverged =
@@ -274,16 +274,16 @@ isConverged =
   currentRound >= 2
 ```
 
-## Development
+## 개발
 
 ```bash
-# Watch mode
+# Watch 모드
 npm run dev
 
-# Inspector (MCP debugging)
+# Inspector (MCP 디버깅)
 npm run inspector
 ```
 
-## License
+## 라이선스
 
 MIT

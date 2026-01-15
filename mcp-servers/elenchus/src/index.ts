@@ -14,11 +14,14 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
-  ReadResourceRequestSchema
+  ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { tools } from './tools/index.js';
 import { listSessions, getSession } from './state/session.js';
+import { generatePromptContent } from './prompts/index.js';
 
 // =============================================================================
 // Server Setup
@@ -32,7 +35,8 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
-      resources: {}
+      resources: {},
+      prompts: {}
     }
   }
 );
@@ -149,6 +153,122 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         uri,
         mimeType: 'application/json',
         text: JSON.stringify(serializable, null, 2)
+      }
+    ]
+  };
+});
+
+// =============================================================================
+// Prompt Handlers (Slash Commands)
+// =============================================================================
+
+/**
+ * Prompt definitions for slash commands
+ * These appear as /mcp__elenchus__[name] in Claude Code
+ */
+const prompts = {
+  verify: {
+    name: 'verify',
+    description: 'Run adversarial verification on target code with Verifier↔Critic loop',
+    arguments: [
+      {
+        name: 'target',
+        description: 'Target path to verify (file or directory)',
+        required: true
+      },
+      {
+        name: 'requirements',
+        description: 'Verification requirements or focus areas',
+        required: false
+      }
+    ]
+  },
+  consolidate: {
+    name: 'consolidate',
+    description: 'Consolidate verification results into prioritized fix plan',
+    arguments: [
+      {
+        name: 'sessionId',
+        description: 'Session ID from previous verify (optional - uses latest if not provided)',
+        required: false
+      }
+    ]
+  },
+  apply: {
+    name: 'apply',
+    description: 'Apply consolidated fixes to codebase with verification',
+    arguments: [
+      {
+        name: 'scope',
+        description: 'Scope of fixes to apply: must_fix, should_fix, all',
+        required: false
+      }
+    ]
+  },
+  complete: {
+    name: 'complete',
+    description: 'Run complete pipeline: VERIFY → CONSOLIDATE → APPLY → RE-VERIFY until zero issues',
+    arguments: [
+      {
+        name: 'target',
+        description: 'Target path to verify and fix',
+        required: true
+      },
+      {
+        name: 'maxCycles',
+        description: 'Maximum cycles before stopping (default: 5)',
+        required: false
+      }
+    ]
+  },
+  'cross-verify': {
+    name: 'cross-verify',
+    description: 'Adversarial cross-verification loop for thorough validation',
+    arguments: [
+      {
+        name: 'target',
+        description: 'Target to verify',
+        required: true
+      },
+      {
+        name: 'question',
+        description: 'Specific question or aspect to verify',
+        required: false
+      }
+    ]
+  }
+};
+
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: Object.values(prompts).map(p => ({
+      name: p.name,
+      description: p.description,
+      arguments: p.arguments
+    }))
+  };
+});
+
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  const prompt = prompts[name as keyof typeof prompts];
+  if (!prompt) {
+    throw new Error(`Unknown prompt: ${name}`);
+  }
+
+  // Generate prompt content based on name
+  const content = generatePromptContent(name, args || {});
+
+  return {
+    description: prompt.description,
+    messages: [
+      {
+        role: 'user',
+        content: {
+          type: 'text',
+          text: content
+        }
       }
     ]
   };
