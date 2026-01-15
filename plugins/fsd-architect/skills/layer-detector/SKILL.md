@@ -272,6 +272,10 @@ function countFiles(dirPath: string): number {
 ```bash
 Glob: "{dirPath}/**/*.{ts,tsx,js,jsx}"
 # Count the length of returned array
+
+# NOTE: For very large slices (1000+ files), use head_limit for memory safety:
+# Glob: "{dirPath}/**/*.{ts,tsx,js,jsx}" head_limit=1000
+# Then check if result.length === 1000 to detect if there are more files
 ```
 
 **Example:**

@@ -440,6 +440,12 @@ function generateSlice(layer, sliceName, options):
 
   mkdir(slicePath)
 
+  // SECURITY: Validate all segment names before creation
+  for segment in options.segments or patterns.segments:
+    result = validateSegmentName(segment)
+    if not result.valid:
+      throw E305(result.error)
+
   for segment in options.segments or patterns.segments:
     segmentPath = slicePath + '/' + segment
     mkdir(segmentPath)
