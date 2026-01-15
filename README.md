@@ -20,6 +20,7 @@ Claude Code plugin marketplace by Jack Lee
 |--------|-------------|---------|
 | [oas](./plugins/oas) | OpenAPI spec sync - adaptive code generator that learns your project patterns | `/plugin install oas@jhlee0409-plugins` |
 | [elenchus](./plugins/elenchus) | Cross-verification loop - two agents debate until evidence-based consensus | `/plugin install elenchus@jhlee0409-plugins` |
+| [fsdarch](./plugins/fsd-architect) | Feature-Sliced Design assistant - analyze, validate, and scaffold FSD structures | `/plugin install fsdarch@jhlee0409-plugins` |
 
 ## License
 
