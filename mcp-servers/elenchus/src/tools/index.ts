@@ -23,7 +23,8 @@ import {
   rollbackToCheckpoint,
   checkConvergence,
   getIssuesSummary,
-  listSessions
+  listSessions,
+  deleteSessionFromCache  // [FIX: REL-02]
 } from '../state/session.js';
 import {
   initializeContext,
@@ -36,7 +37,8 @@ import {
   analyzeRoundAndIntervene,
   analyzeRippleEffect,
   getMediatorSummary,
-  getMediatorState
+  getMediatorState,
+  deleteMediatorState  // [FIX: REL-02]
 } from '../mediator/index.js';
 import { ActiveIntervention } from '../mediator/types.js';
 import {
@@ -47,7 +49,8 @@ import {
   getRoleDefinition,
   getComplianceHistory,
   getRoleEnforcementSummary,
-  updateRoleConfig
+  updateRoleConfig,
+  deleteRoleState  // [FIX: REL-02]
 } from '../roles/index.js';
 import { RoleComplianceResult, VerifierRole } from '../roles/types.js';
 
@@ -367,7 +370,7 @@ export async function endSession(
 
   await updateSessionStatus(session.id, 'converged');
 
-  return {
+  const result = {
     sessionId: session.id,
     verdict: args.verdict,
     summary: {
@@ -378,6 +381,13 @@ export async function endSession(
       issuesBySeverity: getIssuesSummary(session).bySeverity
     }
   };
+
+  // [FIX: REL-02] Clean up memory caches to prevent memory leaks
+  deleteSessionFromCache(session.id);
+  deleteMediatorState(session.id);
+  deleteRoleState(session.id);
+
+  return result;
 }
 
 /**

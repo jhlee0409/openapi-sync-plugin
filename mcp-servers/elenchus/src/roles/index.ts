@@ -457,6 +457,18 @@ export function getRoleEnforcementSummary(sessionId: string): object | null {
 }
 
 // =============================================================================
+// Cache Cleanup
+// =============================================================================
+
+/**
+ * [FIX: REL-02] Delete role state from memory cache
+ * Called when session is ended to prevent memory leaks
+ */
+export function deleteRoleState(sessionId: string): boolean {
+  return roleStates.delete(sessionId);
+}
+
+// =============================================================================
 // Export for Tools
 // =============================================================================
 

@@ -408,9 +408,10 @@ function checkCriticalPathIgnored(
 ): ActiveIntervention | null {
   // [FIX: PRF-01] Use cached importance or calculate if not provided
   const importance = cachedImportance || calculateFileImportance(state.graph);
+  // [FIX: MNT-01] Use MEDIATOR_CONFIG constant instead of magic number
   const sortedByImportance = Array.from(importance.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);  // 상위 5개
+    .slice(0, MEDIATOR_CONFIG.MAX_CRITICAL_FILES_DISPLAY);
 
   const ignoredCritical = sortedByImportance.filter(
     ([file]) => !mentionedFiles.has(file) && !state.coverage.verifiedFiles.has(file)
@@ -707,4 +708,12 @@ export function getMediatorSummary(sessionId: string): object | null {
       lastIntervention: state.interventions[state.interventions.length - 1] || null
     }
   };
+}
+
+/**
+ * [FIX: REL-02] Delete mediator state from memory cache
+ * Called when session is ended to prevent memory leaks
+ */
+export function deleteMediatorState(sessionId: string): boolean {
+  return mediatorStates.delete(sessionId);
 }

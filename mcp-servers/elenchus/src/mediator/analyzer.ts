@@ -37,7 +37,11 @@ export async function analyzeFile(filePath: string): Promise<DependencyNode | nu
       functions: extractFunctions(content),
       classes: extractClasses(content)
     };
-  } catch {
+  } catch (error) {
+    // [FIX: REL-01] Log unexpected errors (not ENOENT)
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      console.error(`[Elenchus] Failed to analyze file: ${filePath}`, error);
+    }
     return null;
   }
 }

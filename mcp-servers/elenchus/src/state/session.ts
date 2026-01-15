@@ -57,7 +57,8 @@ const SessionSchema = z.object({
   id: z.string(),
   target: z.string(),
   requirements: z.string(),
-  status: z.enum(['initialized', 'verifying', 'converged', 'failed', 'completed']),
+  // [FIX: COR-03] Sync with SessionStatus type in types/index.ts
+  status: z.enum(['initialized', 'verifying', 'converging', 'converged', 'forced_stop', 'error']),
   currentRound: z.number(),
   maxRounds: z.number(),
   context: z.object({
@@ -437,4 +438,12 @@ export async function listSessions(): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * [FIX: REL-02] Delete session from memory cache
+ * Called when session is ended to prevent memory leaks
+ */
+export function deleteSessionFromCache(sessionId: string): boolean {
+  return sessions.delete(sessionId);
 }
