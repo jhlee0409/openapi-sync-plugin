@@ -49,11 +49,13 @@ Glob: "{config.srcDir}/"
 2. entities (domain models and business entities)
 3. features (user interactions and business logic)
 4. widgets  (composite UI blocks)
-5. pages    (route-level compositions)
-6. app      (highest - app initialization, providers)
+5. pages    (route-level compositions) → "views" in Next.js
+6. app      (highest - app initialization) → "core" in Next.js
 ```
 
 **Glob commands to execute (in parallel):**
+
+For standard projects:
 ```bash
 Glob: "{srcDir}/app/"
 Glob: "{srcDir}/pages/"
@@ -61,6 +63,43 @@ Glob: "{srcDir}/widgets/"
 Glob: "{srcDir}/features/"
 Glob: "{srcDir}/entities/"
 Glob: "{srcDir}/shared/"
+```
+
+For Next.js projects (layer aliases):
+```bash
+Glob: "{srcDir}/core/"       # app → core
+Glob: "{srcDir}/views/"      # pages → views
+Glob: "{srcDir}/widgets/"
+Glob: "{srcDir}/features/"
+Glob: "{srcDir}/entities/"
+Glob: "{srcDir}/shared/"
+```
+
+**Layer alias mapping (user-configurable):**
+```typescript
+// Layer aliases are stored in .fsd-architect.json
+// Users can customize these during /fsdarch:init
+
+interface LayerAliases {
+  app: string;    // 'app', 'core', '_app', 'application', etc.
+  pages: string;  // 'pages', 'views', '_pages', 'screens', etc.
+}
+
+// Common presets:
+const LAYER_ALIAS_PRESETS = {
+  standard: { app: 'app', pages: 'pages' },
+  nextjs_recommended: { app: 'core', pages: 'views' },
+  nextjs_underscore: { app: '_app', pages: '_pages' },
+  nextjs_verbose: { app: 'application', pages: 'screens' }
+};
+
+// Read from config:
+function getLayerPath(layer: string, config: Config): string {
+  if (config.layerAliases && config.layerAliases[layer]) {
+    return config.layerAliases[layer];
+  }
+  return layer; // default: use layer name as-is
+}
 ```
 
 **For each found layer, record:**

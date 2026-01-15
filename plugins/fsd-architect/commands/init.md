@@ -42,8 +42,13 @@ When `/fsdarch:init` is invoked, Claude MUST perform these steps in order:
 │     ├─ If found → Use it                                      │
 │     └─ If not found → Ask user (AskUserQuestion)              │
 │                                                               │
+│  2.5. Detect framework (Next.js, etc.)                        │
+│     ├─ Check package.json for "next"                          │
+│     ├─ If Next.js → Use layer aliases (core, views)           │
+│     └─ If not → Use standard names (app, pages)               │
+│                                                               │
 │  3. Invoke skill: layer-detector                              │
-│     ├─ Scan for FSD layers in srcDir                          │
+│     ├─ Scan for FSD layers in srcDir (with aliases)           │
 │     ├─ If layers found → Continue to step 4                   │
 │     └─ If no layers → Ask "Create new FSD structure?"         │
 │                                                               │
@@ -121,6 +126,89 @@ options:
     description: "Specify a custom path"
 ```
 
+### Step 1.5: Detect Framework
+
+**Action:** Check if project uses Next.js or other frameworks with conflicting directory names
+
+```
+1. Read package.json
+2. Check dependencies for "next"
+3. If Next.js detected:
+   → Set framework = "nextjs"
+   → Use layer aliases: app → core, pages → views
+4. If not Next.js:
+   → Use standard FSD layer names
+```
+
+**Read command:**
+```bash
+Read: package.json
+```
+
+**Framework detection logic:**
+```typescript
+interface FrameworkConfig {
+  framework: 'nextjs' | 'react' | 'vue' | 'other';
+  hasConflict: boolean;  // Whether framework has conflicting dir names
+}
+
+function detectFramework(packageJson: any): FrameworkConfig {
+  const deps = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies
+  };
+
+  if (deps['next']) {
+    return {
+      framework: 'nextjs',
+      hasConflict: true  // Next.js uses /app and /pages for routing
+    };
+  }
+
+  return {
+    framework: 'react',
+    hasConflict: false
+  };
+}
+```
+
+**If framework has conflict, ask user for layer names:**
+
+```
+AskUserQuestion:
+  question: "Next.js 프로젝트가 감지되었습니다. app/, pages/ 디렉토리가 라우팅에 사용되므로 FSD 레이어 이름을 변경해야 합니다."
+  header: "Layer Names"
+  options:
+    - label: "core / views (권장)"
+      description: "app → core, pages → views"
+    - label: "_app / _pages"
+      description: "app → _app, pages → _pages"
+    - label: "application / screens"
+      description: "app → application, pages → screens"
+    - label: "Custom"
+      description: "직접 이름 지정"
+```
+
+**If user selects "Custom":**
+```
+AskUserQuestion:
+  question: "FSD app 레이어의 디렉토리 이름을 입력하세요 (예: core, _app, application)"
+  header: "App Layer"
+  ...
+
+AskUserQuestion:
+  question: "FSD pages 레이어의 디렉토리 이름을 입력하세요 (예: views, _pages, screens)"
+  header: "Pages Layer"
+  ...
+```
+
+**Progress output:**
+```
+> Detected Next.js project
+> Layer naming conflict detected
+> User selected: app → core, pages → views
+```
+
 ### Step 2: Detect FSD Layers
 
 **Action:** Invoke skill: layer-detector
@@ -139,9 +227,17 @@ options:
 
 **Glob commands to execute:**
 ```bash
-# Check for each layer
+# For standard React/Vue projects:
 Glob: "{srcDir}/app/**/*"
 Glob: "{srcDir}/pages/**/*"
+Glob: "{srcDir}/widgets/**/*"
+Glob: "{srcDir}/features/**/*"
+Glob: "{srcDir}/entities/**/*"
+Glob: "{srcDir}/shared/**/*"
+
+# For Next.js projects (use aliases):
+Glob: "{srcDir}/core/**/*"      # app → core
+Glob: "{srcDir}/views/**/*"     # pages → views
 Glob: "{srcDir}/widgets/**/*"
 Glob: "{srcDir}/features/**/*"
 Glob: "{srcDir}/entities/**/*"
@@ -255,11 +351,12 @@ const DEFAULT_PATTERNS = {
 3. Check .gitignore for cache file entry
 ```
 
-**Configuration template:**
+**Configuration template (Standard React/Vue):**
 ```json
 {
   "version": "1.0.0",
   "srcDir": "src",
+  "framework": "react",
   "layers": {
     "app": { "path": "app", "sliced": false, "exists": true },
     "pages": { "path": "pages", "sliced": true, "exists": true },
@@ -276,6 +373,46 @@ const DEFAULT_PATTERNS = {
   "aliases": {
     "@app": "src/app",
     "@pages": "src/pages",
+    "@widgets": "src/widgets",
+    "@features": "src/features",
+    "@entities": "src/entities",
+    "@shared": "src/shared"
+  },
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.stories.tsx",
+    "**/node_modules/**"
+  ]
+}
+```
+
+**Configuration template (Next.js):**
+```json
+{
+  "version": "1.0.0",
+  "srcDir": "src",
+  "framework": "nextjs",
+  "layerAliases": {
+    "app": "core",
+    "pages": "views"
+  },
+  "layers": {
+    "app": { "path": "core", "sliced": false, "exists": true },
+    "pages": { "path": "views", "sliced": true, "exists": true },
+    "widgets": { "path": "widgets", "sliced": true, "exists": true },
+    "features": { "path": "features", "sliced": true, "exists": true },
+    "entities": { "path": "entities", "sliced": true, "exists": true },
+    "shared": { "path": "shared", "sliced": false, "exists": true }
+  },
+  "patterns": {
+    "naming": "<detected-or-default>",
+    "indexFiles": true,
+    "segments": ["ui", "model", "api", "lib"]
+  },
+  "aliases": {
+    "@core": "src/core",
+    "@views": "src/views",
     "@widgets": "src/widgets",
     "@features": "src/features",
     "@entities": "src/entities",
