@@ -6,6 +6,18 @@ Adversarial code verification with Verifier↔Critic loop.
 
 > **Elenchus** (ἔλεγχος): Socrates' method of refutation through questioning.
 
+## Supported Clients
+
+Works with any MCP-compatible client:
+
+| Client | Status | Notes |
+|--------|--------|-------|
+| Claude Code (CLI) | ✅ Tested | Primary development target |
+| Claude Desktop | ✅ Supported | Full functionality |
+| VS Code (Copilot) | ✅ Supported | Requires v1.102+ |
+| Cursor | ✅ Supported | 40 tool limit applies |
+| Other MCP Clients | ✅ Compatible | Any stdio-based MCP client |
+
 ## Quick Start
 
 ```bash
@@ -34,45 +46,32 @@ No slash commands needed for basic usage.
 
 ## Installation
 
-### Option 1: npx (Recommended)
+### Claude Code (CLI)
 
-No installation needed. Runs directly from npm registry:
+**Option 1: One command (Recommended)**
 
 ```bash
 claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
 ```
 
-### Option 2: Global install
+> **Note:** `-s user` makes it available in all projects. Without it, only current directory.
 
-For faster startup (no download on each run):
+**Option 2: Global install (faster startup)**
 
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
 claude mcp add elenchus -s user -- elenchus-mcp
 ```
 
-### Option 3: From source
-
-For development or customization:
-
+**Verify:**
 ```bash
-git clone https://github.com/jhlee0409/claude-plugins.git
-cd claude-plugins/mcp-servers/elenchus
-npm install && npm run build
-claude mcp add elenchus -s user -- node $(pwd)/dist/index.js
+claude mcp list          # Check registered servers
+claude mcp get elenchus  # Check status
 ```
 
-### Scope Options
+### Claude Desktop
 
-| Flag | Scope | Description |
-|------|-------|-------------|
-| `-s user` | User | Available in all your projects ✅ |
-| `-s local` | Local | Current project only (default) |
-| `-s project` | Project | Shared with team via `.mcp.json` |
-
-### Manual Configuration
-
-If you prefer editing `~/.claude.json` directly, add to `mcpServers`:
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -85,11 +84,51 @@ If you prefer editing `~/.claude.json` directly, add to `mcpServers`:
 }
 ```
 
-### Verify Installation
+### VS Code (GitHub Copilot)
+
+Add to `.vscode/mcp.json` (workspace) or User Settings (global):
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "elenchus": {
+        "command": "npx",
+        "args": ["-y", "@jhlee0409/elenchus-mcp"]
+      }
+    }
+  }
+}
+```
+
+> Requires VS Code 1.102+
+
+### Cursor
+
+Go to **Settings > MCP > Add new global MCP Server**, then add:
+
+```json
+{
+  "mcpServers": {
+    "elenchus": {
+      "command": "npx",
+      "args": ["-y", "@jhlee0409/elenchus-mcp"]
+    }
+  }
+}
+```
+
+> Note: Cursor has a 40 tool limit across all MCP servers.
+
+### From Source (Development)
 
 ```bash
-claude mcp list          # Check registered servers
-claude mcp get elenchus  # Check elenchus status
+git clone https://github.com/jhlee0409/claude-plugins.git
+cd claude-plugins/mcp-servers/elenchus
+npm install && npm run build
+
+# Then add to your client with:
+# command: "node", args: ["/path/to/dist/index.js"]
 ```
 
 ## MCP Prompts (Slash Commands)

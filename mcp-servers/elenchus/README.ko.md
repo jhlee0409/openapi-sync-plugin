@@ -6,6 +6,18 @@ Verifier↔Critic 루프를 통한 적대적 코드 검증.
 
 > **Elenchus** (ἔλεγχος): 질문을 통한 논박의 소크라테스 방법론.
 
+## 지원 클라이언트
+
+MCP 호환 클라이언트에서 사용 가능:
+
+| 클라이언트 | 상태 | 비고 |
+|-----------|------|------|
+| Claude Code (CLI) | ✅ 테스트됨 | 주요 개발 타겟 |
+| Claude Desktop | ✅ 지원 | 전체 기능 사용 가능 |
+| VS Code (Copilot) | ✅ 지원 | v1.102+ 필요 |
+| Cursor | ✅ 지원 | 40개 도구 제한 있음 |
+| 기타 MCP 클라이언트 | ✅ 호환 | stdio 기반 MCP 클라이언트 |
+
 ## 빠른 시작
 
 ```bash
@@ -34,45 +46,32 @@ Claude: (elenchus_start_session, elenchus_submit_round 등 호출)
 
 ## 설치
 
-### 옵션 1: npx (권장)
+### Claude Code (CLI)
 
-설치 없이 npm 레지스트리에서 직접 실행:
+**옵션 1: 한 줄 명령 (권장)**
 
 ```bash
 claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
 ```
 
-### 옵션 2: 글로벌 설치
+> **참고:** `-s user`는 모든 프로젝트에서 사용 가능하게 합니다. 없으면 현재 디렉토리에서만 적용.
 
-더 빠른 시작 (매번 다운로드 없음):
+**옵션 2: 글로벌 설치 (더 빠른 시작)**
 
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
 claude mcp add elenchus -s user -- elenchus-mcp
 ```
 
-### 옵션 3: 소스에서 빌드
-
-개발 또는 커스터마이징용:
-
+**확인:**
 ```bash
-git clone https://github.com/jhlee0409/claude-plugins.git
-cd claude-plugins/mcp-servers/elenchus
-npm install && npm run build
-claude mcp add elenchus -s user -- node $(pwd)/dist/index.js
+claude mcp list          # 등록된 서버 확인
+claude mcp get elenchus  # 상태 확인
 ```
 
-### 스코프 옵션
+### Claude Desktop
 
-| 플래그 | 스코프 | 설명 |
-|--------|--------|------|
-| `-s user` | 사용자 | 모든 프로젝트에서 사용 가능 ✅ |
-| `-s local` | 로컬 | 현재 프로젝트만 (기본값) |
-| `-s project` | 프로젝트 | `.mcp.json`으로 팀과 공유 |
-
-### 수동 설정
-
-`~/.claude.json`을 직접 편집하려면 `mcpServers`에 추가:
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) 또는 `%APPDATA%\Claude\claude_desktop_config.json` (Windows) 편집:
 
 ```json
 {
@@ -85,11 +84,51 @@ claude mcp add elenchus -s user -- node $(pwd)/dist/index.js
 }
 ```
 
-### 설치 확인
+### VS Code (GitHub Copilot)
+
+`.vscode/mcp.json` (워크스페이스) 또는 User Settings (전역)에 추가:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "elenchus": {
+        "command": "npx",
+        "args": ["-y", "@jhlee0409/elenchus-mcp"]
+      }
+    }
+  }
+}
+```
+
+> VS Code 1.102+ 필요
+
+### Cursor
+
+**Settings > MCP > Add new global MCP Server**에서 추가:
+
+```json
+{
+  "mcpServers": {
+    "elenchus": {
+      "command": "npx",
+      "args": ["-y", "@jhlee0409/elenchus-mcp"]
+    }
+  }
+}
+```
+
+> 참고: Cursor는 전체 MCP 서버에 걸쳐 40개 도구 제한이 있습니다.
+
+### 소스에서 빌드 (개발용)
 
 ```bash
-claude mcp list          # 등록된 서버 확인
-claude mcp get elenchus  # elenchus 상태 확인
+git clone https://github.com/jhlee0409/claude-plugins.git
+cd claude-plugins/mcp-servers/elenchus
+npm install && npm run build
+
+# 클라이언트에 추가:
+# command: "node", args: ["/path/to/dist/index.js"]
 ```
 
 ## MCP 프롬프트 (슬래시 커맨드)
