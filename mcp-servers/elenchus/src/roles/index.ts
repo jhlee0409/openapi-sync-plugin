@@ -1,10 +1,10 @@
 /**
- * Role Enforcement Module - 두 검증자 역할 강제
+ * Role Enforcement Module - Verifier and Critic role enforcement
  *
- * 1. 역할 정의 (mustDo, mustNotDo)
- * 2. 출력 검증 (역할 준수 여부)
- * 3. 순응도 추적
- * 4. 역할 교대 강제
+ * 1. Role definitions (mustDo, mustNotDo)
+ * 2. Output validation (role compliance)
+ * 3. Compliance tracking
+ * 4. Role alternation enforcement
  */
 
 import {
@@ -54,18 +54,18 @@ const roleStates = new Map<string, RoleState>();
  * [FIX: MNT-01] Compliance scoring constants
  */
 const COMPLIANCE_SCORE = {
-  BASE: 100,           // 기본 점수
-  ERROR_PENALTY: 20,   // ERROR 위반 시 차감
-  WARNING_PENALTY: 5,  // WARNING 위반 시 차감
-  MIN_SCORE: 0,        // 최소 점수
-  MAX_SCORE: 100       // 최대 점수
+  BASE: 100,           // Base score
+  ERROR_PENALTY: 20,   // Deduction per ERROR violation
+  WARNING_PENALTY: 5,  // Deduction per WARNING violation
+  MIN_SCORE: 0,        // Minimum score
+  MAX_SCORE: 100       // Maximum score
 } as const;
 
 const DEFAULT_CONFIG: RoleEnforcementConfig = {
-  strictMode: false,         // 기본: 경고만, 거부 안함
-  minComplianceScore: 60,    // 60점 이상이어야 통과
-  allowRoleSwitch: false,    // 역할 전환 불허
-  requireAlternation: true   // 교대 필수
+  strictMode: false,         // Default: warn only, do not reject
+  minComplianceScore: 60,    // Must be 60+ to pass
+  allowRoleSwitch: false,    // Role switch not allowed
+  requireAlternation: true   // Alternation required
 };
 
 // =============================================================================
@@ -73,7 +73,7 @@ const DEFAULT_CONFIG: RoleEnforcementConfig = {
 // =============================================================================
 
 /**
- * 세션에 대한 역할 강제 초기화
+ * Initialize role enforcement for session
  */
 export function initializeRoleEnforcement(
   sessionId: string,
@@ -83,7 +83,7 @@ export function initializeRoleEnforcement(
   const state: RoleState = {
     sessionId,
     complianceHistory: [],
-    currentExpectedRole: 'verifier',  // 항상 Verifier가 먼저
+    currentExpectedRole: 'verifier',  // Verifier always goes first
     config: { ...DEFAULT_CONFIG, ...config },
     alternation: {
       expectedRole: 'verifier',
@@ -97,7 +97,7 @@ export function initializeRoleEnforcement(
 }
 
 /**
- * 역할 상태 가져오기
+ * Get role state
  */
 export function getRoleState(sessionId: string): RoleState | undefined {
   return roleStates.get(sessionId);
@@ -108,7 +108,7 @@ export function getRoleState(sessionId: string): RoleState | undefined {
 // =============================================================================
 
 /**
- * 역할 준수 여부 검증
+ * Validate role compliance
  */
 export function validateRoleCompliance(
   sessionId: string,
@@ -118,7 +118,7 @@ export function validateRoleCompliance(
 ): RoleComplianceResult {
   const state = roleStates.get(sessionId);
   if (!state) {
-    // 자동 초기화
+    // Auto-initialize
     initializeRoleEnforcement(sessionId);
     return validateRoleCompliance(sessionId, role, output, session);
   }
@@ -127,7 +127,7 @@ export function validateRoleCompliance(
   const warnings: RoleWarning[] = [];
   const suggestions: string[] = [];
 
-  // 1. 역할 교대 검증
+  // 1. Role alternation validation
   if (state.config.requireAlternation) {
     const alternationResult = checkRoleAlternation(state, role);
     if (!alternationResult.valid) {
@@ -135,12 +135,12 @@ export function validateRoleCompliance(
         criterionId: 'ALT001',
         severity: 'ERROR',
         message: alternationResult.message,
-        fix: `예상 역할: ${state.currentExpectedRole}`
+        fix: `Expected role: ${state.currentExpectedRole}`
       });
     }
   }
 
-  // 2. 역할별 검증 기준 적용
+  // 2. Apply role-specific validation criteria
   const roleDefinition = ROLE_DEFINITIONS[role];
   const context = buildRoleContext(sessionId, session);
 
@@ -159,21 +159,21 @@ export function validateRoleCompliance(
         warnings.push({
           type: criterion.id,
           message: result.message,
-          suggestion: result.details?.[0] || '검토 필요'
+          suggestion: result.details?.[0] || 'Review required'
         });
       }
     }
   }
 
-  // 3. 역할별 필수 요소 검증
+  // 3. Validate role-specific required elements
   const requiredCheck = checkRequiredElements(role, output);
   violations.push(...requiredCheck.violations);
   warnings.push(...requiredCheck.warnings);
 
-  // 4. 점수 계산
+  // 4. Calculate score
   const score = calculateComplianceScore(violations, warnings, roleDefinition.validationCriteria.length);
 
-  // 5. 제안 생성
+  // 5. Generate suggestions
   suggestions.push(...generateSuggestions(role, violations, warnings));
 
   const result: RoleComplianceResult = {
@@ -187,7 +187,7 @@ export function validateRoleCompliance(
     suggestions
   };
 
-  // [FIX: MNT-02] 상태 업데이트 - use consolidated alternation structure
+  // [FIX: MNT-02] Update state - use consolidated alternation structure
   state.complianceHistory.push(result);
   const nextRole = role === 'verifier' ? 'critic' : 'verifier';
   state.currentExpectedRole = nextRole;
@@ -201,7 +201,7 @@ export function validateRoleCompliance(
 }
 
 /**
- * 역할 교대 검증
+ * Validate role alternation
  * [FIX: MNT-02] Use alternation structure for validation
  */
 function checkRoleAlternation(
@@ -212,21 +212,21 @@ function checkRoleAlternation(
   if (attemptedRole !== expectedRole) {
     return {
       valid: false,
-      message: `역할 교대 위반: ${expectedRole} 차례인데 ${attemptedRole}가 제출됨`
+      message: `Role alternation violation: Expected ${expectedRole}, but ${attemptedRole} was submitted`
     };
   }
   return { valid: true, message: '' };
 }
 
 /**
- * 역할 컨텍스트 구축
+ * Build role context
  */
 function buildRoleContext(sessionId: string, session: Session): RoleContext {
   const previousRounds: PreviousRoundSummary[] = session.rounds.map(r => ({
     round: r.number,
     role: r.role as VerifierRole,
     issuesRaised: r.issuesRaised,
-    issuesChallenged: [],  // TODO: 추적 추가
+    issuesChallenged: [],  // TODO: Add tracking
     issuesResolved: r.issuesResolved
   }));
 
@@ -235,7 +235,7 @@ function buildRoleContext(sessionId: string, session: Session): RoleContext {
     severity: i.severity,
     status: i.status,
     raisedBy: i.raisedBy as VerifierRole,
-    challengedBy: undefined  // TODO: 추적 추가
+    challengedBy: undefined  // TODO: Add tracking
   }));
 
   return {
@@ -248,7 +248,7 @@ function buildRoleContext(sessionId: string, session: Session): RoleContext {
 }
 
 /**
- * 필수 요소 검증
+ * Validate required elements
  */
 function checkRequiredElements(
   role: VerifierRole,
@@ -258,12 +258,12 @@ function checkRequiredElements(
   const warnings: RoleWarning[] = [];
 
   if (role === 'verifier') {
-    // Verifier 필수 요소
+    // Verifier required elements
     if (!output.match(/(SEC|COR|REL|MNT|PRF)-\d+/) && !output.includes('이슈 없음') && !output.includes('no issues')) {
       warnings.push({
         type: 'MISSING_ISSUE_FORMAT',
-        message: '표준 이슈 ID 형식(SEC-01 등)이 없습니다',
-        suggestion: '이슈가 있다면 SEC-XX, COR-XX 형식으로 명시하세요'
+        message: 'Standard issue ID format (SEC-01, etc.) not found',
+        suggestion: 'If there are issues, specify them in SEC-XX, COR-XX format'
       });
     }
 
@@ -271,19 +271,19 @@ function checkRequiredElements(
       violations.push({
         criterionId: 'REQ001',
         severity: 'WARNING',
-        message: '이슈 위치(파일:라인)가 명시되지 않았습니다',
-        fix: '각 이슈에 파일명:라인번호 형식으로 위치를 명시하세요'
+        message: 'Issue location (file:line) not specified',
+        fix: 'Specify location in file:line format for each issue'
       });
     }
   }
 
   if (role === 'critic') {
-    // Critic 필수 요소
+    // Critic required elements
     if (!output.match(/\b(VALID|INVALID|PARTIAL)\b/gi)) {
       warnings.push({
         type: 'MISSING_VERDICT',
-        message: '이슈 판정(VALID/INVALID/PARTIAL)이 없습니다',
-        suggestion: '각 이슈에 대해 VALID, INVALID, PARTIAL 중 하나를 명시하세요'
+        message: 'Issue verdict (VALID/INVALID/PARTIAL) not found',
+        suggestion: 'Specify VALID, INVALID, or PARTIAL for each issue'
       });
     }
 
@@ -291,8 +291,8 @@ function checkRequiredElements(
       violations.push({
         criterionId: 'REQ002',
         severity: 'WARNING',
-        message: 'INVALID 판정에 근거가 부족합니다',
-        fix: '반박 시 구체적인 이유를 제시하세요'
+        message: 'INVALID verdict lacks reasoning',
+        fix: 'Provide specific reasoning when refuting'
       });
     }
   }
@@ -301,7 +301,7 @@ function checkRequiredElements(
 }
 
 /**
- * 순응도 점수 계산
+ * Calculate compliance score
  * [FIX: MNT-01] Use COMPLIANCE_SCORE constants
  */
 function calculateComplianceScore(
@@ -321,7 +321,7 @@ function calculateComplianceScore(
 }
 
 /**
- * 개선 제안 생성
+ * Generate improvement suggestions
  */
 function generateSuggestions(
   role: VerifierRole,
@@ -332,26 +332,26 @@ function generateSuggestions(
   const prompt = ROLE_PROMPTS[role];
 
   if (violations.length > 0) {
-    suggestions.push(`${role === 'verifier' ? '검증자' : '비평자'} 역할 체크리스트를 확인하세요:`);
+    suggestions.push(`Check the ${role === 'verifier' ? 'Verifier' : 'Critic'} role checklist:`);
     suggestions.push(...prompt.checklist.slice(0, 3));
   }
 
-  // 역할별 특정 제안
+  // Role-specific suggestions
   if (role === 'verifier') {
     if (violations.some(v => v.criterionId === 'V001')) {
-      suggestions.push('💡 모든 이슈에 코드 블록으로 증거를 포함하세요');
+      suggestions.push('💡 Include evidence in code blocks for all issues');
     }
     if (violations.some(v => v.criterionId === 'V003')) {
-      suggestions.push('💡 이전 라운드에서 반박된 이슈는 새로운 증거 없이 재제기하지 마세요');
+      suggestions.push('💡 Do not re-raise issues refuted in previous rounds without new evidence');
     }
   }
 
   if (role === 'critic') {
     if (violations.some(v => v.criterionId === 'C001')) {
-      suggestions.push('💡 Verifier가 제기한 모든 이슈에 대해 판정을 내려야 합니다');
+      suggestions.push('💡 Must provide verdict for all issues raised by Verifier');
     }
     if (violations.some(v => v.criterionId === 'C002')) {
-      suggestions.push('💡 새로운 이슈 발견은 Verifier의 역할입니다. 기존 이슈만 검토하세요');
+      suggestions.push('💡 Finding new issues is the Verifier\'s role. Only review existing issues');
     }
   }
 
@@ -363,7 +363,7 @@ function generateSuggestions(
 // =============================================================================
 
 /**
- * 다음 예상 역할 가져오기
+ * Get next expected role
  */
 export function getExpectedRole(sessionId: string): VerifierRole {
   const state = roleStates.get(sessionId);
@@ -371,28 +371,28 @@ export function getExpectedRole(sessionId: string): VerifierRole {
 }
 
 /**
- * 역할 프롬프트 가져오기
+ * Get role prompt
  */
 export function getRolePrompt(role: VerifierRole): RolePrompt {
   return ROLE_PROMPTS[role];
 }
 
 /**
- * 역할 정의 가져오기
+ * Get role definition
  */
 export function getRoleDefinition(role: VerifierRole) {
   return ROLE_DEFINITIONS[role];
 }
 
 /**
- * 순응도 이력 가져오기
+ * Get compliance history
  */
 export function getComplianceHistory(sessionId: string): RoleComplianceResult[] {
   return roleStates.get(sessionId)?.complianceHistory || [];
 }
 
 /**
- * 역할 강제 설정 업데이트
+ * Update role enforcement config
  */
 export function updateRoleConfig(
   sessionId: string,
@@ -406,7 +406,7 @@ export function updateRoleConfig(
 }
 
 /**
- * 역할 강제 요약
+ * Get role enforcement summary
  */
 export function getRoleEnforcementSummary(sessionId: string): object | null {
   const state = roleStates.get(sessionId);

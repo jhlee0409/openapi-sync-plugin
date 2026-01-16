@@ -1,5 +1,5 @@
 /**
- * Code Relationship Analyzer - 정적 분석 기반 코드 관계 추출
+ * Code Relationship Analyzer - Static analysis based code relationship extraction
  */
 
 import * as fs from 'fs/promises';
@@ -19,7 +19,7 @@ import {
 // =============================================================================
 
 /**
- * 파일에서 의존성 노드 추출
+ * Extract dependency node from file
  */
 export async function analyzeFile(filePath: string): Promise<DependencyNode | null> {
   try {
@@ -47,7 +47,7 @@ export async function analyzeFile(filePath: string): Promise<DependencyNode | nu
 }
 
 /**
- * 디렉토리에서 전체 의존성 그래프 구축
+ * Build full dependency graph from directory
  */
 export async function buildDependencyGraph(
   files: string[],
@@ -57,7 +57,7 @@ export async function buildDependencyGraph(
   const edges: DependencyEdge[] = [];
   const reverseEdges = new Map<string, string[]>();
 
-  // 1. 모든 파일 분석
+  // 1. Analyze all files
   for (const file of files) {
     const node = await analyzeFile(file);
     if (node) {
@@ -65,7 +65,7 @@ export async function buildDependencyGraph(
     }
   }
 
-  // 2. Edge 생성
+  // 2. Create edges
   for (const [filePath, node] of nodes) {
     for (const imp of node.imports) {
       const resolvedPath = resolveImportPath(imp.source, filePath, workingDir, files);
@@ -446,7 +446,7 @@ function resolveImportPath(
 // =============================================================================
 
 /**
- * 특정 파일이 변경되면 영향받는 파일들 찾기
+ * Find files affected when a specific file changes
  */
 export function findAffectedFiles(
   changedFile: string,
@@ -476,7 +476,7 @@ export function findAffectedFiles(
 }
 
 /**
- * 두 파일 간의 의존 경로 찾기
+ * Find dependency path between two files
  */
 export function findDependencyPath(
   from: string,
@@ -510,7 +510,7 @@ export function findDependencyPath(
 }
 
 /**
- * 순환 의존성 탐지
+ * Detect circular dependencies
  */
 export function detectCircularDependencies(graph: DependencyGraph): string[][] {
   const cycles: string[][] = [];
@@ -544,7 +544,7 @@ export function detectCircularDependencies(graph: DependencyGraph): string[][] {
 }
 
 /**
- * 파일 중요도 계산 (많이 참조될수록 중요)
+ * Calculate file importance (more references = more important)
  */
 export function calculateFileImportance(graph: DependencyGraph): Map<string, number> {
   const importance = new Map<string, number>();
@@ -553,7 +553,7 @@ export function calculateFileImportance(graph: DependencyGraph): Map<string, num
     const dependents = graph.reverseEdges.get(file) || [];
     const exports = graph.nodes.get(file)?.exports.length || 0;
 
-    // 점수 = 참조하는 파일 수 * 2 + export 수
+    // score = dependent files * 2 + exports count
     const score = dependents.length * 2 + exports;
     importance.set(file, score);
   }
