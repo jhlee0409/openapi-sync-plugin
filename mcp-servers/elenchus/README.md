@@ -9,8 +9,8 @@ Adversarial code verification with Verifier↔Critic loop.
 ## Quick Start
 
 ```bash
-# 1. Install and register (one command)
-claude mcp add elenchus -- npx -y @jhlee0409/elenchus-mcp
+# 1. Install and register globally (one command)
+claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
 
 # 2. Restart Claude Code, then use
 /elenchus:verify (MCP)
@@ -18,6 +18,8 @@ claude mcp add elenchus -- npx -y @jhlee0409/elenchus-mcp
 # Or natural language
 "Please verify src/auth for security issues"
 ```
+
+> **Note:** The `-s user` flag makes elenchus available in all your projects. Without it, installation only applies to the current directory.
 
 ## How It Works
 
@@ -32,31 +34,45 @@ No slash commands needed for basic usage.
 
 ## Installation
 
-### Option 1: CLI (Recommended)
+### Option 1: npx (Recommended)
+
+No installation needed. Runs directly from npm registry:
 
 ```bash
-claude mcp add elenchus -- npx -y @jhlee0409/elenchus-mcp
+claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
 ```
 
 ### Option 2: Global install
 
+For faster startup (no download on each run):
+
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
-claude mcp add elenchus -- elenchus-mcp
+claude mcp add elenchus -s user -- elenchus-mcp
 ```
 
 ### Option 3: From source
+
+For development or customization:
 
 ```bash
 git clone https://github.com/jhlee0409/claude-plugins.git
 cd claude-plugins/mcp-servers/elenchus
 npm install && npm run build
-claude mcp add elenchus -- node /path/to/dist/index.js
+claude mcp add elenchus -s user -- node $(pwd)/dist/index.js
 ```
+
+### Scope Options
+
+| Flag | Scope | Description |
+|------|-------|-------------|
+| `-s user` | User | Available in all your projects ✅ |
+| `-s local` | Local | Current project only (default) |
+| `-s project` | Project | Shared with team via `.mcp.json` |
 
 ### Manual Configuration
 
-If you prefer editing `~/.claude.json` directly:
+If you prefer editing `~/.claude.json` directly, add to `mcpServers`:
 
 ```json
 {
@@ -67,6 +83,13 @@ If you prefer editing `~/.claude.json` directly:
     }
   }
 }
+```
+
+### Verify Installation
+
+```bash
+claude mcp list          # Check registered servers
+claude mcp get elenchus  # Check elenchus status
 ```
 
 ## MCP Prompts (Slash Commands)
