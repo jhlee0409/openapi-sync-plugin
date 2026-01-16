@@ -1,10 +1,14 @@
 ---
-description: Sync codebase with OpenAPI spec - generate types and API code (100% accuracy by default)
+description: Sync codebase with OpenAPI spec - full synchronization (create, update, rename, delete)
 ---
 
 # OpenAPI Sync
 
-Generate or update API code based on OpenAPI spec and detected project patterns.
+**Fully synchronizes** spec and code. Handles new code generation, existing code modification, renaming, and deletion.
+
+```
+/oas:sync = Just run this when spec changes
+```
 
 ---
 
@@ -13,561 +17,561 @@ Generate or update API code based on OpenAPI spec and detected project patterns.
 When `/oas:sync` is invoked, Claude MUST perform these steps in order:
 
 1. **Check prerequisites** - Verify `.openapi-sync.json` exists (run `/oas:init` if not)
-2. **Use skill: cache-manager** - Check cache, fetch spec if needed
-3. **Use skill: openapi-parser** - Parse spec, compute diff with cache
-4. **Show diff summary** - Display changes to user
-5. **Get user confirmation** - Proceed or select specific items
-6. **Use skill: code-generator** - Generate code matching project patterns
-7. **Update cache** - Save new state to cache files
-8. **Report results** - Show generated/updated files
+2. **Use skill: cache-manager** - Fetch spec, compute diff with previous version
+3. **Use skill: openapi-parser** - Parse spec structure
+4. **Use skill: code-spec-mapper** - Build/update code-spec mapping
+5. **Use skill: import-tracker** - Build import dependency graph
+6. **Analyze changes** - Classify all changes by type (NEW/RENAME/MAYBE_RENAME/MODIFY/REMOVE)
+   - Use weighted scoring algorithm for RENAME detection
+   - Score ≥ 0.8 → RENAME, 0.5~0.8 → MAYBE_RENAME, < 0.5 → DELETE+ADD
+7. **Show sync plan** - Display all changes with affected files
+8. **Get user confirmation** - Proceed or select specific items
+9. **Handle MAYBE_RENAME** - Ask user to confirm each MAYBE_RENAME item:
+   - [R] Confirm as RENAME + MODIFY
+   - [S] Split into DELETE + ADD
+10. **Apply changes by type:**
+    - NEW → Use `code-generator` to create files
+    - RENAME → Use `refactoring-engine` to rename + update all usages
+    - MAYBE_RENAME (confirmed) → `refactoring-engine` + `migration-applier`
+    - MODIFY → Use `migration-applier` to update type definitions
+    - REMOVE → Mark as deprecated or delete (user choice)
+11. **Update mapping & cache** - Save updated state
+12. **Verify** - Run TypeScript compilation
+13. **Report results** - Show all changes made
 
 ---
 
-## Prerequisites
+## Change Types
 
-1. Check `.openapi-sync.json` exists - if not, run `/oas:init`
-2. Load config and detected patterns
+| Type | Icon | Description | Handler |
+|------|------|-------------|---------|
+| NEW | 🟢 | New endpoint/schema | code-generator |
+| RENAME | 🔵 | Name change (operationId, schema name) | refactoring-engine |
+| MAYBE_RENAME | 🟡 | Possible RENAME (confirmation needed) | user decision → refactoring-engine |
+| MODIFY | 🟠 | Field add/remove/type change | migration-applier |
+| REMOVE | 🔴 | Deleted from spec | user decision |
 
-## Sync Process (Smart Caching - Default)
+---
 
-### Step 0: Smart Cache Check
+## Sync Process
+
+### Step 1: Fetch & Diff
 
 ```
 Use skill: cache-manager
 
-Smart caching: Fast when unchanged, accurate when changed.
-
-1. Check cache exists
-   - .openapi-sync.cache.json (spec cache)
-   - .openapi-sync.state.json (implementation state)
-
-2. Smart validation (not full fetch!)
-   - Remote URL → HEAD request (check ETag/Last-Modified)
-   - Local file → Check file mtime
-
-3. Decision
-   - Unchanged → Use cached spec (fast ⚡)
-   - Changed → Full fetch, update cache
-   - --force → Always full fetch
-   - --offline → Use cache only
+1. Fetch latest spec
+2. Compare with cached version
+3. Identify all changes
 ```
 
-**Output (cache hit):**
-```
-/oas:sync
-
-✅ Using cached spec (ETag unchanged)
-   Last sync: 2 hours ago
-
-   Checking 150 endpoints against codebase...
-   ✅ All endpoints up to date
-
-No changes needed.
-```
-
-**Output (cache miss):**
-```
-/oas:sync
-
-🔄 Spec changed, fetching updates...
-   ETag: "abc123" → "def456"
-
-   Fetching spec...
-   📥 Downloaded 150 endpoints
-
-   Checking against codebase...
-```
-
-**--force mode (bypass cache):**
-```
-/oas:sync --force
-
-🔄 Force mode: refetching spec...
-   Ignoring cache
-
-   Fetching spec...
-   📥 Downloaded 150 endpoints
-```
-
-**--offline mode (cache only):**
-```
-/oas:sync --offline
-
-📦 Offline mode: using cached spec
-   Cache from: 2024-01-13 12:00:00
-
-   Checking 150 endpoints against codebase...
-```
-
-### Step 1: Fetch & Diff (only when changes detected)
+### Step 2: Build Mapping & Import Graph
 
 ```
-1. Fetch new spec
-2. Compute diff with cached spec
+Use skill: code-spec-mapper
+Use skill: import-tracker
 
-   Invoke skill: cache-manager (computeDiff)
-
-3. Diff result:
-   - added: Newly added endpoints
-   - modified: Changed endpoints
-   - removed: Deleted endpoints
-   - unchanged: No changes (skip)
+1. Map existing code to spec (operationId ↔ function, schema ↔ type)
+2. Build project-wide import dependency graph
+3. This enables finding ALL usages of any export
 ```
 
-**Output:**
-```
-📊 Spec Changes Detected:
-   +3 added, ~2 modified, -1 removed
-   (145 unchanged - skipping)
-```
-
-### Step 2: Compare with Existing Code (changes only)
+### Step 3: Classify Changes
 
 ```
-Compare only changed endpoints with code:
+For each diff item:
 
-For each endpoint in (added + modified):
-  1. Check if corresponding code exists
-  2. Compare types/schemas
-  3. Mark as: NEW | CHANGED | NEEDS_UPDATE
+1. NEW: Exists only in spec, not in code
+   → Need to create new files
+
+2. RENAME / MAYBE_RENAME: Analyze removed + added pairs
+   → Use weighted scoring algorithm (see below)
+
+3. MODIFY: Same item, content changed
+   - Field add/remove
+   - Type change
+   - Required change
+
+4. REMOVE: Exists only in code, not in spec
+   → User decision needed
 ```
 
-### Step 3: Show Diff Summary
+#### RENAME Detection Algorithm (Weighted Scoring)
+
+Compare removed and added item pairs to determine RENAME:
+
+```typescript
+detectRenameType(removed, added) {
+  // Calculate individual similarities
+  const pathScore = pathSimilarity(removed.path, added.path);
+  const opIdScore = operationIdSimilarity(removed.operationId, added.operationId);
+  const schemaScore = schemaSimilarity(removed.schema, added.schema);
+  const fieldScore = fieldOverlap(removed.fields, added.fields);
+
+  // Weighted total score
+  const totalScore =
+    pathScore * 0.15 +      // Path (15%)
+    opIdScore * 0.25 +      // operationId (25%)
+    schemaScore * 0.30 +    // Schema structure (30%)
+    fieldScore * 0.30;      // Field overlap (30%)
+
+  // Determination
+  if (totalScore >= 0.8) return 'RENAME';           // Definite RENAME
+  if (totalScore >= 0.5) return 'MAYBE_RENAME';     // Confirmation needed
+  return 'DELETE_ADD';                               // Separate items
+}
+```
+
+**Similarity Calculation Details:**
 
 ```
-=== OpenAPI Sync Preview ===
+pathSimilarity("/api/v1/tasks/status", "/api/v2/jobs/state")
+  → Segment comparison: ["api","v1","tasks","status"] vs ["api","v2","jobs","state"]
+  → Common: "api" (1/4)
+  → Result: 0.25
 
-📥 OpenAPI: My API v2.1.0
-   Source: https://api.example.com/openapi.json
-   Last synced: 2024-01-15
+operationIdSimilarity("getTaskStatus", "getJobState")
+  → Token split: ["get","Task","Status"] vs ["get","Job","State"]
+  → Common: "get" (1/3)
+  → Semantic similarity: "Status" ≈ "State" (+0.3)
+  → Result: 0.63
 
-📊 Changes Detected:
+schemaSimilarity(schemaA, schemaB)
+  → Field name overlap + type match rate
+  → { status, progress } vs { status, progress, eta }
+  → Result: 0.67 (2/3 fields match)
 
-NEW (3 endpoints):
+fieldOverlap(fieldsA, fieldsB)
+  → Core field preservation rate
+  → Ratio of original fields retained
+  → Result: 1.0 (status, progress both retained)
+```
+
+**Anchor Matching (Secondary Determination):**
+
+Promote to MAYBE_RENAME regardless of score when specific conditions are met:
+
+```
+Anchor conditions (if any satisfied):
+1. Same response type name: TaskStatusResponse === TaskStatusResponse
+2. 100% core field preservation: All existing fields exist in new schema
+3. Same tag + HTTP method: GET tasks/* → GET jobs/*
+```
+
+**Determination Criteria Summary:**
+
+| Total Score | Determination | Processing |
+|-------------|---------------|------------|
+| ≥ 0.8 | 🔵 RENAME | Auto process |
+| 0.5 ~ 0.8 | 🟡 MAYBE_RENAME | Process after user confirmation |
+| < 0.5 | DELETE + ADD | Process separately |
+
+### Step 4: Show Sync Plan
+
+```
+═══════════════════════════════════════════════════════════════════
+  OpenAPI Sync Plan
+  My API v1.0.0 → v2.0.0
+═══════════════════════════════════════════════════════════════════
+
+📊 Summary: 16 changes detected
+
+┌─────────────────────────────────────────────────────────────────┐
+│ Type          │ Count │ Files Affected │ Auto │                 │
+├─────────────────────────────────────────────────────────────────┤
+│ 🟢 NEW         │ 3     │ 12 (new)       │ ✅   │                 │
+│ 🔵 RENAME      │ 2     │ 20             │ ✅   │                 │
+│ 🟡 MAYBE_RENAME│ 1     │ 8              │ ❓   │ Confirm needed  │
+│ 🟠 MODIFY      │ 8     │ 15             │ ✅   │                 │
+│ 🔴 REMOVE      │ 2     │ 6              │ ❌   │ User decision   │
+└─────────────────────────────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────
+🟢 NEW: 3 endpoints to create
+───────────────────────────────────────────────────────────────────
+
   + POST /api/v1/clips/{id}/render
-  + GET  /api/v1/clips/{id}/status
-  + DELETE /api/v1/clips/{id}/cache
+    → Will create: src/entities/clip/api/clip-api.ts (renderClip)
+    → Will create: src/entities/clip/model/clip-types.ts (RenderClipRequest)
 
-CHANGED (2 endpoints):
-  ~ GET /api/v1/users/{id}
-    - Added field: preferences (object)
-    - Changed type: status (string → enum)
-  ~ POST /api/v1/projects
-    - New required field: workspaceId
+  + GET /api/v1/clips/{id}/status
+    → Will create: src/entities/clip/api/clip-api.ts (getClipStatus)
 
-UNCHANGED (15 endpoints)
+  + GET /api/v1/workspaces/{id}/credits
+    → Will create: src/entities/workspace/api/workspace-api.ts (getCredits)
 
-REMOVED from spec (1 endpoint):
+───────────────────────────────────────────────────────────────────
+🔵 RENAME: 2 items to rename (all usages will be updated)
+───────────────────────────────────────────────────────────────────
+
+  ↻ getTaskStatus → getTask
+    Definition: src/entities/generation/api/generation-api.ts:45
+    Usages: 8 locations across 5 files
+    ├── src/features/create/hooks/useTaskPolling.ts (3 usages)
+    ├── src/features/history/api/history-queries.ts (2 usages)
+    ├── src/entities/generation/api/generation-queries.ts (1 usage)
+    └── ... 2 more files
+
+  ↻ UserProfile → UserInfo
+    Definition: src/entities/user/model/user-types.ts:12
+    Usages: 15 locations across 8 files
+    ├── src/entities/user/api/user-api.ts (2 usages)
+    ├── src/features/profile/ui/ProfileCard.tsx (4 usages)
+    └── ... 6 more files
+
+───────────────────────────────────────────────────────────────────
+🟡 MAYBE_RENAME: 1 item needs confirmation
+───────────────────────────────────────────────────────────────────
+
+  ❓ GET /api/v1/tasks/status → GET /api/v2/jobs/state
+     getTaskProgress → getJobProgress
+
+     Similarity Analysis:
+     ┌────────────────────────────────────────────────────┐
+     │ Item          │ Score │ Visualization              │
+     ├────────────────────────────────────────────────────┤
+     │ Path          │ 25%   │ ██░░░░░░░░                 │
+     │ operationId   │ 70%   │ ███████░░░                 │
+     │ Schema struct │ 67%   │ ██████▌░░░                 │
+     │ Field overlap │ 100%  │ ██████████                 │
+     └────────────────────────────────────────────────────┘
+     Total Score: 68% (MAYBE_RENAME range: 50-80%)
+
+     Before schema:
+       { status: string, progress: number }
+
+     After schema:
+       { status: string, progress: number, eta: string, message?: string }
+
+     Changes:
+       + eta: string (added)
+       + message?: string (added)
+
+     Existing code:
+       Definition: src/entities/task/api/task-api.ts:23
+       Usages: 5 locations across 3 files
+
+     Is this an evolution of the same endpoint?
+     [R] Process as RENAME + MODIFY (update usages + add fields)
+     [S] Process separately (DELETE existing + ADD new)
+     [?] Show detailed diff
+
+───────────────────────────────────────────────────────────────────
+🟠 MODIFY: 8 type changes
+───────────────────────────────────────────────────────────────────
+
+  ~ CreateProjectRequest
+    + workspaceId: string (required)
+    Affected: 4 files (API + 3 usages need workspaceId value)
+
+  ~ UserResponse
+    ~ status: string → 'active' | 'inactive' | 'pending'
+    Affected: 2 files
+
+  ~ ClipGenerationRequest
+    + aspectRatio?: string (optional)
+    - legacyMode: boolean (removed)
+    Affected: 5 files
+
+  ... 5 more modifications
+
+───────────────────────────────────────────────────────────────────
+🔴 REMOVE: 2 endpoints removed from spec
+───────────────────────────────────────────────────────────────────
+
+  - DELETE /api/v1/sessions/{id}
+    Code exists: src/entities/session/api/session-api.ts:34
+    Used by: 3 files
+
+    Options:
+    [D] Delete code (functionality removed)
+    [K] Keep code (backend still supports)
+    [M] Mark deprecated
+
   - GET /api/v1/legacy/export
-    ⚠️ Code exists at: src/entities/export/api/legacy-api.ts
+    Code exists: src/entities/export/api/legacy-api.ts
+    Used by: 1 file
 
-Proceed with generation?
-(You can select specific items or proceed with all)
+═══════════════════════════════════════════════════════════════════
+
+Proceed with sync?
+  [A] Apply all (auto changes only, ask for MAYBE_RENAME/REMOVE)
+  [S] Select specific changes
+  [P] Preview changes (dry-run)
+  [C] Cancel
 ```
 
-### Step 4: Generate Code
+### Step 5: Apply Changes
 
-Use `code-generator` skill:
-
-```
-Invoke skill: code-generator
-```
-
-Based on detected patterns, generate:
-
-#### For FSD Structure:
+#### 5a. Apply NEW (code-generator)
 
 ```
-src/entities/{tag}/
-├── api/
-│   ├── {tag}-api.ts        # API functions
-│   ├── {tag}-api-paths.ts  # Path constants
-│   └── queries.ts          # React Query hooks
-└── model/
-    └── types.ts            # TypeScript types
+Creating new code...
+
+🟢 Creating: POST /api/v1/clips/{id}/render
+   ✅ src/entities/clip/model/clip-types.ts
+      + RenderClipRequest (interface)
+      + RenderClipResponse (interface)
+   ✅ src/entities/clip/api/clip-api.ts
+      + renderClip (function)
+   ✅ src/entities/clip/config/clip-api-paths.ts
+      + render (path)
+   ✅ src/entities/clip/api/clip-mutations.ts
+      + useRenderClip (hook)
+
+🟢 Creating: GET /api/v1/clips/{id}/status
+   ✅ src/entities/clip/api/clip-api.ts
+      + getClipStatus (function)
+   ✅ src/entities/clip/api/clip-queries.ts
+      + useClipStatus (hook)
+
+... more creations
 ```
 
-#### For Feature-based Structure:
+#### 5b. Apply RENAME (refactoring-engine)
 
 ```
-src/features/{tag}/
-├── api.ts          # API functions + paths
-├── hooks.ts        # React Query hooks
-└── types.ts        # TypeScript types
+Applying renames...
+
+🔵 Renaming: getTaskStatus → getTask
+   Creating backup...
+
+   [1/8] ✅ generation-api.ts:45
+         export const getTaskStatus → export const getTask
+   [2/8] ✅ generation/index.ts:3
+         export { getTaskStatus } → export { getTask }
+   [3/8] ✅ useTaskPolling.ts:5
+         import { getTaskStatus } → import { getTask }
+   [4/8] ✅ useTaskPolling.ts:28
+         generationApi.getTaskStatus() → generationApi.getTask()
+   [5/8] ✅ useTaskPolling.ts:35
+         generationApi.getTaskStatus() → generationApi.getTask()
+   [6/8] ✅ history-queries.ts:12
+         import { getTaskStatus } → import { getTask }
+   [7/8] ✅ history-queries.ts:45
+         getTaskStatus({ → getTask({
+   [8/8] ✅ generation-queries.ts:18
+         queryFn: () => getTaskStatus → queryFn: () => getTask
+
+   ✅ TypeScript verification passed
+
+🔵 Renaming: UserProfile → UserInfo
+   [1/15] ✅ user-types.ts:12
+          interface UserProfile → interface UserInfo
+   ... (15 changes across 8 files)
+
+   ✅ TypeScript verification passed
 ```
 
-#### For Flat Structure:
+#### 5b-2. Handle MAYBE_RENAME (user confirmation)
 
 ```
-src/api/{tag}/
-├── api.ts
-├── hooks.ts
-└── types.ts
+🟡 Processing MAYBE_RENAME items...
+
+───────────────────────────────────────────────────────────────────
+❓ GET /api/v1/tasks/status → GET /api/v2/jobs/state
+   getTaskProgress → getJobProgress
+   Score: 68%
+
+Is this an evolution of the same endpoint?
+  [R] Process as RENAME + MODIFY
+  [S] Process separately (DELETE + ADD)
+
+User selected: [R] RENAME + MODIFY
+
+🔵 Applying as RENAME + MODIFY...
+
+   Phase 1: RENAME (refactoring-engine)
+   ├── [1/5] ✅ task-api.ts:23
+   │         export const getTaskProgress → export const getJobProgress
+   ├── [2/5] ✅ task/index.ts:5
+   │         export { getTaskProgress } → export { getJobProgress }
+   ├── [3/5] ✅ useTaskProgress.ts:8
+   │         import { getTaskProgress } → import { getJobProgress }
+   ├── [4/5] ✅ useTaskProgress.ts:15
+   │         getTaskProgress() → getJobProgress()
+   └── [5/5] ✅ dashboard-queries.ts:28
+             queryFn: () => getTaskProgress → queryFn: () => getJobProgress
+
+   Phase 2: MODIFY (migration-applier)
+   ├── ✅ task-types.ts:12
+   │     + eta: string
+   │     + message?: string
+   └── ✅ Updated TaskProgressResponse interface
+
+   Phase 3: Path update (if changed)
+   └── ✅ task-api-paths.ts:8
+         status: '/api/v1/tasks/status' → progress: '/api/v2/jobs/state'
+
+   ✅ TypeScript verification passed
+   ✅ All 5 usages updated successfully
+
+───────────────────────────────────────────────────────────────────
 ```
 
-### Step 5: Type Generation
-
-Generate types from schemas:
-
-```typescript
-// From OpenAPI schema
-{
-  "User": {
-    "type": "object",
-    "properties": {
-      "id": { "type": "string", "format": "uuid" },
-      "name": { "type": "string" },
-      "email": { "type": "string", "format": "email" },
-      "status": { "type": "string", "enum": ["active", "inactive"] }
-    },
-    "required": ["id", "name", "email"]
-  }
-}
-
-// Generated TypeScript
-export interface User {
-  id: string
-  name: string
-  email: string
-  status?: 'active' | 'inactive'
-}
-
-export interface GetUserRequest {
-  id: string
-}
-
-export type GetUserResponse = User
-```
-
-### Step 6: API Function Generation
-
-Based on HTTP client pattern:
-
-```typescript
-// Axios pattern
-export const getUser = async (params: GetUserRequest): Promise<GetUserResponse> => {
-  const { id } = params
-  const response = await createApi().get<GetUserResponse>(
-    USER_API_PATHS.detail(id)
-  )
-  return response.data
-}
-
-// Fetch pattern
-export const getUser = async (params: GetUserRequest): Promise<GetUserResponse> => {
-  const { id } = params
-  const response = await fetch(USER_API_PATHS.detail(id))
-  if (!response.ok) throw new Error('Failed to fetch user')
-  return response.json()
-}
-```
-
-### Step 7: Query Hook Generation
-
-Based on state manager pattern:
-
-```typescript
-// React Query with factory pattern
-export const useUser = (id: string, options?: UseQueryOptions<GetUserResponse>) => {
-  return useQuery({
-    queryKey: userKeys.detail(id),
-    queryFn: () => userApi.getUser({ id }),
-    ...options,
-  })
-}
-
-// React Query simple pattern
-export const useUser = (id: string) => {
-  return useQuery({
-    queryKey: ['users', id],
-    queryFn: () => getUser({ id }),
-  })
-}
-
-// SWR pattern
-export const useUser = (id: string) => {
-  return useSWR(['users', id], () => getUser({ id }))
-}
-```
-
-### Step 8: Report Results
+**When MAYBE_RENAME → separate processing is selected:**
 
 ```
-=== Sync Complete ===
+User selected: [S] Process separately
 
-Generated:
-  ✓ src/entities/clip/model/types.ts (3 types)
-  ✓ src/entities/clip/api/clip-api.ts (3 functions)
-  ✓ src/entities/clip/api/clip-api-paths.ts (3 paths)
-  ✓ src/entities/clip/api/queries.ts (3 hooks)
+📝 Splitting into DELETE + ADD...
 
-Updated:
-  ✓ src/entities/user/model/types.ts (+2 fields)
-  ✓ src/entities/project/model/types.ts (+1 required field)
+🔴 DELETE: getTaskProgress
+   → Added to existing REMOVE list
+   → Will be processed in REMOVE step
 
-Skipped:
-  - src/entities/export/api/legacy-api.ts (endpoint removed from spec)
-
-Next: Review generated code and run your type checker
+🟢 ADD: getJobProgress
+   → Added to existing NEW list
+   → Will be processed in NEW step
 ```
+
+#### 5c. Apply MODIFY (migration-applier)
+
+```
+Applying modifications...
+
+🟠 Modifying: CreateProjectRequest
+   ✅ src/entities/project/model/project-types.ts:23
+      + workspaceId: string
+
+   ⚠️ Usage review needed:
+      src/features/project/ui/CreateProjectModal.tsx:78
+      → Need to provide workspaceId value
+
+🟠 Modifying: UserResponse
+   ✅ src/entities/user/model/user-types.ts:8
+      + type UserStatus = 'active' | 'inactive' | 'pending'
+   ✅ src/entities/user/model/user-types.ts:15
+      status: string → status: UserStatus
+
+... more modifications
+```
+
+#### 5d. Handle REMOVE (user decision)
+
+```
+🔴 Handling removed endpoints...
+
+DELETE /api/v1/sessions/{id} - What would you like to do?
+  [D] Delete code
+  [K] Keep code (mark as non-spec)
+  [M] Mark deprecated
+
+User selected: [D] Delete
+
+   ✅ Deleted: src/entities/session/api/session-api.ts (deleteSession)
+   ✅ Deleted: src/entities/session/config/session-api-paths.ts (delete)
+   ✅ Updated: src/features/auth/api/use-logout.ts (removed import)
+```
+
+### Step 6: Verification & Report
+
+```
+═══════════════════════════════════════════════════════════════════
+  Sync Complete
+═══════════════════════════════════════════════════════════════════
+
+✅ TypeScript compilation passed
+
+📊 Summary:
+   🟢 Created: 12 files (3 endpoints)
+   🔵 Renamed: 20 usages across 13 files (2 renames)
+   🟡 MAYBE_RENAME: 1 confirmed as RENAME + MODIFY
+      └── getTaskProgress → getJobProgress (5 usages updated + 2 fields added)
+   🟠 Modified: 15 files (8 type changes)
+   🔴 Removed: 6 files (2 endpoints)
+
+⚠️ Manual review needed (1 item):
+   src/features/project/ui/CreateProjectModal.tsx:78
+   → Need to provide workspaceId value for CreateProjectRequest
+
+📁 Mapping updated: .openapi-sync.mapping.json
+📁 Cache updated: .openapi-sync.cache.json
+
+═══════════════════════════════════════════════════════════════════
+```
+
+---
 
 ## Flags
 
-### Cache & Network
+### Scope Control
+
 | Flag | Description |
 |------|-------------|
-| `--force` | Ignore cache, always fetch fresh |
-| `--trust-cache` | Fast mode, trust cache (99% accuracy) |
-| `--offline` | Use cached spec only, no network |
+| `--only-new` | Process only new endpoints (CREATE only) |
+| `--only-changes` | Process only changes (RENAME + MODIFY) |
+| `--only-renames` | Process only renames |
+| `--skip-remove` | Skip removal processing |
 
-### Output Control
+### Safety
+
 | Flag | Description |
 |------|-------------|
-| `--dry-run` | Preview only, no file changes |
-| `--verbose` | Show detailed progress |
+| `--dry-run` | Preview only, no actual changes |
+| `--force` | Auto-apply without confirmation (except REMOVE) |
+| `--keep-backup` | Keep backup files |
+| `--no-verify` | Skip TypeScript verification |
 
-### Tag Filtering
+### Filtering
+
 | Flag | Description |
 |------|-------------|
-| `--tag=<name>` | Process specific tag(s) only |
-| `--exclude-tag=<name>` | Exclude specific tag(s) |
-| `--list-tags` | Show available tags with status |
+| `--tag=<name>` | Sync only specific tag |
+| `--endpoint=<path>` | Sync only specific endpoint |
 
-### Endpoint Filtering
+### Network
+
 | Flag | Description |
 |------|-------------|
-| `--endpoint=<path>` | Process specific endpoint(s) |
-| `--only-added` | Process new endpoints only |
-| `--only-changed` | Process modified endpoints only |
+| `--offline` | Use cached spec only |
+| `--force-fetch` | Ignore cache, fetch fresh |
 
-### File Type Filtering
-| Flag | Description |
-|------|-------------|
-| `--only-types` | Generate types only |
-| `--only-api` | Generate API functions only |
-| `--only-hooks` | Generate hooks only |
+---
 
-### Examples
+## Examples
 
 ```bash
-# Basic
-/oas:sync                    # Smart mode (default)
-/oas:sync --dry-run          # Preview changes
-/oas:sync --force            # Fresh fetch
-/oas:sync --trust-cache      # Fast mode
-
-# Tag filtering
-/oas:sync --tag=users        # Single tag
-/oas:sync --tag=users --tag=billing  # Multiple tags
-/oas:sync --exclude-tag=internal     # Exclude tag
-
-# Endpoint filtering
-/oas:sync --endpoint="/api/v1/users/{id}"
-/oas:sync --only-added       # New endpoints only
-
-# File type filtering
-/oas:sync --only-types       # Types only
-/oas:sync --only-api         # API functions only
-```
-
-## Sync Modes
-
-| Mode | Command | Speed | Accuracy | When to use |
-|------|---------|-------|----------|-------------|
-| Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
-| Trust Cache | `/oas:sync --trust-cache` | Instant | 99%** | Quick iterations, know spec unchanged |
-| Force | `/oas:sync --force` | Slow | 100% | Cache seems stale, debugging |
-| Offline | `/oas:sync --offline` | Instant | Cache-based | Airplane mode, no network access |
-
-*Smart mode: HEAD request to check changes, full fetch only when needed
-**Trust Cache may miss changes if server ETag/Last-Modified errors or cache corrupted
-
-## Tag Filtering
-
-Filter endpoints by OpenAPI tags. Tags are extracted from the `tags` field in each endpoint definition.
-
-### How Tags Work
-
-OpenAPI spec defines tags per endpoint:
-```yaml
-paths:
-  /workspaces/{id}/credit-usage:
-    get:
-      tags:
-        - workspace    # ← Primary tag (used for filtering)
-        - billing      # ← Secondary tags also searchable
-      operationId: getWorkspaceCreditUsage
-```
-
-### Tag Filter Options
-
-```bash
-# Single tag - sync only endpoints with this tag
-/oas:sync --tag=workspace
-
-# Multiple tags - sync endpoints matching ANY tag (OR)
-/oas:sync --tag=workspace --tag=billing
-
-# Exclude tag - sync all EXCEPT this tag
-/oas:sync --exclude-tag=internal
-
-# Combined - specific tags, excluding some
-/oas:sync --tag=workspace --exclude-tag=deprecated
-
-# List available tags first
-/oas:sync --list-tags
-```
-
-### Tag Discovery
-
-Before filtering, see what tags are available:
-
-```
-/oas:sync --list-tags
-
-📋 Available Tags (from OpenAPI spec):
-
-Tag              Endpoints   Status
-─────────────────────────────────────
-workspace        18          ⚠️ Partial (14/18)
-user             12          ✅ Complete
-project          28          ✅ Complete
-billing          8           ❌ Missing
-auth             10          ✅ Complete
-clips            15          ✅ Complete
-internal         5           ⚠️ Partial (2/5)
-deprecated       3           ⚠️ Has code
-
-Total: 7 tags, 99 endpoints
-```
-
-### Tag-Based Generation
-
-When using `--tag`, the generator:
-
-1. Filters endpoints by matching tag(s)
-2. Creates domain directory named after primary tag
-3. Generates only types used by filtered endpoints
-
-```bash
-/oas:sync --tag=billing
-
-Generated:
-  src/entities/billing/
-  ├── api/
-  │   ├── billing-api.ts        (8 functions)
-  │   ├── billing-api-paths.ts  (8 paths)
-  │   └── billing-queries.ts    (8 hooks)
-  └── model/
-      └── billing-types.ts      (12 types)
-```
-
-### By Endpoint
-
-```bash
-# Specific endpoint only
-/oas:sync --endpoint=/api/v1/users
-/oas:sync --endpoint="/api/v1/users/{id}"
-
-# Pattern matching
-/oas:sync --endpoint="/api/v1/clips/*"
-```
-
-### By Change Type
-
-```bash
-# New additions only
-/oas:sync --only-added
-
-# Changes only
-/oas:sync --only-changed
-
-# New + changed
-/oas:sync --only-added --only-changed
-```
-
-### By File Type
-
-```bash
-# Types only
-/oas:sync --only-types
-
-# API functions only (no types)
-/oas:sync --only-api
-
-# Hooks only
-/oas:sync --only-hooks
-
-# Combined
-/oas:sync --only-types --only-api
-```
-
-## Partial Sync Examples
-
-```bash
-# Generate types only for new endpoints in clips tag
-/oas:sync --tag=clips --only-added --only-types
-
-# Preview changes for users only
-/oas:sync --tag=users --only-changed --dry-run
-
-# Full generation for specific endpoint
-/oas:sync --endpoint="/api/v1/clips/{id}/render"
-```
-
-## Interactive Selection
-
-When changes are detected, you can select which ones to process:
-
-```
+# Full sync (default)
 /oas:sync
 
-📊 Changes Detected:
+# Preview only
+/oas:sync --dry-run
 
-NEW (3):
-  1. POST /api/v1/clips/{id}/render (clips)
-  2. GET  /api/v1/clips/{id}/status (clips)
-  3. DELETE /api/v1/cache/{key} (cache)
+# New endpoints only
+/oas:sync --only-new
 
-CHANGED (2):
-  4. GET /api/v1/users/{id} (users)
-  5. POST /api/v1/projects (projects)
+# Specific tag only
+/oas:sync --tag=workspace
 
-Which items do you want to process?
-(Select all, specific numbers, or filter by tag)
+# Renames only
+/oas:sync --only-renames
+
+# Sync without handling removals
+/oas:sync --skip-remove
 ```
 
 ---
 
 ## Error Handling
 
-For full error code reference, see [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md).
-
 | Error | Code | Description | Recovery |
 |-------|------|-------------|----------|
 | Config not found | E501 | .openapi-sync.json missing | Run /oas:init |
-| Network error | E101/E102 | Cannot fetch spec | Use --offline with cache |
-| Parse error | E201/E202 | Invalid spec format | Fix spec syntax |
-| Cache not found | E601 | No cache (with --offline) | Run /oas:sync first without --offline |
-| Write error | E303 | Cannot write generated files | Check directory permissions |
-| Pattern not found | E402 | No sample code to learn from | Provide sample file path |
-
-**Recovery Actions:**
-```
-E501 → "Run /oas:init to initialize the project"
-E101 + cache exists → "Use --offline to sync with cached version"
-E601 → "Run /oas:sync without --offline first to create cache"
-E402 → "Provide sample: /oas:init with sample path"
-```
+| Spec fetch failed | E101 | Failed to fetch spec | Use --offline with cache |
+| TypeScript error | E1003 | Compilation failed after changes | Auto rollback |
+| Rename conflict | E1001 | Target name already exists | Suggest different name |
+| Mapping not found | E701 | Mapping file missing | Auto generate |
 
 ---
 
-## Migration Guide
+## vs /oas:migrate
 
-For handling breaking changes after sync, see [../docs/MIGRATION.md](../docs/MIGRATION.md).
+| Scenario | Recommended Command |
+|----------|---------------------|
+| Regular spec changes | `/oas:sync` |
+| Major API version upgrade (v1→v2) | `/oas:migrate` |
+| Updates with many breaking changes | `/oas:migrate` |
+| Need step-by-step careful migration | `/oas:migrate` |
 
-When `/oas:sync` shows breaking changes:
-1. Review removed endpoints and changed types
-2. Follow migration workflow in MIGRATION.md
-3. Use `--dry-run` first to preview changes
-4. Run `/oas:validate` after sync to check coverage
+**Generally, just use `/oas:sync`.**
