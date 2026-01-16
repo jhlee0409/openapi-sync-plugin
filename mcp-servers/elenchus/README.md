@@ -9,19 +9,14 @@ Adversarial code verification with Verifier↔Critic loop.
 ## Quick Start
 
 ```bash
-# 1. Install
-npm install -g @jhlee0409/elenchus-mcp
+# 1. Install and register (one command)
+claude mcp add elenchus -- npx -y @jhlee0409/elenchus-mcp
 
-# 2. Add to ~/.claude.json
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
+# 2. Restart Claude Code, then use
+/elenchus:verify (MCP)
 
-# 3. Use in Claude Code (natural language)
+# Or natural language
 "Please verify src/auth for security issues"
-"Check this code for bugs"
 ```
 
 ## How It Works
@@ -37,31 +32,17 @@ No slash commands needed for basic usage.
 
 ## Installation
 
-### Option 1: npm (Recommended)
+### Option 1: CLI (Recommended)
+
+```bash
+claude mcp add elenchus -- npx -y @jhlee0409/elenchus-mcp
+```
+
+### Option 2: Global install
 
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
-```
-
-```json
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
-```
-
-### Option 2: npx (No global install)
-
-```json
-{
-  "mcpServers": {
-    "elenchus": {
-      "command": "npx",
-      "args": ["-y", "@jhlee0409/elenchus-mcp"]
-    }
-  }
-}
+claude mcp add elenchus -- elenchus-mcp
 ```
 
 ### Option 3: From source
@@ -70,14 +51,19 @@ npm install -g @jhlee0409/elenchus-mcp
 git clone https://github.com/jhlee0409/claude-plugins.git
 cd claude-plugins/mcp-servers/elenchus
 npm install && npm run build
+claude mcp add elenchus -- node /path/to/dist/index.js
 ```
+
+### Manual Configuration
+
+If you prefer editing `~/.claude.json` directly:
 
 ```json
 {
   "mcpServers": {
     "elenchus": {
-      "command": "node",
-      "args": ["/path/to/mcp-servers/elenchus/dist/index.js"]
+      "command": "npx",
+      "args": ["-y", "@jhlee0409/elenchus-mcp"]
     }
   }
 }

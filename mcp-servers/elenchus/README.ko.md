@@ -9,19 +9,14 @@ Verifier↔Critic 루프를 통한 적대적 코드 검증.
 ## 빠른 시작
 
 ```bash
-# 1. 설치
-npm install -g @jhlee0409/elenchus-mcp
+# 1. 설치 및 등록 (한 줄)
+claude mcp add elenchus -- npx -y @jhlee0409/elenchus-mcp
 
-# 2. ~/.claude.json에 추가
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
+# 2. Claude Code 재시작 후 사용
+/elenchus:verify (MCP)
 
-# 3. Claude Code에서 사용 (자연어)
+# 또는 자연어로
 "src/auth 보안 이슈 검증해줘"
-"이 코드 버그 확인해줘"
 ```
 
 ## 작동 방식
@@ -37,31 +32,17 @@ Claude: (elenchus_start_session, elenchus_submit_round 등 호출)
 
 ## 설치
 
-### 옵션 1: npm (권장)
+### 옵션 1: CLI (권장)
+
+```bash
+claude mcp add elenchus -- npx -y @jhlee0409/elenchus-mcp
+```
+
+### 옵션 2: 글로벌 설치
 
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
-```
-
-```json
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
-```
-
-### 옵션 2: npx (글로벌 설치 없이)
-
-```json
-{
-  "mcpServers": {
-    "elenchus": {
-      "command": "npx",
-      "args": ["-y", "@jhlee0409/elenchus-mcp"]
-    }
-  }
-}
+claude mcp add elenchus -- elenchus-mcp
 ```
 
 ### 옵션 3: 소스에서 빌드
@@ -70,14 +51,19 @@ npm install -g @jhlee0409/elenchus-mcp
 git clone https://github.com/jhlee0409/claude-plugins.git
 cd claude-plugins/mcp-servers/elenchus
 npm install && npm run build
+claude mcp add elenchus -- node /path/to/dist/index.js
 ```
+
+### 수동 설정
+
+`~/.claude.json`을 직접 편집하려면:
 
 ```json
 {
   "mcpServers": {
     "elenchus": {
-      "command": "node",
-      "args": ["/path/to/mcp-servers/elenchus/dist/index.js"]
+      "command": "npx",
+      "args": ["-y", "@jhlee0409/elenchus-mcp"]
     }
   }
 }
