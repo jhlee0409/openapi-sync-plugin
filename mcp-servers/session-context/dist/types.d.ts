@@ -59,4 +59,10 @@ export declare const CONTEXT_LIMITS: {
     MAX_TODOS: number;
 };
 export declare const DEFAULT_CONTEXT: SessionContext;
+export declare function isValidGoal(obj: unknown): obj is SessionContextGoal;
+export declare function isValidProgress(obj: unknown): obj is SessionContextProgress;
+export declare function isValidTodoItem(obj: unknown): obj is TodoItem;
+export declare function isValidDecision(obj: unknown): obj is SessionContextDecision;
+export declare function isValidDiscovery(obj: unknown): obj is SessionContextDiscovery;
+export declare function isValidState(obj: unknown): obj is SessionContextState;
 //# sourceMappingURL=types.d.ts.map

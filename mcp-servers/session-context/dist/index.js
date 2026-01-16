@@ -219,16 +219,52 @@ server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
                     last_trigger: "manual",
                 },
             };
-            if (args?.goal)
+            // Validate and set fields with runtime type checking
+            if (args?.goal) {
+                if (!(0, types_js_2.isValidGoal)(args.goal)) {
+                    return {
+                        content: [{ type: "text", text: "Error: Invalid goal format" }],
+                        isError: true,
+                    };
+                }
                 context.goal = args.goal;
-            if (args?.progress)
+            }
+            if (args?.progress) {
+                if (!(0, types_js_2.isValidProgress)(args.progress)) {
+                    return {
+                        content: [{ type: "text", text: "Error: Invalid progress format" }],
+                        isError: true,
+                    };
+                }
                 context.progress = args.progress;
-            if (args?.decisions)
+            }
+            if (args?.decisions) {
+                if (!Array.isArray(args.decisions) || !args.decisions.every(types_js_2.isValidDecision)) {
+                    return {
+                        content: [{ type: "text", text: "Error: Invalid decisions format" }],
+                        isError: true,
+                    };
+                }
                 context.decisions = args.decisions;
-            if (args?.discoveries)
+            }
+            if (args?.discoveries) {
+                if (!Array.isArray(args.discoveries) || !args.discoveries.every(types_js_2.isValidDiscovery)) {
+                    return {
+                        content: [{ type: "text", text: "Error: Invalid discoveries format" }],
+                        isError: true,
+                    };
+                }
                 context.discoveries = args.discoveries;
-            if (args?.state)
+            }
+            if (args?.state) {
+                if (!(0, types_js_2.isValidState)(args.state)) {
+                    return {
+                        content: [{ type: "text", text: "Error: Invalid state format" }],
+                        isError: true,
+                    };
+                }
                 context.state = args.state;
+            }
             const saved = contextManager.update(context);
             return {
                 content: [
@@ -353,9 +389,22 @@ server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
                     isError: true,
                 };
             }
+            // Validate each todo item
+            if (!todos.every(types_js_2.isValidTodoItem)) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: "Error: Invalid todo item format. Each item must have content, status, and activeForm.",
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+            const validTodos = todos;
             const current = contextManager.load() || { ...types_js_2.DEFAULT_CONTEXT };
             // Apply limit to prevent unbounded growth
-            const limitedTodos = todos.slice(-types_js_2.CONTEXT_LIMITS.MAX_TODOS);
+            const limitedTodos = validTodos.slice(-types_js_2.CONTEXT_LIMITS.MAX_TODOS);
             current.tasks = {
                 todos: limitedTodos,
                 last_synced: new Date().toISOString(),

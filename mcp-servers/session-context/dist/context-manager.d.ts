@@ -2,6 +2,7 @@ import { SessionContext } from "./types.js";
 export declare class ContextManager {
     private contextPath;
     private backupPath;
+    private projectDir;
     constructor(projectDir: string);
     exists(): boolean;
     load(): SessionContext | null;

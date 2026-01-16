@@ -40,8 +40,16 @@ const types_js_1 = require("./types.js");
 class ContextManager {
     contextPath;
     backupPath;
+    projectDir;
     constructor(projectDir) {
-        const claudeDir = path.join(projectDir, ".claude");
+        // Validate and normalize project directory
+        const normalizedProjectDir = path.resolve(projectDir);
+        // Ensure the path doesn't contain suspicious patterns
+        if (normalizedProjectDir.includes('\0') || normalizedProjectDir.includes('..')) {
+            throw new Error(`Invalid project directory: ${projectDir}`);
+        }
+        this.projectDir = normalizedProjectDir;
+        const claudeDir = path.join(normalizedProjectDir, ".claude");
         this.contextPath = path.join(claudeDir, "session-context.json");
         this.backupPath = path.join(claudeDir, "session-context.json.bak");
     }
@@ -75,16 +83,36 @@ class ContextManager {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        // Create backup if exists
-        if (this.exists()) {
-            fs.copyFileSync(this.contextPath, this.backupPath);
-        }
         // Apply size limits to prevent unbounded growth
         context = this.applyLimits(context);
         // Update metadata
         context.meta.saved_at = new Date().toISOString();
         context.meta.version = "2.0";
-        fs.writeFileSync(this.contextPath, JSON.stringify(context, null, 2));
+        // Atomic write: write to temp file first, then rename
+        const tempPath = `${this.contextPath}.tmp`;
+        const content = JSON.stringify(context, null, 2);
+        try {
+            // Write to temp file
+            fs.writeFileSync(tempPath, content);
+            // Only create backup after successful temp write (from valid existing file)
+            if (this.exists()) {
+                fs.copyFileSync(this.contextPath, this.backupPath);
+            }
+            // Atomic rename (on POSIX systems)
+            fs.renameSync(tempPath, this.contextPath);
+        }
+        catch (error) {
+            // Clean up temp file on failure
+            if (fs.existsSync(tempPath)) {
+                try {
+                    fs.unlinkSync(tempPath);
+                }
+                catch {
+                    // Ignore cleanup errors
+                }
+            }
+            throw error;
+        }
     }
     applyLimits(context) {
         // Keep only the most recent items within limits

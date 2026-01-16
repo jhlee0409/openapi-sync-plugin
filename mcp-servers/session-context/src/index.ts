@@ -8,7 +8,18 @@ import {
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { ContextManager } from "./context-manager.js";
-import { SessionContext, DEFAULT_CONTEXT, TodoItem, CONTEXT_LIMITS } from "./types.js";
+import {
+  SessionContext,
+  DEFAULT_CONTEXT,
+  TodoItem,
+  CONTEXT_LIMITS,
+  isValidGoal,
+  isValidProgress,
+  isValidDecision,
+  isValidDiscovery,
+  isValidState,
+  isValidTodoItem
+} from "./types.js";
 
 const server = new Server(
   {
@@ -237,11 +248,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         },
       };
 
-      if (args?.goal) context.goal = args.goal as SessionContext["goal"];
-      if (args?.progress) context.progress = args.progress as SessionContext["progress"];
-      if (args?.decisions) context.decisions = args.decisions as SessionContext["decisions"];
-      if (args?.discoveries) context.discoveries = args.discoveries as SessionContext["discoveries"];
-      if (args?.state) context.state = args.state as SessionContext["state"];
+      // Validate and set fields with runtime type checking
+      if (args?.goal) {
+        if (!isValidGoal(args.goal)) {
+          return {
+            content: [{ type: "text", text: "Error: Invalid goal format" }],
+            isError: true,
+          };
+        }
+        context.goal = args.goal;
+      }
+      if (args?.progress) {
+        if (!isValidProgress(args.progress)) {
+          return {
+            content: [{ type: "text", text: "Error: Invalid progress format" }],
+            isError: true,
+          };
+        }
+        context.progress = args.progress;
+      }
+      if (args?.decisions) {
+        if (!Array.isArray(args.decisions) || !args.decisions.every(isValidDecision)) {
+          return {
+            content: [{ type: "text", text: "Error: Invalid decisions format" }],
+            isError: true,
+          };
+        }
+        context.decisions = args.decisions;
+      }
+      if (args?.discoveries) {
+        if (!Array.isArray(args.discoveries) || !args.discoveries.every(isValidDiscovery)) {
+          return {
+            content: [{ type: "text", text: "Error: Invalid discoveries format" }],
+            isError: true,
+          };
+        }
+        context.discoveries = args.discoveries;
+      }
+      if (args?.state) {
+        if (!isValidState(args.state)) {
+          return {
+            content: [{ type: "text", text: "Error: Invalid state format" }],
+            isError: true,
+          };
+        }
+        context.state = args.state;
+      }
 
       const saved = contextManager.update(context);
       return {
@@ -366,7 +418,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     case "sync_todos": {
-      const todos = args?.todos as TodoItem[];
+      const todos = args?.todos;
       if (!todos || !Array.isArray(todos)) {
         return {
           content: [
@@ -379,10 +431,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      // Validate each todo item
+      if (!todos.every(isValidTodoItem)) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Error: Invalid todo item format. Each item must have content, status, and activeForm.",
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      const validTodos = todos as TodoItem[];
       const current = contextManager.load() || { ...DEFAULT_CONTEXT };
 
       // Apply limit to prevent unbounded growth
-      const limitedTodos = todos.slice(-CONTEXT_LIMITS.MAX_TODOS);
+      const limitedTodos = validTodos.slice(-CONTEXT_LIMITS.MAX_TODOS);
 
       current.tasks = {
         todos: limitedTodos,
