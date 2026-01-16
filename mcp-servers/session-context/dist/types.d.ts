@@ -1,0 +1,101 @@
+export interface SessionContextMeta {
+    version: string;
+    saved_at: string;
+    session_id: string;
+    project: string;
+    last_trigger: string;
+}
+export interface SessionContextGoal {
+    original_request: string;
+    current_objective: string;
+}
+export interface SessionContextProgress {
+    done: string[];
+    current: string[];
+    pending: string[];
+}
+export interface TodoItem {
+    content: string;
+    status: "pending" | "in_progress" | "completed";
+    activeForm: string;
+}
+export interface SessionContextTasks {
+    todos: TodoItem[];
+    last_synced?: string;
+}
+export interface SessionContextDecision {
+    what: string;
+    why: string;
+    rejected?: string[];
+}
+export interface SessionContextDiscovery {
+    file: string;
+    insight: string;
+    timestamp?: string;
+}
+export interface SessionContextState {
+    recent_files: string[];
+    blockers: string[];
+    errors: string[];
+    last_tool_calls?: string[];
+}
+export interface UsageMetrics {
+    tool_calls: number;
+    files_read: number;
+    files_modified: number;
+    discoveries_count: number;
+    decisions_count: number;
+    todos_count: number;
+    session_start: string;
+    last_updated: string;
+}
+export interface UsageStatus {
+    metrics: UsageMetrics;
+    estimated_load: "low" | "medium" | "high" | "critical";
+    load_score: number;
+    recommendation: string;
+    should_compact: boolean;
+}
+export declare const USAGE_WEIGHTS: {
+    TOOL_CALL: number;
+    FILE_READ: number;
+    FILE_MODIFIED: number;
+    DISCOVERY: number;
+    DECISION: number;
+    TODO: number;
+};
+export declare const LOAD_THRESHOLDS: {
+    LOW: number;
+    MEDIUM: number;
+    HIGH: number;
+    CRITICAL: number;
+};
+export interface SessionContext {
+    meta: SessionContextMeta;
+    goal: SessionContextGoal;
+    progress: SessionContextProgress;
+    tasks?: SessionContextTasks;
+    decisions: SessionContextDecision[];
+    discoveries: SessionContextDiscovery[];
+    state: SessionContextState;
+    usage?: UsageMetrics;
+}
+export declare const CONTEXT_LIMITS: {
+    MAX_DECISIONS: number;
+    MAX_DISCOVERIES: number;
+    MAX_DONE_TASKS: number;
+    MAX_RECENT_FILES: number;
+    MAX_BLOCKERS: number;
+    MAX_ERRORS: number;
+    MAX_TOOL_CALLS: number;
+    MAX_TODOS: number;
+};
+export declare const DEFAULT_USAGE_METRICS: UsageMetrics;
+export declare const DEFAULT_CONTEXT: SessionContext;
+export declare function isValidGoal(obj: unknown): obj is SessionContextGoal;
+export declare function isValidProgress(obj: unknown): obj is SessionContextProgress;
+export declare function isValidTodoItem(obj: unknown): obj is TodoItem;
+export declare function isValidDecision(obj: unknown): obj is SessionContextDecision;
+export declare function isValidDiscovery(obj: unknown): obj is SessionContextDiscovery;
+export declare function isValidState(obj: unknown): obj is SessionContextState;
+//# sourceMappingURL=types.d.ts.map
