@@ -1,12 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_CONTEXT = exports.CONTEXT_LIMITS = void 0;
+exports.DEFAULT_CONTEXT = exports.DEFAULT_USAGE_METRICS = exports.CONTEXT_LIMITS = exports.LOAD_THRESHOLDS = exports.USAGE_WEIGHTS = void 0;
 exports.isValidGoal = isValidGoal;
 exports.isValidProgress = isValidProgress;
 exports.isValidTodoItem = isValidTodoItem;
 exports.isValidDecision = isValidDecision;
 exports.isValidDiscovery = isValidDiscovery;
 exports.isValidState = isValidState;
+// Weights for heuristic calculation
+exports.USAGE_WEIGHTS = {
+    TOOL_CALL: 1,
+    FILE_READ: 2,
+    FILE_MODIFIED: 5,
+    DISCOVERY: 3,
+    DECISION: 2,
+    TODO: 1,
+};
+// Thresholds for load levels
+exports.LOAD_THRESHOLDS = {
+    LOW: 30,
+    MEDIUM: 60,
+    HIGH: 85,
+    CRITICAL: 100,
+};
 // Context size limits to prevent unbounded growth
 exports.CONTEXT_LIMITS = {
     MAX_DECISIONS: 20,
@@ -17,6 +33,16 @@ exports.CONTEXT_LIMITS = {
     MAX_ERRORS: 10,
     MAX_TOOL_CALLS: 10,
     MAX_TODOS: 30,
+};
+exports.DEFAULT_USAGE_METRICS = {
+    tool_calls: 0,
+    files_read: 0,
+    files_modified: 0,
+    discoveries_count: 0,
+    decisions_count: 0,
+    todos_count: 0,
+    session_start: "",
+    last_updated: "",
 };
 exports.DEFAULT_CONTEXT = {
     meta: {
@@ -45,7 +71,8 @@ exports.DEFAULT_CONTEXT = {
         recent_files: [],
         blockers: [],
         errors: []
-    }
+    },
+    usage: { ...exports.DEFAULT_USAGE_METRICS }
 };
 // Runtime validation helpers
 function isValidGoal(obj) {

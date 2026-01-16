@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "version": "2.0",
+    "saved_at": "2026-01-16T02:12:08.404Z",
+    "session_id": "",
+    "project": "",
+    "last_trigger": "auto_compact"
+  },
+  "goal": {
+    "original_request": "",
+    "current_objective": ""
+  },
+  "progress": {
+    "done": [],
+    "current": [],
+    "pending": []
+  },
+  "tasks": {
+    "todos": []
+  },
+  "decisions": [],
+  "discoveries": [],
+  "state": {
+    "recent_files": [],
+    "blockers": [],
+    "errors": []
+  },
+  "usage": {
+    "tool_calls": 0,
+    "files_read": 0,
+    "files_modified": 0,
+    "discoveries_count": 0,
+    "decisions_count": 0,
+    "todos_count": 0,
+    "session_start": "2026-01-16T02:12:08.403Z",
+    "last_updated": "2026-01-16T02:12:08.404Z"
+  }
+}

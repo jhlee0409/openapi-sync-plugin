@@ -1,6 +1,15 @@
 import * as fs from "fs";
 import * as path from "path";
-import { SessionContext, DEFAULT_CONTEXT, CONTEXT_LIMITS } from "./types.js";
+import {
+  SessionContext,
+  DEFAULT_CONTEXT,
+  CONTEXT_LIMITS,
+  UsageMetrics,
+  UsageStatus,
+  DEFAULT_USAGE_METRICS,
+  USAGE_WEIGHTS,
+  LOAD_THRESHOLDS,
+} from "./types.js";
 
 export class ContextManager {
   private contextPath: string;
@@ -134,6 +143,150 @@ export class ContextManager {
     }
 
     return result;
+  }
+
+  // ============ Usage Tracking Methods ============
+
+  /**
+   * Track a usage event (tool call, file read, etc.)
+   */
+  trackUsage(event: {
+    tool_calls?: number;
+    files_read?: number;
+    files_modified?: number;
+  }): UsageMetrics {
+    const current = this.load() || { ...DEFAULT_CONTEXT };
+    const now = new Date().toISOString();
+
+    if (!current.usage) {
+      current.usage = {
+        ...DEFAULT_USAGE_METRICS,
+        session_start: now,
+      };
+    }
+
+    // Update metrics
+    if (event.tool_calls) current.usage.tool_calls += event.tool_calls;
+    if (event.files_read) current.usage.files_read += event.files_read;
+    if (event.files_modified) current.usage.files_modified += event.files_modified;
+
+    // Sync counts from context
+    current.usage.discoveries_count = current.discoveries.length;
+    current.usage.decisions_count = current.decisions.length;
+    current.usage.todos_count = current.tasks?.todos?.length || 0;
+    current.usage.last_updated = now;
+
+    this.save(current);
+    return current.usage;
+  }
+
+  /**
+   * Calculate load score based on heuristics (0-100+)
+   */
+  calculateLoadScore(metrics: UsageMetrics): number {
+    return (
+      metrics.tool_calls * USAGE_WEIGHTS.TOOL_CALL +
+      metrics.files_read * USAGE_WEIGHTS.FILE_READ +
+      metrics.files_modified * USAGE_WEIGHTS.FILE_MODIFIED +
+      metrics.discoveries_count * USAGE_WEIGHTS.DISCOVERY +
+      metrics.decisions_count * USAGE_WEIGHTS.DECISION +
+      metrics.todos_count * USAGE_WEIGHTS.TODO
+    );
+  }
+
+  /**
+   * Get current usage status with recommendations
+   */
+  getUsageStatus(): UsageStatus {
+    const current = this.load();
+    const metrics = current?.usage || { ...DEFAULT_USAGE_METRICS };
+    const score = this.calculateLoadScore(metrics);
+
+    let estimated_load: UsageStatus["estimated_load"];
+    let recommendation: string;
+    let should_compact = false;
+
+    if (score < LOAD_THRESHOLDS.LOW) {
+      estimated_load = "low";
+      recommendation = "컨텍스트 여유 있음. 작업 계속 진행하세요.";
+    } else if (score < LOAD_THRESHOLDS.MEDIUM) {
+      estimated_load = "medium";
+      recommendation = "컨텍스트 사용량 보통. 주기적으로 sync_todos 권장.";
+    } else if (score < LOAD_THRESHOLDS.HIGH) {
+      estimated_load = "high";
+      recommendation = "⚠️ 컨텍스트 사용량 높음. save_session_context 후 /clear 고려하세요.";
+      should_compact = true;
+    } else {
+      estimated_load = "critical";
+      recommendation = "🚨 컨텍스트 임계치 도달! 즉시 save_session_context → /clear → load_session_context 권장.";
+      should_compact = true;
+    }
+
+    return {
+      metrics,
+      estimated_load,
+      load_score: score,
+      recommendation,
+      should_compact,
+    };
+  }
+
+  /**
+   * Compact the context - keep only essential recent data
+   */
+  compactContext(): SessionContext {
+    const current = this.load() || { ...DEFAULT_CONTEXT };
+
+    // Aggressive compaction
+    const compacted: SessionContext = {
+      ...current,
+      // Keep only last 3 decisions
+      decisions: current.decisions.slice(-3),
+      // Keep only last 5 discoveries
+      discoveries: current.discoveries.slice(-5),
+      progress: {
+        // Summarize done tasks
+        done: current.progress.done.length > 3
+          ? [`✓ ${current.progress.done.length}개 작업 완료`]
+          : current.progress.done,
+        current: current.progress.current,
+        pending: current.progress.pending,
+      },
+      state: {
+        ...current.state,
+        recent_files: current.state.recent_files.slice(-5),
+        blockers: current.state.blockers.slice(-3),
+        errors: [], // Clear errors on compact
+        last_tool_calls: current.state.last_tool_calls?.slice(-3),
+      },
+      // Reset usage metrics
+      usage: {
+        ...DEFAULT_USAGE_METRICS,
+        session_start: new Date().toISOString(),
+        last_updated: new Date().toISOString(),
+      },
+    };
+
+    compacted.meta.last_trigger = "auto_compact";
+    this.save(compacted);
+    return compacted;
+  }
+
+  /**
+   * Reset usage tracking (e.g., after manual /clear)
+   */
+  resetUsage(): UsageMetrics {
+    const current = this.load() || { ...DEFAULT_CONTEXT };
+    const now = new Date().toISOString();
+
+    current.usage = {
+      ...DEFAULT_USAGE_METRICS,
+      session_start: now,
+      last_updated: now,
+    };
+
+    this.save(current);
+    return current.usage;
   }
 
   formatForDisplay(context: SessionContext): string {

@@ -13,6 +13,7 @@ import {
   DEFAULT_CONTEXT,
   TodoItem,
   CONTEXT_LIMITS,
+  LOAD_THRESHOLDS,
   isValidGoal,
   isValidProgress,
   isValidDecision,
@@ -228,6 +229,61 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "If true, returns instructions to call TodoWrite with the saved todos",
             },
           },
+        },
+      },
+      // ============ Heuristic Usage Tracking Tools ============
+      {
+        name: "track_usage",
+        description:
+          "Track usage metrics to estimate context load. Call this after significant operations (tool calls, file reads/writes). This enables proactive context management before compaction occurs.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            tool_calls: {
+              type: "number",
+              description: "Number of tool calls made (default: 1)",
+            },
+            files_read: {
+              type: "number",
+              description: "Number of files read",
+            },
+            files_modified: {
+              type: "number",
+              description: "Number of files modified/written",
+            },
+          },
+        },
+      },
+      {
+        name: "get_usage_status",
+        description:
+          "Get current usage status with load estimation and recommendations. Returns whether context compaction is recommended based on heuristic analysis.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+      {
+        name: "auto_compact",
+        description:
+          "Automatically compact the session context to reduce size while preserving essential information. Use when usage status indicates high load. This is a lightweight alternative to full save/clear/load cycle.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            force: {
+              type: "boolean",
+              description: "Force compaction even if load is not high (default: false)",
+            },
+          },
+        },
+      },
+      {
+        name: "reset_usage",
+        description:
+          "Reset usage tracking metrics. Call this after a manual /clear to start fresh tracking.",
+        inputSchema: {
+          type: "object",
+          properties: {},
         },
       },
     ],
@@ -563,6 +619,115 @@ Call TodoWrite with the todos array above to restore your task list and continue
       };
     }
 
+    // ============ Heuristic Usage Tracking Handlers ============
+    case "track_usage": {
+      const metrics = contextManager.trackUsage({
+        tool_calls: (args?.tool_calls as number) || 1,
+        files_read: args?.files_read as number,
+        files_modified: args?.files_modified as number,
+      });
+
+      const status = contextManager.getUsageStatus();
+
+      // Return concise status with warning if needed
+      let response = `📊 Usage tracked (score: ${status.load_score}/${LOAD_THRESHOLDS.CRITICAL})`;
+
+      if (status.should_compact) {
+        response += `\n${status.recommendation}`;
+      }
+
+      return {
+        content: [{ type: "text", text: response }],
+      };
+    }
+
+    case "get_usage_status": {
+      const status = contextManager.getUsageStatus();
+
+      const loadBar = (score: number): string => {
+        const filled = Math.min(Math.floor(score / 10), 10);
+        const empty = 10 - filled;
+        return "█".repeat(filled) + "░".repeat(empty);
+      };
+
+      const output = `## 📊 Context Usage Status
+
+### Load: ${status.estimated_load.toUpperCase()} [${loadBar(status.load_score)}] ${status.load_score}/${LOAD_THRESHOLDS.CRITICAL}
+
+### Metrics
+- Tool calls: ${status.metrics.tool_calls}
+- Files read: ${status.metrics.files_read}
+- Files modified: ${status.metrics.files_modified}
+- Discoveries: ${status.metrics.discoveries_count}
+- Decisions: ${status.metrics.decisions_count}
+- Todos: ${status.metrics.todos_count}
+
+### Tracking Since
+${status.metrics.session_start || "Not started"}
+
+### Recommendation
+${status.recommendation}
+
+${status.should_compact ? "⚡ **Action Required**: Context compaction recommended" : "✅ Context healthy"}`;
+
+      return {
+        content: [{ type: "text", text: output }],
+      };
+    }
+
+    case "auto_compact": {
+      const force = args?.force as boolean;
+      const status = contextManager.getUsageStatus();
+
+      if (!force && !status.should_compact) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `컨텍스트 상태 양호 (score: ${status.load_score}). 압축 불필요.\n강제 압축하려면 force: true 사용.`,
+            },
+          ],
+        };
+      }
+
+      const beforeScore = status.load_score;
+      const compacted = contextManager.compactContext();
+      const afterStatus = contextManager.getUsageStatus();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `✅ Context Compacted
+
+**Before**: ${beforeScore} → **After**: ${afterStatus.load_score}
+
+### Retained
+- Decisions: ${compacted.decisions.length}
+- Discoveries: ${compacted.discoveries.length}
+- Todos: ${compacted.tasks?.todos?.length || 0}
+- Current tasks: ${compacted.progress.current.length}
+- Pending tasks: ${compacted.progress.pending.length}
+
+Usage metrics reset. Continue working with lighter context.`,
+          },
+        ],
+      };
+    }
+
+    case "reset_usage": {
+      const metrics = contextManager.resetUsage();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `🔄 Usage tracking reset at ${metrics.session_start}`,
+          },
+        ],
+      };
+    }
+
     default:
       return {
         content: [
@@ -592,6 +757,12 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
         description: "A markdown summary of the current session context",
         mimeType: "text/markdown",
       },
+      {
+        uri: "session-context://usage",
+        name: "Usage Status",
+        description: "Current context usage metrics and load status",
+        mimeType: "application/json",
+      },
     ],
   };
 });
@@ -619,6 +790,19 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
           uri,
           mimeType: "text/markdown",
           text: context ? contextManager.formatForDisplay(context) : "No session context available.",
+        },
+      ],
+    };
+  }
+
+  if (uri === "session-context://usage") {
+    const status = contextManager.getUsageStatus();
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(status, null, 2),
         },
       ],
     };

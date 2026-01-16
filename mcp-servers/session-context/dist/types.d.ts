@@ -39,6 +39,37 @@ export interface SessionContextState {
     errors: string[];
     last_tool_calls?: string[];
 }
+export interface UsageMetrics {
+    tool_calls: number;
+    files_read: number;
+    files_modified: number;
+    discoveries_count: number;
+    decisions_count: number;
+    todos_count: number;
+    session_start: string;
+    last_updated: string;
+}
+export interface UsageStatus {
+    metrics: UsageMetrics;
+    estimated_load: "low" | "medium" | "high" | "critical";
+    load_score: number;
+    recommendation: string;
+    should_compact: boolean;
+}
+export declare const USAGE_WEIGHTS: {
+    TOOL_CALL: number;
+    FILE_READ: number;
+    FILE_MODIFIED: number;
+    DISCOVERY: number;
+    DECISION: number;
+    TODO: number;
+};
+export declare const LOAD_THRESHOLDS: {
+    LOW: number;
+    MEDIUM: number;
+    HIGH: number;
+    CRITICAL: number;
+};
 export interface SessionContext {
     meta: SessionContextMeta;
     goal: SessionContextGoal;
@@ -47,6 +78,7 @@ export interface SessionContext {
     decisions: SessionContextDecision[];
     discoveries: SessionContextDiscovery[];
     state: SessionContextState;
+    usage?: UsageMetrics;
 }
 export declare const CONTEXT_LIMITS: {
     MAX_DECISIONS: number;
@@ -58,6 +90,7 @@ export declare const CONTEXT_LIMITS: {
     MAX_TOOL_CALLS: number;
     MAX_TODOS: number;
 };
+export declare const DEFAULT_USAGE_METRICS: UsageMetrics;
 export declare const DEFAULT_CONTEXT: SessionContext;
 export declare function isValidGoal(obj: unknown): obj is SessionContextGoal;
 export declare function isValidProgress(obj: unknown): obj is SessionContextProgress;
