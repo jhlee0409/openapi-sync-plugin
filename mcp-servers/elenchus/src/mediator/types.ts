@@ -1,5 +1,5 @@
 /**
- * Mediator Types - 코드 관계 분석 및 중재 로직
+ * Mediator Types - Code relationship analysis and mediation logic
  */
 
 // =============================================================================
@@ -33,7 +33,7 @@ export interface FunctionInfo {
   name: string;
   line: number;
   endLine: number;
-  calls: string[];          // 호출하는 다른 함수들
+  calls: string[];          // Other functions called
   isAsync: boolean;
   isExported: boolean;
   parameters: string[];
@@ -70,7 +70,7 @@ export interface VerificationCoverage {
   totalFiles: number;
   verifiedFiles: Set<string>;
   partiallyVerified: Map<string, CoverageDetail>;
-  unverifiedCritical: string[];   // 중요하지만 검증 안된 파일
+  unverifiedCritical: string[];   // Critical files not yet verified
 }
 
 export interface CoverageDetail {
@@ -78,7 +78,7 @@ export interface CoverageDetail {
   functionsTotal: number;
   functionsVerified: string[];
   linesTotal: number;
-  linesMentioned: number[];       // 검증 출력에서 언급된 라인들
+  linesMentioned: number[];       // Lines mentioned in verification output
   lastVerifiedRound: number;
 }
 
@@ -87,14 +87,14 @@ export interface CoverageDetail {
 // =============================================================================
 
 export type ActiveInterventionType =
-  | 'MISSED_DEPENDENCY'      // 관련 코드 누락
-  | 'INCOMPLETE_COVERAGE'    // 중요 섹션 미검증
-  | 'SIDE_EFFECT_WARNING'    // 사이드 이펙트 가능성
-  | 'RIPPLE_EFFECT'          // 변경 영향 범위
-  | 'CONTEXT_CORRECTION'     // 검증자 이해 오류
-  | 'SCOPE_DRIFT'            // 범위 이탈
-  | 'CIRCULAR_DEPENDENCY'    // 순환 의존성 발견
-  | 'CRITICAL_PATH_IGNORED'; // 중요 경로 무시
+  | 'MISSED_DEPENDENCY'      // Related code not reviewed
+  | 'INCOMPLETE_COVERAGE'    // Critical section not verified
+  | 'SIDE_EFFECT_WARNING'    // Potential side effects
+  | 'RIPPLE_EFFECT'          // Change impact scope
+  | 'CONTEXT_CORRECTION'     // Verifier misunderstanding
+  | 'SCOPE_DRIFT'            // Scope deviation
+  | 'CIRCULAR_DEPENDENCY'    // Circular dependency detected
+  | 'CRITICAL_PATH_IGNORED'; // Critical path ignored
 
 export interface ActiveIntervention {
   type: ActiveInterventionType;
@@ -102,7 +102,7 @@ export interface ActiveIntervention {
   reason: string;
   action: string;
 
-  // 구체적 정보
+  // Specific details
   affectedFiles?: string[];
   missedCode?: MissedCodeInfo[];
   suggestedChecks?: string[];
@@ -113,7 +113,7 @@ export interface MissedCodeInfo {
   file: string;
   functions?: string[];
   lines?: number[];
-  reason: string;           // 왜 이 코드를 봐야 하는지
+  reason: string;           // Why this code should be reviewed
   importance: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
@@ -125,7 +125,7 @@ export interface RippleEffect {
   changedFile: string;
   changedFunction?: string;
   affectedFiles: AffectedFile[];
-  depth: number;              // 영향 깊이 (1=직접, 2=간접...)
+  depth: number;              // Impact depth (1=direct, 2=indirect...)
   totalAffected: number;
 }
 
@@ -147,6 +147,6 @@ export interface MediatorState {
   coverage: VerificationCoverage;
   interventions: ActiveIntervention[];
   mentionedLocations: Map<string, Set<number>>;  // file -> mentioned lines
-  verifierFocus: string[];      // 검증자가 집중하고 있는 파일들
-  ignoredWarnings: string[];    // 무시된 경고들
+  verifierFocus: string[];      // Files the verifier is focusing on
+  ignoredWarnings: string[];    // Ignored warnings
 }

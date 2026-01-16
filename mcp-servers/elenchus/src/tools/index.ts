@@ -23,7 +23,8 @@ import {
   rollbackToCheckpoint,
   checkConvergence,
   getIssuesSummary,
-  listSessions
+  listSessions,
+  deleteSessionFromCache  // [FIX: REL-02]
 } from '../state/session.js';
 import {
   initializeContext,
@@ -36,7 +37,8 @@ import {
   analyzeRoundAndIntervene,
   analyzeRippleEffect,
   getMediatorSummary,
-  getMediatorState
+  getMediatorState,
+  deleteMediatorState  // [FIX: REL-02]
 } from '../mediator/index.js';
 import { ActiveIntervention } from '../mediator/types.js';
 import {
@@ -47,7 +49,8 @@ import {
   getRoleDefinition,
   getComplianceHistory,
   getRoleEnforcementSummary,
-  updateRoleConfig
+  updateRoleConfig,
+  deleteRoleState  // [FIX: REL-02]
 } from '../roles/index.js';
 import { RoleComplianceResult, VerifierRole } from '../roles/types.js';
 
@@ -119,13 +122,13 @@ export async function startSession(
 
   const updatedSession = await getSession(session.id);
 
-  // Initialize Mediator (중재자)
+  // Initialize Mediator
   const files = updatedSession
     ? Array.from(updatedSession.context.files.keys())
     : [];
   const mediatorState = await initializeMediator(session.id, files, args.workingDir);
 
-  // Initialize Role Enforcement (역할 강제)
+  // Initialize Role Enforcement
   const roleState = initializeRoleEnforcement(session.id);
   const verifierPrompt = getRolePrompt('verifier');
 
@@ -143,7 +146,7 @@ export async function startSession(
       graphEdges: mediatorState.graph.edges.length,
       criticalFiles: mediatorState.coverage.unverifiedCritical.length
     },
-    // 🆕 역할 강제 정보
+    // Role enforcement info
     roles: {
       initialized: true,
       expectedRole: roleState.currentExpectedRole,
@@ -193,7 +196,7 @@ export async function submitRound(
   const session = await getSession(args.sessionId);
   if (!session) return null;
 
-  // 🆕 역할 준수 검증 (Role Compliance Check)
+  // Role Compliance Check
   const roleCompliance = validateRoleCompliance(
     args.sessionId,
     args.role as VerifierRole,
@@ -250,10 +253,10 @@ export async function submitRound(
     newFilesDiscovered: newFiles
   });
 
-  // Check for basic arbiter intervention (기존 로직)
+  // Check for basic arbiter intervention
   const intervention = checkForIntervention(session, args.output, newFiles);
 
-  // 🆕 중재자 개입 분석 (Mediator Active Intervention)
+  // Mediator Active Intervention analysis
   const mediatorInterventions = analyzeRoundAndIntervene(
     session,
     args.output,
@@ -292,12 +295,12 @@ export async function submitRound(
     convergence,
     intervention,
     nextRole,
-    // 🆕 중재자 개입 결과
+    // Mediator intervention results
     mediatorInterventions: mediatorInterventions.length > 0 ? mediatorInterventions : undefined,
-    // 🆕 역할 준수 결과
+    // Role compliance results
     roleCompliance: {
       ...roleCompliance,
-      // 다음 역할 안내 추가
+      // Add next role guidance
       nextRoleGuidelines: nextRolePrompt ? {
         role: nextRole,
         mustDo: getRoleDefinition(nextRole as VerifierRole).mustDo.slice(0, 3),
@@ -367,7 +370,7 @@ export async function endSession(
 
   await updateSessionStatus(session.id, 'converged');
 
-  return {
+  const result = {
     sessionId: session.id,
     verdict: args.verdict,
     summary: {
@@ -378,6 +381,13 @@ export async function endSession(
       issuesBySeverity: getIssuesSummary(session).bySeverity
     }
   };
+
+  // [FIX: REL-02] Clean up memory caches to prevent memory leaks
+  deleteSessionFromCache(session.id);
+  deleteMediatorState(session.id);
+  deleteRoleState(session.id);
+
+  return result;
 }
 
 /**
@@ -402,7 +412,7 @@ export const MediatorSummarySchema = z.object({
 });
 
 /**
- * Analyze ripple effect of a change (리플 이펙트 분석)
+ * Analyze ripple effect of a change
  */
 export async function rippleEffect(
   args: z.infer<typeof RippleEffectSchema>
@@ -426,7 +436,7 @@ export async function rippleEffect(
 }
 
 /**
- * Get mediator summary (중재자 상태 요약)
+ * Get mediator summary
  */
 export async function mediatorSummary(
   args: z.infer<typeof MediatorSummarySchema>
@@ -435,7 +445,7 @@ export async function mediatorSummary(
 }
 
 // =============================================================================
-// New Role Enforcement Tools (역할 강제 도구)
+// New Role Enforcement Tools
 // =============================================================================
 
 export const GetRolePromptSchema = z.object({
@@ -454,7 +464,7 @@ export const UpdateRoleConfigSchema = z.object({
 });
 
 /**
- * Get role prompt and guidelines (역할 프롬프트 가져오기)
+ * Get role prompt and guidelines
  */
 export async function getRolePromptTool(
   args: z.infer<typeof GetRolePromptSchema>
@@ -477,7 +487,7 @@ export async function getRolePromptTool(
 }
 
 /**
- * Get role enforcement summary (역할 강제 요약)
+ * Get role enforcement summary
  */
 export async function roleSummary(
   args: z.infer<typeof RoleSummarySchema>
@@ -486,7 +496,7 @@ export async function roleSummary(
 }
 
 /**
- * Update role enforcement config (역할 강제 설정 변경)
+ * Update role enforcement config
  */
 export async function updateRoleConfigTool(
   args: z.infer<typeof UpdateRoleConfigSchema>
@@ -602,7 +612,7 @@ export const tools = {
     schema: EndSessionSchema,
     handler: endSession
   },
-  // 🆕 중재자 도구들
+  // Mediator tools
   elenchus_ripple_effect: {
     description: 'Analyze ripple effect of a code change. Shows which files and functions will be affected by modifying a specific file.',
     schema: RippleEffectSchema,
@@ -613,7 +623,7 @@ export const tools = {
     schema: MediatorSummarySchema,
     handler: mediatorSummary
   },
-  // 🆕 역할 강제 도구들
+  // Role enforcement tools
   elenchus_get_role_prompt: {
     description: 'Get detailed role prompt and guidelines for Verifier or Critic. Includes mustDo/mustNotDo rules, output templates, and checklists.',
     schema: GetRolePromptSchema,

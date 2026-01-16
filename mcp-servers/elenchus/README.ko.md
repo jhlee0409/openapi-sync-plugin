@@ -6,23 +6,32 @@ Verifier↔Critic 루프를 통한 적대적 코드 검증.
 
 > **Elenchus** (ἔλεγχος): 질문을 통한 논박의 소크라테스 방법론.
 
+## 지원 클라이언트
+
+MCP 호환 클라이언트에서 사용 가능:
+
+| 클라이언트 | 상태 | 비고 |
+|-----------|------|------|
+| Claude Code (CLI) | ✅ 테스트됨 | 주요 개발 타겟 |
+| Claude Desktop | ✅ 지원 | 전체 기능 사용 가능 |
+| VS Code (Copilot) | ✅ 지원 | v1.102+ 필요 |
+| Cursor | ✅ 지원 | 40개 도구 제한 있음 |
+| 기타 MCP 클라이언트 | ✅ 호환 | stdio 기반 MCP 클라이언트 |
+
 ## 빠른 시작
 
 ```bash
-# 1. 설치
-npm install -g @jhlee0409/elenchus-mcp
+# 1. 전역 설치 및 등록 (한 줄)
+claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
 
-# 2. ~/.claude.json에 추가
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
+# 2. Claude Code 재시작 후 사용
+/elenchus:verify (MCP)
 
-# 3. Claude Code에서 사용 (자연어)
+# 또는 자연어로
 "src/auth 보안 이슈 검증해줘"
-"이 코드 버그 확인해줘"
 ```
+
+> **참고:** `-s user` 플래그로 모든 프로젝트에서 elenchus를 사용할 수 있습니다. 없으면 현재 디렉토리에서만 적용됩니다.
 
 ## 작동 방식
 
@@ -37,21 +46,32 @@ Claude: (elenchus_start_session, elenchus_submit_round 등 호출)
 
 ## 설치
 
-### 옵션 1: npm (권장)
+### Claude Code (CLI)
+
+**옵션 1: 한 줄 명령 (권장)**
+
+```bash
+claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
+```
+
+> **참고:** `-s user`는 모든 프로젝트에서 사용 가능하게 합니다. 없으면 현재 디렉토리에서만 적용.
+
+**옵션 2: 글로벌 설치 (더 빠른 시작)**
 
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
+claude mcp add elenchus -s user -- elenchus-mcp
 ```
 
-```json
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
+**확인:**
+```bash
+claude mcp list          # 등록된 서버 확인
+claude mcp get elenchus  # 상태 확인
 ```
 
-### 옵션 2: npx (글로벌 설치 없이)
+### Claude Desktop
+
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) 또는 `%APPDATA%\Claude\claude_desktop_config.json` (Windows) 편집:
 
 ```json
 {
@@ -64,43 +84,56 @@ npm install -g @jhlee0409/elenchus-mcp
 }
 ```
 
-### 옵션 3: 소스에서 빌드
+### VS Code (GitHub Copilot)
 
-```bash
-git clone https://github.com/jhlee0409/claude-plugins.git
-cd claude-plugins/mcp-servers/elenchus
-npm install && npm run build
-```
+`.vscode/mcp.json` (워크스페이스) 또는 User Settings (전역)에 추가:
 
 ```json
 {
-  "mcpServers": {
-    "elenchus": {
-      "command": "node",
-      "args": ["/path/to/mcp-servers/elenchus/dist/index.js"]
+  "mcp": {
+    "servers": {
+      "elenchus": {
+        "command": "npx",
+        "args": ["-y", "@jhlee0409/elenchus-mcp"]
+      }
     }
   }
 }
 ```
 
-## 파워 유저: + 플러그인
+> VS Code 1.102+ 필요
 
-명시적인 워크플로우 제어와 짧은 커맨드를 원한다면:
+### Cursor
 
+**Settings > MCP > Add new global MCP Server**에서 추가:
+
+```json
+{
+  "mcpServers": {
+    "elenchus": {
+      "command": "npx",
+      "args": ["-y", "@jhlee0409/elenchus-mcp"]
+    }
+  }
+}
 ```
-# Claude Code에서
-/install-plugin elenchus@jhlee0409-plugins
-```
 
-| 플러그인 없이 | 플러그인 포함 |
-|--------------|--------------|
-| 자연어 요청 | `/elenchus:verify src/auth` |
-| Claude가 워크플로우 결정 | 명시적 워크플로우 제어 |
-| 간단한 검증에 적합 | 26개 기준 전체 검증 |
+> 참고: Cursor는 전체 MCP 서버에 걸쳐 40개 도구 제한이 있습니다.
+
+### 소스에서 빌드 (개발용)
+
+```bash
+git clone https://github.com/jhlee0409/claude-plugins.git
+cd claude-plugins/mcp-servers/elenchus
+npm install && npm run build
+
+# 클라이언트에 추가:
+# command: "node", args: ["/path/to/dist/index.js"]
+```
 
 ## MCP 프롬프트 (슬래시 커맨드)
 
-MCP 서버는 명시적 워크플로우를 위한 프롬프트도 제공합니다:
+명시적 워크플로우 제어를 위한 MCP 프롬프트:
 
 | 커맨드 | 설명 |
 |--------|------|
@@ -192,6 +225,85 @@ MCP 서버는 명시적 워크플로우를 위한 프롬프트도 제공합니�
 }
 ```
 
+### elenchus_ripple_effect
+
+코드 변경 영향 분석.
+
+```typescript
+{
+  sessionId: string,
+  changedFile: string,     // 변경될 파일
+  changedFunction?: string // 특정 함수 (선택)
+}
+```
+
+### elenchus_mediator_summary
+
+중재자 분석 요약 조회.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+반환: 의존성 그래프 통계, 검증 커버리지, 개입 이력.
+
+### elenchus_get_role_prompt
+
+역할별 프롬프트 및 가이드라인 조회.
+
+```typescript
+{
+  role: 'verifier' | 'critic'
+}
+```
+
+반환: mustDo/mustNotDo 규칙, 출력 템플릿, 체크리스트.
+
+### elenchus_role_summary
+
+세션의 역할 강제 요약 조회.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+반환: 준수 이력, 평균 점수, 위반 사항, 다음 예상 역할.
+
+### elenchus_update_role_config
+
+역할 강제 설정 업데이트.
+
+```typescript
+{
+  sessionId: string,
+  strictMode?: boolean,        // 비준수 라운드 거부
+  minComplianceScore?: number, // 최소 점수 (0-100)
+  requireAlternation?: boolean // Verifier/Critic 교대 필수
+}
+```
+
+## MCP 리소스
+
+MCP 리소스 URI로 세션 데이터 접근:
+
+| URI | 설명 |
+|-----|------|
+| `elenchus://sessions/` | 모든 활성 세션 목록 |
+| `elenchus://sessions/{sessionId}` | 특정 세션 상세 정보 |
+
+**Claude에서 사용:**
+```
+# 활성 세션 목록
+Read elenchus://sessions/
+
+# 세션 상세 정보
+Read elenchus://sessions/2024-01-15_src-auth_abc123
+```
+
 ## 세션 저장소
 
 세션은 `~/.claude/elenchus/sessions/`에 저장됩니다:
@@ -204,7 +316,7 @@ MCP 서버는 명시적 워크플로우를 위한 프롬프트도 제공합니�
 
 ### 설계 결정: 글로벌 저장소
 
-세션은 플러그인 설치 범위와 관계없이 **항상 글로벌에 저장**됩니다.
+세션은 사용자 홈 디렉토리에 **항상 글로벌에 저장**됩니다.
 
 **이유:**
 - MCP 서버는 **stdio 기반, 상태 비저장** 아키텍처
@@ -265,6 +377,27 @@ Layer 1 (발견): 라운드 중 발견
 - `LOOP_BREAK`: 동일 이슈 반복 논쟁
 - `SOFT_CORRECT`: 범위 과잉 확장
 
+### 의존성 분석 (Mediator)
+
+서버가 의존성 그래프를 구축하고 분석합니다:
+
+**기능:**
+- Import/export 관계 추적
+- 순환 의존성 탐지
+- 파일 중요도 점수 (참조 수 기반)
+- 코드 변경 ripple effect 분석
+
+**`elenchus_ripple_effect`로 분석:**
+```typescript
+// 예시: auth.ts를 변경하면 어떤 파일이 영향받나?
+elenchus_ripple_effect({
+  sessionId: "...",
+  changedFile: "src/auth/auth.ts",
+  changedFunction: "validateToken"  // 선택
+})
+// 반환: 영향받는 파일 목록과 의존성 경로
+```
+
 ### 수렴 감지
 
 ```typescript
@@ -273,6 +406,31 @@ isConverged =
   roundsWithoutNewIssues >= 2 &&
   currentRound >= 2
 ```
+
+### 역할 강제
+
+서버가 엄격한 Verifier↔Critic 교대를 강제합니다:
+
+```
+Round 1: Verifier (항상 시작)
+Round 2: Critic
+Round 3: Verifier
+...
+```
+
+**준수 검증:**
+- 역할 교대 강제
+- 필수 요소 검사 (이슈 형식, 증거)
+- 준수 점수 계산 (기본 100, 오류당 -20, 경고당 -5)
+
+**역할별 규칙:**
+
+| 역할 | 필수 | 금지 |
+|------|------|------|
+| Verifier | 모든 주장에 증거, file:line 위치 | 카테고리 건너뛰기, 모호한 "괜찮음" |
+| Critic | 모든 이슈 검증, 커버리지 확인 | 증거 없이 수용, 새 이슈 추가 |
+
+상세 가이드라인은 `elenchus_get_role_prompt`로 조회하세요.
 
 ## 개발
 

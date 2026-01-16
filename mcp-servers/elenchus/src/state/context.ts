@@ -205,7 +205,11 @@ async function addFileToContext(
 
     context.files.set(filePath, fileContext);
     return true;
-  } catch {
+  } catch (error) {
+    // [FIX: REL-01] Log unexpected errors (not ENOENT)
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      console.error(`[Elenchus] Failed to add file to context: ${filePath}`, error);
+    }
     return false;
   }
 }

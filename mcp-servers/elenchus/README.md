@@ -6,23 +6,32 @@ Adversarial code verification with Verifier↔Critic loop.
 
 > **Elenchus** (ἔλεγχος): Socrates' method of refutation through questioning.
 
+## Supported Clients
+
+Works with any MCP-compatible client:
+
+| Client | Status | Notes |
+|--------|--------|-------|
+| Claude Code (CLI) | ✅ Tested | Primary development target |
+| Claude Desktop | ✅ Supported | Full functionality |
+| VS Code (Copilot) | ✅ Supported | Requires v1.102+ |
+| Cursor | ✅ Supported | 40 tool limit applies |
+| Other MCP Clients | ✅ Compatible | Any stdio-based MCP client |
+
 ## Quick Start
 
 ```bash
-# 1. Install
-npm install -g @jhlee0409/elenchus-mcp
+# 1. Install and register globally (one command)
+claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
 
-# 2. Add to ~/.claude.json
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
+# 2. Restart Claude Code, then use
+/elenchus:verify (MCP)
 
-# 3. Use in Claude Code (natural language)
+# Or natural language
 "Please verify src/auth for security issues"
-"Check this code for bugs"
 ```
+
+> **Note:** The `-s user` flag makes elenchus available in all your projects. Without it, installation only applies to the current directory.
 
 ## How It Works
 
@@ -37,21 +46,32 @@ No slash commands needed for basic usage.
 
 ## Installation
 
-### Option 1: npm (Recommended)
+### Claude Code (CLI)
+
+**Option 1: One command (Recommended)**
+
+```bash
+claude mcp add elenchus -s user -- npx -y @jhlee0409/elenchus-mcp
+```
+
+> **Note:** `-s user` makes it available in all projects. Without it, only current directory.
+
+**Option 2: Global install (faster startup)**
 
 ```bash
 npm install -g @jhlee0409/elenchus-mcp
+claude mcp add elenchus -s user -- elenchus-mcp
 ```
 
-```json
-{
-  "mcpServers": {
-    "elenchus": { "command": "elenchus-mcp" }
-  }
-}
+**Verify:**
+```bash
+claude mcp list          # Check registered servers
+claude mcp get elenchus  # Check status
 ```
 
-### Option 2: npx (No global install)
+### Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -64,43 +84,56 @@ npm install -g @jhlee0409/elenchus-mcp
 }
 ```
 
-### Option 3: From source
+### VS Code (GitHub Copilot)
 
-```bash
-git clone https://github.com/jhlee0409/claude-plugins.git
-cd claude-plugins/mcp-servers/elenchus
-npm install && npm run build
-```
+Add to `.vscode/mcp.json` (workspace) or User Settings (global):
 
 ```json
 {
-  "mcpServers": {
-    "elenchus": {
-      "command": "node",
-      "args": ["/path/to/mcp-servers/elenchus/dist/index.js"]
+  "mcp": {
+    "servers": {
+      "elenchus": {
+        "command": "npx",
+        "args": ["-y", "@jhlee0409/elenchus-mcp"]
+      }
     }
   }
 }
 ```
 
-## For Power Users: + Plugin
+> Requires VS Code 1.102+
 
-Want explicit workflow control with short commands?
+### Cursor
 
+Go to **Settings > MCP > Add new global MCP Server**, then add:
+
+```json
+{
+  "mcpServers": {
+    "elenchus": {
+      "command": "npx",
+      "args": ["-y", "@jhlee0409/elenchus-mcp"]
+    }
+  }
+}
 ```
-# In Claude Code
-/install-plugin elenchus@jhlee0409-plugins
-```
 
-| Without Plugin | With Plugin |
-|----------------|-------------|
-| Natural language requests | `/elenchus:verify src/auth` |
-| Claude decides workflow | Explicit workflow control |
-| Good for simple checks | Full 26-criteria verification |
+> Note: Cursor has a 40 tool limit across all MCP servers.
+
+### From Source (Development)
+
+```bash
+git clone https://github.com/jhlee0409/claude-plugins.git
+cd claude-plugins/mcp-servers/elenchus
+npm install && npm run build
+
+# Then add to your client with:
+# command: "node", args: ["/path/to/dist/index.js"]
+```
 
 ## MCP Prompts (Slash Commands)
 
-MCP server also provides prompts for explicit workflow:
+For explicit workflow control, use MCP prompts:
 
 | Command | Description |
 |---------|-------------|
@@ -192,6 +225,85 @@ End session and record final verdict.
 }
 ```
 
+### elenchus_ripple_effect
+
+Analyze impact of code changes.
+
+```typescript
+{
+  sessionId: string,
+  changedFile: string,     // File that will be changed
+  changedFunction?: string // Specific function (optional)
+}
+```
+
+### elenchus_mediator_summary
+
+Get mediator analysis summary.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+Returns: dependency graph stats, verification coverage, intervention history.
+
+### elenchus_get_role_prompt
+
+Get role-specific prompt and guidelines.
+
+```typescript
+{
+  role: 'verifier' | 'critic'
+}
+```
+
+Returns: mustDo/mustNotDo rules, output templates, checklists.
+
+### elenchus_role_summary
+
+Get role enforcement summary for session.
+
+```typescript
+{
+  sessionId: string
+}
+```
+
+Returns: compliance history, average scores, violations, expected next role.
+
+### elenchus_update_role_config
+
+Update role enforcement configuration.
+
+```typescript
+{
+  sessionId: string,
+  strictMode?: boolean,        // Reject non-compliant rounds
+  minComplianceScore?: number, // Minimum score (0-100)
+  requireAlternation?: boolean // Require verifier/critic alternation
+}
+```
+
+## MCP Resources
+
+Access session data via MCP resource URIs:
+
+| URI | Description |
+|-----|-------------|
+| `elenchus://sessions/` | List all active sessions |
+| `elenchus://sessions/{sessionId}` | Get specific session details |
+
+**Usage in Claude:**
+```
+# List active sessions
+Read elenchus://sessions/
+
+# Get session details
+Read elenchus://sessions/2024-01-15_src-auth_abc123
+```
+
 ## Session Storage
 
 Sessions are stored at `~/.claude/elenchus/sessions/`:
@@ -204,7 +316,7 @@ Sessions are stored at `~/.claude/elenchus/sessions/`:
 
 ### Design Decision: Global Storage
 
-Sessions are **always stored globally** regardless of plugin installation scope.
+Sessions are **always stored globally** in the user's home directory.
 
 **Reason:**
 - MCP server is **stdio-based, stateless** architecture
@@ -265,6 +377,27 @@ Server auto-detects and intervenes:
 - `LOOP_BREAK`: Same issue repeatedly argued
 - `SOFT_CORRECT`: Scope over-expansion
 
+### Dependency Analysis (Mediator)
+
+Server builds and analyzes dependency graph:
+
+**Features:**
+- Import/export relationship tracking
+- Circular dependency detection
+- File importance scoring (based on dependents count)
+- Ripple effect analysis for code changes
+
+**Use `elenchus_ripple_effect` to analyze:**
+```typescript
+// Example: What files are affected if I change auth.ts?
+elenchus_ripple_effect({
+  sessionId: "...",
+  changedFile: "src/auth/auth.ts",
+  changedFunction: "validateToken"  // optional
+})
+// Returns: List of affected files with dependency paths
+```
+
 ### Convergence Detection
 
 ```typescript
@@ -273,6 +406,31 @@ isConverged =
   roundsWithoutNewIssues >= 2 &&
   currentRound >= 2
 ```
+
+### Role Enforcement
+
+Server enforces strict Verifier↔Critic alternation:
+
+```
+Round 1: Verifier (always starts)
+Round 2: Critic
+Round 3: Verifier
+...
+```
+
+**Compliance validation:**
+- Role alternation enforcement
+- Required elements check (issue format, evidence)
+- Compliance score calculation (100 base, -20 per error, -5 per warning)
+
+**Role-specific rules:**
+
+| Role | Must Do | Must Not Do |
+|------|---------|-------------|
+| Verifier | Evidence for all claims, file:line locations | Skip categories, vague "looks good" |
+| Critic | Validate all issues, check coverage | Accept without evidence, add new issues |
+
+Use `elenchus_get_role_prompt` to get detailed guidelines.
 
 ## Development
 

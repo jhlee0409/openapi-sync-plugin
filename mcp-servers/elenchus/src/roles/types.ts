@@ -1,5 +1,5 @@
 /**
- * Verifier Roles Types - 두 검증자 역할 정의
+ * Verifier Roles Types - Verifier and Critic role definitions
  */
 
 // =============================================================================

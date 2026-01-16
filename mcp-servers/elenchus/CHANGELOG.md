@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/mcp__elenchus__cross-verify` - Adversarial cross-verification
 
 #### Advanced Features
-- **Mediator (중재자)** - Active intervention for verification loops
+- **Mediator** - Active intervention for verification loops
   - Scope drift detection
   - Critical path monitoring
   - Infinite loop detection
