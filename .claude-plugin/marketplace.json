@@ -1,24 +1,21 @@
 {
-  "name": "jhlee0409-plugins",
+  "name": "local-plugins",
   "owner": {
     "name": "Jack Lee",
     "email": "jhlee0409@gmail.com"
   },
+  "metadata": {
+    "description": "Local development plugins",
+    "version": "1.0.0"
+  },
   "plugins": [
     {
       "name": "oas",
-      "source": "./plugins/oas",
-      "description": "Adaptive API code generator that learns your project patterns and syncs with OpenAPI specs"
+      "source": "./plugins/oas"
     },
     {
-      "name": "elenchus",
-      "source": "./plugins/elenchus",
-      "description": "Cross-verification loop - two agents debate until evidence-based consensus"
-    },
-    {
-      "name": "fsdarch",
-      "source": "./plugins/fsd-architect",
-      "description": "Feature-Sliced Design architecture assistant - analyze, validate, and scaffold FSD-compliant structures"
+      "name": "fsd-architect",
+      "source": "./plugins/fsd-architect"
     }
   ]
 }

@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "matcher": { "type": "auto" },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/save-context.sh"
+          }
+        ]
+      },
+      {
+        "matcher": { "type": "manual" },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/save-context.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": { "type": "compact" },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/load-context.sh"
+          }
+        ]
+      },
+      {
+        "matcher": { "type": "startup" },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/load-context.sh"
+          }
+        ]
+      },
+      {
+        "matcher": { "type": "resume" },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/scripts/load-context.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

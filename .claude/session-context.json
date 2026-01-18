@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "version": "2.0",
+    "saved_at": "2026-01-15T12:58:51Z",
+    "session_id": "test-123",
+    "project": "/Users/jack/client/claude-plugins",
+    "last_trigger": "manual"
+  },
+  "goal": {
+    "original_request": "Session Context System 구현",
+    "current_objective": "hooks와 스크립트 완성"
+  },
+  "progress": {
+    "done": [
+      "설계 문서 작성",
+      "save-context.sh 생성",
+      "load-context.sh 생성"
+    ],
+    "current": [
+      "hooks.json 설정"
+    ],
+    "pending": [
+      "테스트",
+      "문서화"
+    ]
+  },
+  "decisions": [
+    {
+      "what": "파일 기반 저장",
+      "why": "Hook에서 MCP 호출 불가"
+    }
+  ],
+  "discoveries": [
+    {
+      "file": "hooks docs",
+      "insight": "SessionStart stdout이 컨텍스트에 주입됨"
+    }
+  ],
+  "state": {
+    "recent_files": [
+      ".claude/scripts/save-context.sh",
+      ".claude/hooks.json"
+    ],
+    "blockers": [],
+    "errors": []
+  }
+}

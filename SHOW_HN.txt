@@ -1,0 +1,27 @@
+Show HN: openapi-sync – Sample-Based OpenAPI Code Generator
+
+I got tired of fighting with OpenAPI codegen tools. Orval, openapi-typescript-codegen - they all generate code in their own style. My project uses a custom Axios wrapper with React Query and FSD folder structure, but the generated code never matched. I spent more time tweaking configs than actually shipping features.
+
+So I built a Claude Code plugin that takes a different approach: instead of templates, it scans your codebase, learns the majority patterns (naming conventions, folder structure, HTTP client usage), and generates code that fits in.
+
+What it does:
+- Point it at your OpenAPI spec and your existing API files
+- It analyzes what patterns your codebase uses most
+- Generates new API code that matches
+
+  "Show me one API file, I'll generate 100 more like it"
+
+Usage:
+
+  /plugin install oas@jhlee0409-plugins
+  /oas:init https://api.example.com/openapi.json
+  /oas:sync
+
+It also does diff-based sync (only processes changed endpoints) and can lint your code against your own majority patterns, not external rules.
+
+All processing happens locally within Claude Code's context. No code is sent anywhere.
+
+Would love to hear if this approach makes sense, and what patterns I should add.
+
+GitHub: https://github.com/jhlee0409/claude-plugins
+Docs: https://github.com/jhlee0409/claude-plugins/tree/main/plugins/oas
