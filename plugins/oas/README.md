@@ -71,7 +71,8 @@ claude --plugin-dir /path/to/claude-plugins
 | Command | Description |
 |---------|-------------|
 | `/oas:init <url\|path>` | Initialize with OpenAPI spec, learn patterns |
-| `/oas:sync` | Generate/sync code based on OpenAPI spec |
+| `/oas:sync` | **Full synchronization** - handles NEW, RENAME, MODIFY, REMOVE |
+| `/oas:migrate` | Major version upgrade (v1→v2) with step-by-step review |
 | `/oas:status` | Quick status check using cache |
 | `/oas:diff` | Compare spec changes |
 | `/oas:validate` | Validate code matches spec |
@@ -117,28 +118,34 @@ Generated:
   ✓ src/entities/publisher/config/publisher-api-paths.ts
 ```
 
-### 3. Caching & Diff-Based Processing
+### 3. Full Synchronization
 
-Only processes changes to save tokens and time:
+`/oas:sync` handles **all change types** automatically:
 
 ```bash
 /oas:sync
 
-✓ No spec changes (cache hint)
-✓ Direct code-spec comparison complete
-✓ No changes needed
+═══════════════════════════════════════════════════════════════
+  OpenAPI Sync Plan
+  My API v1.0.0 → v1.1.0
+═══════════════════════════════════════════════════════════════
 
-# When changes exist
-/oas:sync
+📊 Summary: 6 changes detected
 
-Changes detected:
-  +2 added, ~1 modified, -0 removed
-  (148 unchanged - skipped)
+┌─────────────────────────────────────────────────────────────┐
+│ Type     │ Count │ Files Affected │ Auto │                 │
+├─────────────────────────────────────────────────────────────┤
+│ 🟢 NEW    │ 2     │ 8 (new)        │ ✅   │                 │
+│ 🔵 RENAME │ 1     │ 12             │ ✅   │ All usages!     │
+│ 🟠 MODIFY │ 2     │ 5              │ ✅   │                 │
+│ 🔴 REMOVE │ 1     │ 3              │ ❌   │ User decision   │
+└─────────────────────────────────────────────────────────────┘
 
-Generating...
-  ✓ POST /clips/{id}/render (new)
-  ✓ GET /clips/{id}/status (new)
-  ~ GET /users/{id} (updated: +preferences field)
+# Applies all changes including:
+# - Creates new endpoints/types
+# - Renames with automatic usage updates across entire project
+# - Modifies existing types
+# - Handles removed endpoints (user choice)
 ```
 
 ### 4. Project-Standard Consistency Checks
@@ -181,34 +188,42 @@ Initialize project and learn patterns.
 
 ### /oas:sync
 
-Generate or update code based on OpenAPI spec.
+**Full synchronization** - handles all change types (NEW, RENAME, MODIFY, REMOVE).
 
 ```bash
 # Basic
-/oas:sync                    # Default (Smart, 100% accuracy)
+/oas:sync                    # Full sync (default)
 /oas:sync --dry-run          # Preview only, no file changes
-/oas:sync --force            # Ignore cache, full regeneration
-/oas:sync --trust-cache      # Trust cache mode (faster, 99% accuracy)
+/oas:sync --force            # Ignore cache, force fetch
 /oas:sync --offline          # Use cached spec only (no network)
+
+# Scope control
+/oas:sync --only-new         # Create new endpoints only
+/oas:sync --only-changes     # RENAME + MODIFY only
+/oas:sync --only-renames     # Renames only
+/oas:sync --skip-remove      # Skip REMOVE handling
 
 # Filter by tag
 /oas:sync --tag=users        # Specific tag only
 /oas:sync --tag=users --tag=projects  # Multiple tags
-/oas:sync --exclude-tag=internal      # Exclude tag
 
 # Filter by endpoint
 /oas:sync --endpoint="/api/v1/users/{id}"
 /oas:sync --endpoint="/api/v1/clips/*"  # Wildcard
 
-# Filter by change type
-/oas:sync --only-added       # New endpoints only
-/oas:sync --only-changed     # Modified endpoints only
-
-# Filter by file type
-/oas:sync --only-types       # Types only
-/oas:sync --only-api         # API functions only
-/oas:sync --only-hooks       # Hooks only
+# Safety
+/oas:sync --keep-backup      # Keep backup after completion
+/oas:sync --no-verify        # Skip TypeScript verification
 ```
+
+**Change Types Handled:**
+| Type | Icon | Description |
+|------|------|-------------|
+| NEW | 🟢 | New endpoint/schema → auto-generated |
+| RENAME | 🔵 | Name change → all usages updated |
+| MAYBE_RENAME | 🟡 | Possible rename (score 0.5~0.8) → user confirmation |
+| MODIFY | 🟠 | Field change → type definitions updated |
+| REMOVE | 🔴 | Deleted from spec → user decision |
 
 ### /oas:diff
 
@@ -279,6 +294,49 @@ Deep analysis of detected patterns.
 /oas:analyze --domain=users  # Analyze specific domain only
 ```
 
+### /oas:migrate
+
+**Major version upgrade** (v1→v2) with phase-by-phase review and customization protection.
+
+```bash
+# Phase-by-phase migration (recommended for major upgrades)
+/oas:migrate                    # Interactive phase-based migration
+
+# Preview all changes
+/oas:migrate --dry-run          # See all phases without applying
+
+# All at once (when confident)
+/oas:migrate --all-at-once      # Skip phase confirmation
+
+# Specific phases
+/oas:migrate --types-only       # Phase 1: Types only
+/oas:migrate --api-only         # Phase 2: API functions only
+/oas:migrate --phase=1          # Specific phase number
+
+# Rollback support
+/oas:migrate --rollback         # Rollback last phase
+/oas:migrate --rollback-to=2    # Rollback to checkpoint 2
+/oas:migrate --rollback-all     # Undo entire migration
+```
+
+**Migration Phases:**
+| Phase | Content | Safety |
+|-------|---------|--------|
+| 1 | Types & Schemas | Safest |
+| 2 | API Functions | Medium |
+| 3 | Hooks & Features | Needs review |
+| 4 | Cleanup | Optional |
+
+**When to use `/oas:sync` vs `/oas:migrate`:**
+| Scenario | Command |
+|----------|---------|
+| Daily spec changes | `/oas:sync` |
+| Field added/removed | `/oas:sync` |
+| Name changes | `/oas:sync` |
+| **v1 → v2 upgrade** | `/oas:migrate` |
+| **50%+ endpoints changed** | `/oas:migrate` |
+| **10+ breaking changes** | `/oas:migrate` |
+
 ## Tag Filtering
 
 Filter operations by OpenAPI tags. Tags are extracted from the `tags` field in each endpoint.
@@ -339,43 +397,69 @@ Generated:
   └── model/billing-types.ts    (12 types)
 ```
 
-## Sync Modes
+## Sync Change Types
 
-| Mode | Command | Speed | Accuracy | Use Case |
-|------|---------|-------|----------|----------|
-| Smart (default) | `/oas:sync` | Fast* | 100% | Always recommended |
-| Trust Cache | `/oas:sync --trust-cache` | Fast | 99%* | Quick check needed |
-| Force | `/oas:sync --force` | Slow | 100% | Ignore cache, full regen |
+| Type | Icon | Auto | Description |
+|------|------|------|-------------|
+| NEW | 🟢 | ✅ | New endpoint/schema detected → generates new files |
+| RENAME | 🔵 | ✅ | operationId/schema renamed → updates all usages across project |
+| MAYBE_RENAME | 🟡 | ❓ | Possible rename (needs confirmation) → user decides: rename or split |
+| MODIFY | 🟠 | ✅ | Field added/removed/changed → updates type definitions |
+| REMOVE | 🔴 | ❌ | Endpoint removed from spec → user chooses: delete/keep/deprecate |
 
-*Smart mode: HEAD request to check changes, full fetch only when needed
+**Rename Detection Algorithm (Weighted Scoring):**
 
-*Trust Cache may miss changes if server ETag/Last-Modified errors or cache corrupted
+Compares removed + added items using weighted scoring:
+```
+totalScore =
+  pathScore * 0.15 +      // Path similarity (15%)
+  opIdScore * 0.25 +      // operationId similarity (25%)
+  schemaScore * 0.30 +    // Schema structure (30%)
+  fieldScore * 0.30;      // Field overlap (30%)
+
+if (totalScore >= 0.8) → RENAME (auto)
+if (totalScore >= 0.5) → MAYBE_RENAME (user confirmation)
+if (totalScore < 0.5)  → DELETE + ADD (separate items)
+```
 
 ## Interactive Selection
 
-When running `/oas:sync` without flags and changes are detected, Claude will show a preview and ask for confirmation before generating code:
+When running `/oas:sync`, Claude shows a sync plan and asks for confirmation:
 
 ```
-📊 Changes Detected:
+═══════════════════════════════════════════════════════════════════
+  OpenAPI Sync Plan
+  My API v1.0.0 → v1.1.0
+═══════════════════════════════════════════════════════════════════
 
-NEW (3):
-  1. POST /api/v1/clips/{id}/render (clips)
-  2. GET  /api/v1/clips/{id}/status (clips)
-  3. DELETE /api/v1/cache/{key} (cache)
+📊 Summary: 8 changes detected
 
-CHANGED (2):
-  4. GET /api/v1/users/{id} (users)
-  5. POST /api/v1/projects (projects)
+🟢 NEW: 2 endpoints
+  + POST /api/v1/clips/{id}/render
+  + GET /api/v1/clips/{id}/status
 
-Proceed with generation?
-(You can select specific items or proceed with all)
+🔵 RENAME: 1 item (12 usages)
+  ↻ getTaskStatus → getTask
+
+🟠 MODIFY: 4 type changes
+  ~ CreateProjectRequest: +workspaceId (required)
+  ~ UserResponse: status → enum type
+
+🔴 REMOVE: 1 endpoint (user decision needed)
+  - DELETE /api/v1/sessions/{id}
+
+Proceed with sync?
+  [A] Apply all (auto changes only, ask for REMOVE)
+  [S] Select specific changes
+  [P] Preview changes (dry-run)
+  [C] Cancel
 ```
 
 **Response Options:**
-- "Yes" or "Proceed" - Process all changes
-- "Only 1, 2" - Process specific numbered items
-- "Only clips" - Process by tag name
-- "Skip" or "No" - Cancel generation
+- `[A]` - Apply all auto changes, prompt for REMOVE items
+- `[S]` - Select specific changes to apply
+- `[P]` - Preview without applying
+- `[C]` - Cancel
 
 ## Breaking Changes Detection
 
@@ -404,7 +488,22 @@ Proceed with generation?
    → Remove usage code
 ```
 
-For detailed migration strategies and handling breaking changes, see [MIGRATION.md](./docs/MIGRATION.md).
+For major version upgrades (v1→v2), use `/oas:migrate` for phase-by-phase migration with rollback support.
+
+## Internal Skills
+
+These skills power the sync/migrate functionality:
+
+| Skill | Purpose |
+|-------|---------|
+| `cache-manager` | Fetch spec, compute diff with cached version |
+| `openapi-parser` | Parse OpenAPI/Swagger spec structure |
+| `pattern-detector` | Learn patterns from existing code samples |
+| `code-generator` | Generate new code matching project patterns |
+| `code-spec-mapper` | Build bidirectional code ↔ spec mapping |
+| `import-tracker` | Track import dependencies across project |
+| `refactoring-engine` | Rename with automatic usage updates |
+| `migration-applier` | Apply field/type changes atomically |
 
 ## Generated File Structures
 
@@ -517,8 +616,12 @@ The following shows what `/oas:init` generates after scanning your codebase.
 ## Cache Files
 
 ```
-.openapi-sync.cache.json  → Spec cache (hash, endpoints, schemas)
-.openapi-sync.state.json  → Implementation state (coverage, timestamps)
+.openapi-sync.json          → Main config (openapi source, samples, etc.)
+.openapi-sync.cache.json    → Spec cache (hash, endpoints, schemas)
+.openapi-sync.state.json    → Implementation state (coverage, timestamps)
+.openapi-sync.mapping.json  → Code-spec bidirectional mapping
+.oas-refactor-backup/       → Backup during sync refactoring
+.openapi-migrate-backup/    → Phase checkpoints during major migration
 ```
 
 ### Time Tracking Fields
