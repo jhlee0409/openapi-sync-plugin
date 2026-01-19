@@ -1,0 +1,54 @@
+[package]
+name = "oas-mcp"
+version = "1.0.0"
+edition = "2021"
+description = "MCP server for OpenAPI Sync - parse, validate, and generate code from OpenAPI specs"
+authors = ["Jack Lee <jhlee0409@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/jhlee0409/claude-plugins"
+keywords = ["mcp", "openapi", "swagger", "api", "code-generator"]
+categories = ["development-tools", "parsing"]
+
+[dependencies]
+# OpenAPI parsing
+openapiv3 = "2.0"
+oas3 = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# HTTP client for fetching remote specs
+reqwest = { version = "0.12", features = ["json"] }
+
+# Utilities
+thiserror = "2.0"
+anyhow = "1.0"
+sha2 = "0.10"
+hex = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1.0"
+glob = "0.3"
+handlebars = "6.0"
+
+# CLI
+clap = { version = "4.0", features = ["derive"] }
+
+# Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tempfile = "3.0"
+pretty_assertions = "1.0"
+
+[[bin]]
+name = "oas-mcp"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

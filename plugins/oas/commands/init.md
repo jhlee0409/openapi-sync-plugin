@@ -1,10 +1,14 @@
 ---
-description: Initialize OpenAPI sync - learns your project patterns automatically
+description: Initialize OpenAPI sync - auto-learns patterns OR scaffolds from best practice templates
 ---
 
 # OpenAPI Sync Initialization
 
-Initialize OpenAPI sync by learning your project's existing patterns. Works with ANY codebase.
+**One command for all scenarios:**
+- Have existing API code? → Auto-learns your patterns
+- Starting fresh? → Scaffolds from best practice templates
+
+Works with ANY codebase, ANY framework.
 
 ## Usage
 
@@ -59,20 +63,44 @@ If not, prompt for input before proceeding.
 ## Flow Overview
 
 ```
-┌───────────────────────────────────────────────────────┐
-│                      /oas:init                        │
-├───────────────────────────────────────────────────────┤
-│  1. Get OpenAPI spec location                         │
-│  2. Fetch & cache spec (cache-manager)                │
-│  3. Validate spec (openapi-parser)                    │
-│  4. Detect framework (package.json)                   │
-│  5. Find existing API code (sample discovery)         │
-│  6. Analyze samples OR ask user                       │
-│  7. Generate .openapi-sync.json                       │
-│  8. Security check (.gitignore)                       │
-│  9. Show summary                                      │
-└───────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                        /oas:init                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Get OpenAPI spec location                                │
+│  2. Fetch & cache spec (cache-manager)                       │
+│  3. Validate spec (openapi-parser)                           │
+│  4. Detect framework (package.json)                          │
+│  5. Find existing API code                                   │
+│          │                                                   │
+│          ├─ FOUND ──────────────────────────────────────┐    │
+│          │     │                                        │    │
+│          │     ▼                                        │    │
+│          │  6a. Analyze samples (pattern-detector)      │    │
+│          │     │                                        │    │
+│          │     ▼                                        │    │
+│          │  Use existing code as sample                 │    │
+│          │                                              │    │
+│          └─ NOT FOUND ──────────────────────────────┐   │    │
+│                │                                    │   │    │
+│                ▼                                    │   │    │
+│             6b. Select template (scaffold-templates)│   │    │
+│                │                                    │   │    │
+│                ▼                                    │   │    │
+│             Generate scaffold → becomes sample      │   │    │
+│                                                     │   │    │
+│          ◄──────────────────────────────────────────┴───┘    │
+│          │                                                   │
+│  7. Generate .openapi-sync.json (samples point to code)      │
+│  8. Security check (.gitignore)                              │
+│  9. Show summary                                             │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**Key insight:** Whether you have existing code or start fresh, the result is the same:
+- `.openapi-sync.json` with `samples` pointing to real code
+- `/oas:sync` uses these samples for future code generation
 
 ## Step 1: Get OpenAPI Spec Location
 
@@ -216,40 +244,88 @@ Generate code using these patterns?
 (Let me know if you'd like any changes)
 ```
 
-## Step 6b: Interactive Mode (if no samples)
+## Step 6b: Template Scaffold Mode (if no samples found)
 
-**Ask user for guidance:**
+**When no existing API code is found, offer best practice templates:**
 
 ```
-Q1: "Where should API code be generated?"
-    Options:
-    - src/api/{domain}/ (flat)
-    - src/features/{domain}/api/ (feature-based)
-    - src/entities/{domain}/api/ (FSD)
-    - Custom path
+🎨 No existing API code found. Let's set up a best practice structure!
 
-Q2: "Which HTTP client are you using?"
-    Options (based on package.json):
-    - Axios (detected)
-    - Fetch (native)
-    - Other
+Based on your stack (React + TypeScript + React Query), I recommend:
 
-Q3: "Are you using a data fetching library?"
-    Options (based on package.json):
-    - React Query (detected)
-    - SWR
-    - None
+┌─────────────────────────────────────────────────────────────┐
+│  1. react-query-fsd (Recommended)                           │
+│     Feature-Sliced Design with React Query v5               │
+│     ├── Separate types, api, hooks per domain               │
+│     ├── Query key factory pattern                           │
+│     └── Best for: Medium-large apps, team projects          │
+├─────────────────────────────────────────────────────────────┤
+│  2. react-query-flat                                        │
+│     Flat structure - all API code in src/api/               │
+│     └── Best for: Small apps, prototypes                    │
+├─────────────────────────────────────────────────────────────┤
+│  3. react-query-feature                                     │
+│     Feature-based - API co-located with features            │
+│     └── Best for: Feature-focused teams                     │
+├─────────────────────────────────────────────────────────────┤
+│  4. Custom - Paste sample code to replicate                 │
+└─────────────────────────────────────────────────────────────┘
 
-Q4: "Do you have sample code to reference?"
-    - Yes → "Please provide the file path" OR "Paste the code"
-    - No → Use framework defaults
-
-Alternative:
-"Paste sample code and I'll replicate that style:"
-[User pastes code]
-→ Analyze pasted code
-→ Extract patterns
+Select template (1-4):
 ```
+
+**After template selection:**
+
+```
+Invoke skill: scaffold-templates
+
+1. Load template definition
+2. Generate shared API layer (create-api.ts, etc.)
+3. For each tag in OpenAPI spec:
+   - Generate types from schemas
+   - Generate API functions
+   - Generate path constants
+   - Generate query hooks (if applicable)
+   - Generate query key factory (if applicable)
+4. Create barrel exports (index.ts)
+```
+
+**Report scaffold progress:**
+```
+🏗️ Scaffolding API layer...
+
+  ✓ src/shared/api/create-api.ts
+  ✓ src/shared/api/api-error.ts
+  ✓ src/shared/api/index.ts
+
+  ✓ src/entities/users/
+    ├── api/users-api.ts (5 functions)
+    ├── api/users-paths.ts
+    ├── api/users-keys.ts
+    ├── api/users-queries.ts (5 hooks)
+    └── model/types.ts (3 types)
+
+  ✓ src/entities/projects/
+    └── ... (12 endpoints)
+
+  ✓ src/entities/billing/
+    └── ... (8 endpoints)
+```
+
+**The generated code becomes the sample for future syncs.**
+
+This means `.openapi-sync.json` will point to the scaffolded code:
+```json
+{
+  "samples": {
+    "api": "src/entities/users/api/users-api.ts",
+    "types": "src/entities/users/model/types.ts",
+    "hooks": "src/entities/users/api/users-queries.ts"
+  }
+}
+```
+
+Now `/oas:sync` will use these generated files as the pattern source.
 
 ## Step 7: Generate Config
 
@@ -364,6 +440,25 @@ Existing config file:
 
 ## Flags
 
-- `--force`: Overwrite existing config
-- `--interactive`: Skip auto-detection and configure manually
-- `--sample=path`: Specify a particular sample file
+| Flag | Description |
+|------|-------------|
+| `--force` | Overwrite existing config |
+| `--scaffold` | Skip sample detection, go directly to template selection |
+| `--template=<name>` | Use specific template (e.g., `react-query-fsd`) |
+| `--sample=<path>` | Specify a particular sample file to learn from |
+| `--auto` | Auto-select template based on stack (no prompts) |
+
+**Examples:**
+```bash
+# Standard init (auto-detects or prompts)
+/oas:init https://api.example.com/openapi.json
+
+# Force scaffold mode (skip sample detection)
+/oas:init --scaffold
+
+# Use specific template without prompts
+/oas:init --template=react-query-fsd
+
+# Full auto mode (best for CI/CD or scripts)
+/oas:init --auto
+```
