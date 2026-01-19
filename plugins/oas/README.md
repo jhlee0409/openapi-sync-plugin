@@ -12,6 +12,29 @@ A Claude Code plugin that syncs OpenAPI specs with your codebase.
 
 ## Installation
 
+### 1. Install MCP Server (Required)
+
+The OAS plugin requires the OpenAPI Sync MCP server:
+
+```bash
+npm install -g @jhlee0409/openapi-sync-mcp
+```
+
+Then add to your Claude config (`~/.claude.json` or project `.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "oas": {
+      "command": "openapi-sync-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+### 2. Install Plugin
+
 ```bash
 # Add plugin marketplace (run once)
 /plugin marketplace add jhlee0409/claude-plugins
@@ -25,6 +48,8 @@ For development/testing:
 # Load plugin from local directory
 claude --plugin-dir /path/to/claude-plugins
 ```
+
+> **Note:** If MCP server is not installed, the plugin will prompt you to install it automatically when running any `/oas:*` command.
 
 ## Quick Start
 

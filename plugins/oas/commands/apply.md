@@ -14,6 +14,12 @@ Apply OpenAPI spec changes throughout your entire codebase. This command handles
 
 When `/oas:apply` is invoked, Claude MUST perform these steps in order:
 
+### Step 0: MCP Dependency Check
+**Invoke skill: mcp-dependency**
+- Verify OpenAPI Sync MCP server is installed
+- If not available, offer to install via `npm install -g @jhlee0409/openapi-sync-mcp`
+- Only proceed after MCP is confirmed available
+
 1. **Use skill: cache-manager** - Detect spec changes (diff)
 2. **Load mapping** - Read usage mapping from `/oas:map`
 3. **Analyze changes** - Classify each change type

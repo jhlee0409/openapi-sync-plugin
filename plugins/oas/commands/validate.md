@@ -6,6 +6,13 @@ description: Validate that code matches OpenAPI spec
 
 Validate that your code matches the OpenAPI spec.
 
+## MCP Dependency Check
+
+**Before executing this command, invoke skill: mcp-dependency**
+- Verify OpenAPI Sync MCP server is installed
+- If not available, offer to install via `npm install -g @jhlee0409/openapi-sync-mcp`
+- Only proceed after MCP is confirmed available
+
 ## Usage
 
 ```bash

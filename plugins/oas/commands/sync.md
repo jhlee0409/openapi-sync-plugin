@@ -12,6 +12,12 @@ Generate or update API code based on OpenAPI spec and detected project patterns.
 
 When `/oas:sync` is invoked, Claude MUST perform these steps in order:
 
+### Step 0: MCP Dependency Check
+**Invoke skill: mcp-dependency**
+- Verify OpenAPI Sync MCP server is installed
+- If not available, offer to install via `npm install -g @jhlee0409/openapi-sync-mcp`
+- Only proceed after MCP is confirmed available
+
 1. **Check prerequisites** - Verify `.openapi-sync.json` exists (run `/oas:init` if not)
 2. **Use skill: cache-manager** - Check cache, fetch spec if needed
 3. **Use skill: openapi-parser** - Parse spec, compute diff with cache

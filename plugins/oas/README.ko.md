@@ -12,6 +12,29 @@ OpenAPI 스펙과 코드베이스를 동기화하는 Claude Code 플러그인.
 
 ## 설치
 
+### 1. MCP 서버 설치 (필수)
+
+OAS 플러그인은 OpenAPI Sync MCP 서버가 필요합니다:
+
+```bash
+npm install -g @jhlee0409/openapi-sync-mcp
+```
+
+그 후 Claude 설정 파일(`~/.claude.json` 또는 프로젝트 `.mcp.json`)에 추가:
+
+```json
+{
+  "mcpServers": {
+    "oas": {
+      "command": "openapi-sync-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+### 2. 플러그인 설치
+
 ```bash
 # 플러그인 마켓플레이스 추가 (최초 1회)
 /plugin marketplace add jhlee0409/claude-plugins
@@ -25,6 +48,8 @@ OpenAPI 스펙과 코드베이스를 동기화하는 Claude Code 플러그인.
 # 로컬 디렉토리에서 플러그인 로드
 claude --plugin-dir /path/to/claude-plugins
 ```
+
+> **참고:** MCP 서버가 설치되지 않은 경우, `/oas:*` 명령어 실행 시 자동 설치를 안내합니다.
 
 ## 빠른 시작
 

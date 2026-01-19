@@ -6,6 +6,13 @@ description: Lint OpenAPI spec AND codebase for inconsistencies
 
 Check OpenAPI spec and codebase for consistency. Finds inconsistencies in manually written specs/code.
 
+## MCP Dependency Check
+
+**Before executing this command, invoke skill: mcp-dependency**
+- Verify OpenAPI Sync MCP server is installed
+- If not available, offer to install via `npm install -g @jhlee0409/openapi-sync-mcp`
+- Only proceed after MCP is confirmed available
+
 ## Target Selection
 
 ```

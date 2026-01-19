@@ -12,6 +12,12 @@ Discover and track where your generated API code is used throughout your codebas
 
 When `/oas:map` is invoked, Claude MUST perform these steps in order:
 
+### Step 0: MCP Dependency Check
+**Invoke skill: mcp-dependency**
+- Verify OpenAPI Sync MCP server is installed
+- If not available, offer to install via `npm install -g @jhlee0409/openapi-sync-mcp`
+- Only proceed after MCP is confirmed available
+
 1. **Load config** - Read `.openapi-sync.json` for generated file locations
 2. **Identify API exports** - Find all exported functions, hooks, types
 3. **Search codebase** - Find all files that import these exports

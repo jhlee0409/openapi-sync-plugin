@@ -31,6 +31,12 @@ Works with ANY codebase, ANY framework.
 
 When `/oas:init` is invoked, Claude MUST perform these steps in order:
 
+### Step 0: MCP Dependency Check
+**Invoke skill: mcp-dependency**
+- Verify OpenAPI Sync MCP server is installed
+- If not available, offer to install via `npm install -g @jhlee0409/openapi-sync-mcp`
+- Only proceed after MCP is confirmed available
+
 1. **Get spec location** - Ask user or use provided argument
 2. **Use skill: cache-manager** - Fetch spec with caching (saves redundant fetch on first sync)
 3. **Use skill: openapi-parser** - Validate the fetched spec

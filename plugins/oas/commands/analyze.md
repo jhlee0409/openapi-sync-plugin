@@ -6,6 +6,13 @@ description: Deep analysis of project's API code patterns
 
 Perform deep analysis of the project's existing API-related code patterns.
 
+## MCP Dependency Check
+
+**Before executing this command, invoke skill: mcp-dependency**
+- Verify OpenAPI Sync MCP server is installed
+- If not available, offer to install via `npm install -g @jhlee0409/openapi-sync-mcp`
+- Only proceed after MCP is confirmed available
+
 ## Prerequisites
 
 Check if `.openapi-sync.json` exists. If not, suggest running `/oas:init` first.
